@@ -56,7 +56,7 @@ class CgiContainer implements Container {
   
   function getRequest() {
     return new IncomingRequest(
-      new RequestHeader(
+      new IncomingRequestHeader(
         cast Cgi.getMethod(),
         Cgi.getURI(),
         'HTTP/1.1',
@@ -100,7 +100,6 @@ class CgiContainer implements Container {
 class TcpContainer implements Container {
   
   var port:Int;
-  var server:Server;
   
   public function new(port:Int) {
     this.port = port;
@@ -109,32 +108,21 @@ class TcpContainer implements Container {
   public function run(application:Application) {
     Server.bind(port).handle(function (o) switch o {
       case Success(server):
+        application.done.handle(server.close);
         server.connected.handle(function (cnx) {
-          
           cnx.source.parse(new RequestHeaderParser()).handle(function (o) switch o {
             case Success( { data: header, rest: body } ):
               application.serve(new IncomingRequest(header, body)).handle(function (res) {
-                var buf = new BytesBuffer();
-                function line(?line:String) {
-                  if (line != null)
-                    buf.addString(line);
-                  buf.addByte('\r'.code);
-                  buf.addByte('\n'.code);
-                }
-                line('HTTP/1.1 ${res.header.statusCode} ${res.header.reason}');
-                for (h in res.header.fields)
-                  line(h.name+': ' + h.value);
-                line();
                 
-                res.body.prepend(buf.getBytes()).pipeTo(cnx.sink).handle(function (result) switch result.status {
+                res.body.prepend(res.header.toString()).pipeTo(cnx.sink.idealize(application.onError)).handle(function (result) switch result {
                   case AllWritten:
                     cnx.close();
-                  case SinkEnded(_):
-                    application.onError(new Error('remote end hung up unexpectedly'));
-                    cnx.close();
-                  case SinkFailed(e, _):
-                    application.onError(e);
-                    cnx.close();
+                  //case SinkEnded(_):
+                    //application.onError(new Error('remote end hung up unexpectedly'));
+                    //cnx.close();
+                  //case SinkFailed(e, _):
+                    //application.onError(e);
+                    //cnx.close();
                   case SourceFailed(e):
                     e.throwSelf();
                 });
@@ -151,8 +139,8 @@ class TcpContainer implements Container {
   }
 }
 
-private class RequestHeaderParser extends ByteWiseParser<RequestHeader> {
-	var header:RequestHeader;
+private class RequestHeaderParser extends ByteWiseParser<IncomingRequestHeader> {
+	var header:IncomingRequestHeader;
   var fields:Array<MessageHeaderField>;
 	var buf:StringBuf;
 	var last:Int = -1;
@@ -164,7 +152,7 @@ private class RequestHeaderParser extends ByteWiseParser<RequestHeader> {
   
 	static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
         
-  override function read(c:Int):ParseStep<RequestHeader> 
+  override function read(c:Int):ParseStep<IncomingRequestHeader> 
     return
 			switch [last, c] {
 				case [_, -1]:
@@ -190,7 +178,7 @@ private class RequestHeaderParser extends ByteWiseParser<RequestHeader> {
 							if (header == null)
 								switch line.split(' ') {
 									case [method, url, protocol]:
-										this.header = new RequestHeader(cast method, url, protocol, fields = []);
+										this.header = new IncomingRequestHeader(cast method, url, protocol, fields = []);
 										Progressed;
 									default: 
 										INVALID;

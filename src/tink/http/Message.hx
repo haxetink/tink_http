@@ -12,6 +12,7 @@ class Message<Header, Body:Source> {
     this.body = body;
   }
   
+  
 }
 
 class MessageHeader {
@@ -29,4 +30,7 @@ class MessageHeaderField {
     this.value = value;
     this.name = name;
   }
+  
+  public function toString() 
+    return '$name: $value';
 }

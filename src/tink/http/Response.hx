@@ -1,6 +1,7 @@
 package tink.http;
 
 import haxe.io.Bytes;
+import haxe.io.BytesBuffer;
 import tink.http.Message;
 import tink.io.*;
 
@@ -13,6 +14,18 @@ class ResponseHeader extends MessageHeader {
     this.reason = reason;
     super(fields);
   }
+  
+  public function toString() {    
+    var ret = ['HTTP/1.1 $statusCode $reason'];
+    
+    for (h in fields)
+      ret.push(h.toString());
+    
+    ret.push('');
+    ret.push('');
+    
+    return ret.join('\r\n');
+  }  
 }
 
 @:forward
