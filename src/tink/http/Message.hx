@@ -19,6 +19,9 @@ class MessageHeader {
   public var fields(default, null):Array<MessageHeaderField>;
   public function new(fields)
     this.fields = fields;
+    
+  public function get(name:String)
+    return [for (f in fields) if (f.name == name) f.value];
 }
 
 class MessageHeaderField {

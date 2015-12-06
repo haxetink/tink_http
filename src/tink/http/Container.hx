@@ -5,7 +5,6 @@ import tink.http.Message;
 import tink.http.Request;
 import tink.http.Response;
 import tink.tcp.Server;
-import tink.io.StreamParser;
 
 import haxe.io.BytesOutput;
 import tink.io.*;
@@ -108,23 +107,21 @@ class TcpContainer implements Container {
   public function run(application:Application) {
     Server.bind(port).handle(function (o) switch o {
       case Success(server):
+        
         application.done.handle(server.close);
+        
         server.connected.handle(function (cnx) {
+          
           cnx.source.parse(new RequestHeaderParser()).handle(function (o) switch o {
             case Success( { data: header, rest: body } ):
+              
               application.serve(new IncomingRequest(header, body)).handle(function (res) {
                 
                 res.body.prepend(res.header.toString()).pipeTo(cnx.sink.idealize(application.onError)).handle(function (result) switch result {
                   case AllWritten:
                     cnx.close();
-                  //case SinkEnded(_):
-                    //application.onError(new Error('remote end hung up unexpectedly'));
-                    //cnx.close();
-                  //case SinkFailed(e, _):
-                    //application.onError(e);
-                    //cnx.close();
                   case SourceFailed(e):
-                    e.throwSelf();
+                    e.throwSelf();//this is only here because there's no easy way to append ideal sources
                 });
               });
             case Failure(e):  
@@ -139,83 +136,4 @@ class TcpContainer implements Container {
   }
 }
 
-private class RequestHeaderParser extends ByteWiseParser<IncomingRequestHeader> {
-	var header:IncomingRequestHeader;
-  var fields:Array<MessageHeaderField>;
-	var buf:StringBuf;
-	var last:Int = -1;
-  
-	public function new() {
-		this.buf = new StringBuf();
-		super();
-	}
-  
-	static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
-        
-  override function read(c:Int):ParseStep<IncomingRequestHeader> 
-    return
-			switch [last, c] {
-				case [_, -1]:
-					
-					if (header == null)
-            Progressed;
-          else
-            Done(header);
-					
-				case ['\r'.code, '\n'.code]:
-					
-					var line = buf.toString();
-					buf = new StringBuf();
-					last = -1;
-					
-					switch line {
-						case '':
-              if (header == null)
-                INVALID;
-              else
-                Done(header);
-						default:
-							if (header == null)
-								switch line.split(' ') {
-									case [method, url, protocol]:
-										this.header = new IncomingRequestHeader(cast method, url, protocol, fields = []);
-										Progressed;
-									default: 
-										INVALID;
-								}
-							else {
-								var s = line.indexOf(':');
-								switch [line.substr(0, s), line.substr(s+1).trim()] {
-									case [name, value]: 
-                    fields.push(new MessageHeaderField(name, value));//urldecode?
-								}
-								Progressed;
-							}
-					}
-						
-				case ['\r'.code, '\r'.code]:
-					
-					buf.addChar(last);
-					Progressed;
-					
-				case ['\r'.code, other]:
-					
-					buf.addChar(last);
-					buf.addChar(other);
-					last = -1;
-					Progressed;
-					
-				case [_, '\r'.code]:
-					
-					last = '\r'.code;
-					Progressed;
-					
-				case [_, other]:
-					
-					last = other;
-					buf.addChar(other);
-					Progressed;
-			}
-  
-}
 #end
