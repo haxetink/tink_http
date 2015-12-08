@@ -112,7 +112,7 @@ class TcpContainer implements Container {
         
         server.connected.handle(function (cnx) {
           
-          cnx.source.parse(new RequestHeaderParser()).handle(function (o) switch o {
+          cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
             case Success( { data: header, rest: body } ):
               
               application.serve(new IncomingRequest(header, body)).handle(function (res) {

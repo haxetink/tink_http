@@ -19,6 +19,16 @@ class IncomingRequestHeader extends MessageHeader {
     this.version = version;
     super(fields);
   }
+  
+  static public function parser():StreamParser<IncomingRequestHeader>
+    return new MessageHeaderParser<IncomingRequestHeader>(function (line, headers) 
+      return switch line.split(' ') {
+        case [method, url, protocol]:
+          Success(new IncomingRequestHeader(cast method, url, protocol, headers));
+        default: 
+          Failure(new Error(UnprocessableEntity, 'Invalid HTTP header'));
+      }
+    );
 }
 
 class OutgoingRequestHeader extends MessageHeader {
@@ -74,83 +84,3 @@ class OutgoingRequestHeader extends MessageHeader {
 
 typedef OutgoingRequest = Message<OutgoingRequestHeader, IdealSource>;
 typedef IncomingRequest = Message<IncomingRequestHeader, Source>;
-
-class RequestHeaderParser extends ByteWiseParser<IncomingRequestHeader> {
-	var header:IncomingRequestHeader;
-  var fields:Array<MessageHeaderField>;
-	var buf:StringBuf;
-	var last:Int = -1;
-  
-	public function new() {
-		this.buf = new StringBuf();
-		super();
-	}
-  
-	static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
-        
-  override function read(c:Int):ParseStep<IncomingRequestHeader> 
-    return
-			switch [last, c] {
-				case [_, -1]:
-					
-					if (header == null)
-            Progressed;
-          else
-            Done(header);
-					
-				case ['\r'.code, '\n'.code]:
-					
-					var line = buf.toString();
-					buf = new StringBuf();
-					last = -1;
-					
-					switch line {
-						case '':
-              if (header == null)
-                INVALID;
-              else
-                Done(header);
-						default:
-							if (header == null)
-								switch line.split(' ') {
-									case [method, url, protocol]:
-										this.header = new IncomingRequestHeader(cast method, url, protocol, fields = []);
-										Progressed;
-									default: 
-										INVALID;
-								}
-							else {
-								var s = line.indexOf(':');
-								switch [line.substr(0, s), line.substr(s+1).trim()] {
-									case [name, value]: 
-                    fields.push(new MessageHeaderField(name, value));//urldecode?
-								}
-								Progressed;
-							}
-					}
-						
-				case ['\r'.code, '\r'.code]:
-					
-					buf.addChar(last);
-					Progressed;
-					
-				case ['\r'.code, other]:
-					
-					buf.addChar(last);
-					buf.addChar(other);
-					last = -1;
-					Progressed;
-					
-				case [_, '\r'.code]:
-					
-					last = '\r'.code;
-					Progressed;
-					
-				case [_, other]:
-					
-					last = other;
-					buf.addChar(other);
-					Progressed;
-			}
-  
-}
