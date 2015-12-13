@@ -13,16 +13,16 @@ class Multipart {
   static function getChunk(s:Source, delim:Bytes):Surprise<Option<{ chunk:MultipartChunk, rest:Source }>, Error> {
     var split = s.split(delim);
     return
-      split.first.parse(new MessageHeaderParser(function (line, fields) {
+      split.first.parse(new HeaderParser(function (line, fields) {
         return
           Success(if (line == '--') null
           else {
-            fields.push(MessageHeaderField.ofString(line));
-            new MessageHeader(fields);
+            fields.push(HeaderField.ofString(line));
+            new Header(fields);
           });
       })) 
         >> 
-          function (o:{ data: MessageHeader, rest: Source }) 
+          function (o:{ data: Header, rest: Source }) 
             return 
               if (o.data == null) None
               else Some({ 
@@ -50,4 +50,4 @@ class Multipart {
   }
 }
 
-typedef MultipartChunk = Message<MessageHeader, Source>;
+typedef MultipartChunk = Message<Header, Source>;

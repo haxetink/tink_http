@@ -1,16 +1,15 @@
 package tink.http;
 
-import tink.http.Message.MessageHeaderField;
 import tink.io.Source;
 import tink.io.StreamParser;
 
 using tink.CoreApi;
 using StringTools;
 
-class Message<Header, Body:Source> {
+class Message<H:Header, B:Source> {
   
-  public var header(default, null):Header;
-  public var body(default, null):Body;
+  public var header(default, null):H;
+  public var body(default, null):B;
   
   public function new(header, body) {
     this.header = header;
@@ -20,16 +19,59 @@ class Message<Header, Body:Source> {
   
 }
 
-class MessageHeader {
-  public var fields(default, null):Array<MessageHeaderField>;
+class ContentType {
+  public var type(default, null):String = '*';
+  public var subtype(default, null):String = '*';
+  public var extension(default, null):Null<Map<String, String>>;
+  
+  function new() { 
+    extension = new Map();
+  }
+  
+  static public function ofString(s:String) {
+    var ret = new ContentType();
+    
+    inline function setType(max)
+      switch s.indexOf('/') {
+        case -1:
+          ret.type = s;
+        case pos:
+          ret.type = s.substring(0, pos);
+          ret.subtype = s.substring(pos + 1, max);
+      }
+      
+    switch s.indexOf(';') {
+      case -1: 
+        setType(s.length);
+      case pos: 
+        setType(pos);
+        for (p in KeyValue.parse(s, ';', pos + 1))
+          ret.extension[p.a] = p.b;
+    }
+    
+    return ret;
+  }
+}
+
+class Header {
+  public var fields(default, null):Array<HeaderField>;
+  
   public function new(fields)
     this.fields = fields;
     
   public function get(name:String)
     return [for (f in fields) if (f.name == name) f.value];
+    
+  public function contentType() 
+    return switch get('Content-Type') {
+      case [v]: 
+        Success(ContentType.ofString(v));
+      default: 
+        Failure(new Error('Content-Type not specified'));
+    }
 }
 
-class MessageHeaderField {
+class HeaderField {
   
   public var name(default, null):String;
   public var value(default, null):String;
@@ -47,19 +89,19 @@ class MessageHeaderField {
   static public function ofString(s:String)
     return switch s.indexOf(':') {
       case -1: 
-        new MessageHeaderField(s, null);
+        new HeaderField(s, null);
       case v: 
-        new MessageHeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
+        new HeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
     }
 }
 
-class MessageHeaderParser<T> extends ByteWiseParser<T> {
+class HeaderParser<T> extends ByteWiseParser<T> {
 	var header:T;
-  var fields:Array<MessageHeaderField>;
+  var fields:Array<HeaderField>;
 	var buf:StringBuf;
 	var last:Int = -1;
   
-  var makeHeader:String->Array<MessageHeaderField>->Outcome<T, Error>;
+  var makeHeader:String->Array<HeaderField>->Outcome<T, Error>;
   
 	public function new(makeHeader) {
     super();
@@ -106,7 +148,7 @@ class MessageHeaderParser<T> extends ByteWiseParser<T> {
                     Failed(e);
                 }
 							else {
-                fields.push(MessageHeaderField.ofString(line));
+                fields.push(HeaderField.ofString(line));
 								Progressed;
 							}
 					}

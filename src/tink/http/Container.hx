@@ -59,7 +59,7 @@ class CgiContainer implements Container {
         cast Cgi.getMethod(),
         Cgi.getURI(),
         'HTTP/1.1',
-        [for (h in Cgi.getClientHeaders()) new MessageHeaderField(h.header, h.value)]
+        [for (h in Cgi.getClientHeaders()) new HeaderField(h.header, h.value)]
       ),
       (Cgi.getPostData() : IdealSource)
     );

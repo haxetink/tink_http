@@ -8,7 +8,7 @@ import tink.io.StreamParser;
 using tink.CoreApi;
 using StringTools;
 
-class IncomingRequestHeader extends MessageHeader {
+class IncomingRequestHeader extends Header {
   public var method(default, null):Method;
   public var uri(default, null):String;
   public var version(default, null):String;
@@ -21,7 +21,7 @@ class IncomingRequestHeader extends MessageHeader {
   }
   
   static public function parser():StreamParser<IncomingRequestHeader>
-    return new MessageHeaderParser<IncomingRequestHeader>(function (line, headers) 
+    return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
       return switch line.split(' ') {
         case [method, url, protocol]:
           Success(new IncomingRequestHeader(cast method, url, protocol, headers));
@@ -31,7 +31,7 @@ class IncomingRequestHeader extends MessageHeader {
     );
 }
 
-class OutgoingRequestHeader extends MessageHeader {
+class OutgoingRequestHeader extends Header {
   public var method(default, null):Method;
   public var host(default, null):String;//TODO: do something about validating host names
   public var port(default, null):Int;
@@ -71,7 +71,7 @@ class OutgoingRequestHeader extends MessageHeader {
     
     switch get('Host') {
       case []:
-        ret.push(new MessageHeaderField('Host', '$host:$port').toString());  
+        ret.push(new HeaderField('Host', '$host:$port').toString());  
       default:
     } 
     

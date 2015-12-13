@@ -34,7 +34,7 @@ class StdClient {
               case null: [];
               case v:
                 [for (name in v.keys()) 
-                  new MessageHeaderField(name, v[name])
+                  new HeaderField(name, v[name])
                 ];
             }
           
@@ -90,7 +90,7 @@ class TcpClient {
 
 class ResponseHeaderParser extends ByteWiseParser<ResponseHeader> {
 	var header:ResponseHeader;
-  var fields:Array<MessageHeaderField>;
+  var fields:Array<HeaderField>;
 	var buf:StringBuf;
 	var last:Int = -1;
   
@@ -136,7 +136,7 @@ class ResponseHeaderParser extends ByteWiseParser<ResponseHeader> {
 								var s = line.indexOf(':');
 								switch [line.substr(0, s), line.substr(s+1).trim()] {
 									case [name, value]: 
-                    fields.push(new MessageHeaderField(name, value));//urldecode?
+                    fields.push(new HeaderField(name, value));//urldecode?
 								}
 								Progressed;
 							}

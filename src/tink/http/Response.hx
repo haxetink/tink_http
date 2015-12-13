@@ -5,7 +5,7 @@ import haxe.io.BytesBuffer;
 import tink.http.Message;
 import tink.io.*;
 
-class ResponseHeader extends MessageHeader {
+class ResponseHeader extends Header {
   public var statusCode(default, null):Int;
   public var reason(default, null):String;
   
@@ -35,7 +35,7 @@ abstract OutgoingResponse(Message<ResponseHeader, IdealSource>) {
     
   static function blob(bytes:Bytes, contentType:String)
     return new OutgoingResponse(
-      new ResponseHeader(200, 'OK', [new MessageHeaderField('Content-Type', contentType), new MessageHeaderField('Content-Length', Std.string(bytes.length))]), 
+      new ResponseHeader(200, 'OK', [new HeaderField('Content-Type', contentType), new HeaderField('Content-Length', Std.string(bytes.length))]), 
       bytes
     );
     

@@ -4,8 +4,8 @@ import tink.core.Pair;
 using StringTools;
 
 class KeyValue {
-  static public function parseMap(s, ?sep:String = '&', ?set:String = '=') 
-    return [for (p in parse(s, sep, set)) p.a => p.b]; 
+  static public function parseMap(s, ?sep:String = '&', ?set:String = '=', ?pos:Int = 0) 
+    return [for (p in parse(s, sep, set, pos)) p.a => p.b]; 
   
   static function trimmedSub(s:String, start:Int, end:Int) {
     while (s.fastCodeAt(start) <= 32)
@@ -15,8 +15,7 @@ class KeyValue {
     return s.substring(start, end);
   }
     
-  static public function parse(s:String, ?sep:String = '&', ?set:String = '='):Iterator<Pair<String, Null<String>>> {
-    var pos = 0;
+  static public function parse(s:String, ?sep:String = '&', ?set:String = '=', ?pos:Int = 0):Iterator<Pair<String, Null<String>>> {
     return {
       hasNext: function () return pos < s.length,
       next: function () {
