@@ -61,20 +61,35 @@ class Header {
     
   public function get(name:String)
     return [for (f in fields) if (f.name == name) f.value];
+  
+  public function byName(name:String)
+    return switch get(name) {
+      case []:
+        Failure(new Error(BadRequest, 'No $name header found'));
+      case [v]:
+        Success(v);
+      case v: 
+        Failure(new Error(BadRequest, 'Multiple entries for $name header'));
+    }
     
   public function contentType() 
-    return switch get('Content-Type') {
-      case [v]: 
-        Success(ContentType.ofString(v));
-      default: 
-        Failure(new Error('Content-Type not specified'));
-    }
+    return byName('Content-Type').map(ContentType.ofString);
+}
+
+abstract HeaderValue(String) from String to String {
+        
+  public function getExtension():Map<String, String>
+    return 
+      switch this.indexOf(';') {
+        case -1: new Map();
+        case v: [for (p in KeyValue.parse(this, ';', v + 1)) p.a => p.b];
+      }
 }
 
 class HeaderField {
   
   public var name(default, null):String;
-  public var value(default, null):String;
+  public var value(default, null):HeaderValue;
   
   public function new(name, value) {
     this.value = value;

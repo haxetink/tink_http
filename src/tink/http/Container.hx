@@ -4,7 +4,6 @@ import haxe.io.BytesBuffer;
 import tink.http.Message;
 import tink.http.Request;
 import tink.http.Response;
-import tink.tcp.Server;
 
 import haxe.io.BytesOutput;
 import tink.io.*;
@@ -55,6 +54,7 @@ class CgiContainer implements Container {
   
   function getRequest() {
     return new IncomingRequest(
+      Cgi.getClientIP(),
       new IncomingRequestHeader(
         cast Cgi.getMethod(),
         Cgi.getURI(),
@@ -96,6 +96,7 @@ class CgiContainer implements Container {
 #end
 
 #if neko
+@:require(tink_tcp)
 class TcpContainer implements Container {
   
   var port:Int;
@@ -105,7 +106,8 @@ class TcpContainer implements Container {
   }
   
   public function run(application:Application) {
-    Server.bind(port).handle(function (o) switch o {
+    #if tink_tcp
+    tink.tcp.Server.bind(port).handle(function (o) switch o {
       case Success(server):
         
         application.done.handle(server.close);
@@ -115,7 +117,7 @@ class TcpContainer implements Container {
           cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
             case Success( { data: header, rest: body } ):
               
-              application.serve(new IncomingRequest(header, body)).handle(function (res) {
+              application.serve(new IncomingRequest(cnx.peer.host, header, body)).handle(function (res) {
                 
                 res.body.prepend(res.header.toString()).pipeTo(cnx.sink.idealize(application.onError)).handle(function (result) switch result {
                   case AllWritten:
@@ -133,6 +135,7 @@ class TcpContainer implements Container {
       case Failure(e):
         application.onError(e);
     });
+    #end
   }
 }
 

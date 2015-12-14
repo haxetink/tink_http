@@ -1,6 +1,6 @@
 package tink.http;
 
-@:enum abstract Method(String) {
+@:enum abstract Method(String) to String {
   var GET = 'GET';
   var HEAD = 'HEAD';
   var OPTIONS = 'OPTIONS';

@@ -1,6 +1,7 @@
 package tink.http;
 
 import haxe.io.Bytes;
+import tink.http.Request.IncomingRequest;
 import tink.io.Sink;
 import tink.io.Source;
 import tink.http.Message;
@@ -31,11 +32,33 @@ class Multipart {
               });
             
   }
-  static function parse(s:Source, delim:String):Stream<MultipartChunk> {
+  
+  //static public function getBoundary(h:Header)
+    //return switch h.contentType() {
+      
+    //}
+  
+  static public function check(r:IncomingRequest):Option<Stream<MultipartChunk>> {
+    
+    return switch r.header.contentType() {
+      case Success( { type: 'multipart', extension: _['boundary'] => boundary } ):
+        Some(
+          if (boundary != null)
+            parseSource(r.body, boundary);
+          else
+            Stream.failure(new Error(UnprocessableEntity, 'No multipart boundary given'))
+        );
+      default:
+        None;
+    }
+  }
+  
+  static public function parseSource(s:Source, delim:String):Stream<MultipartChunk> {
+        
+    s = s.split(Bytes.ofString('--$delim')).then;//TODO: make sure it's on its newline
+    
     var delim = Bytes.ofString('\r\n--$delim');
-    
-    s = s.split(delim).then;
-    
+
     return Stream.generate(function ():Future<StreamStep<MultipartChunk>> {
       return getChunk(s, delim).map(function (o) return switch o {
         case Success(None): 
