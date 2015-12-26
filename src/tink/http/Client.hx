@@ -77,7 +77,7 @@ class TcpClient {
     req.body.prepend(req.header.toString()).pipeTo(cnx.sink).handle(function (x) {
       cnx.sink.close();//TODO: implement connection reuse
     });
-    
+    return null;
     return cnx.source.parse(new ResponseHeaderParser()).map(function (o) return switch o {
       case Success({ data: header, rest: body }):
         new IncomingResponse(header, body);

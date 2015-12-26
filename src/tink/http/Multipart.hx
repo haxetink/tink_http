@@ -33,11 +33,6 @@ class Multipart {
             
   }
   
-  //static public function getBoundary(h:Header)
-    //return switch h.contentType() {
-      
-    //}
-  
   static public function check(r:IncomingRequest):Option<Stream<MultipartChunk>> {
     
     return switch r.header.contentType() {

@@ -130,43 +130,12 @@ class HeaderParser<T> extends ByteWiseParser<T> {
     return
 			switch [last, c] {
 				case [_, -1]:
-					
-					switch header {
-            case null:
-              Progressed;
-            case v:
-              header = null;
-              Done(v);
-					}
+          
+          nextLine();
 
 				case ['\r'.code, '\n'.code]:
 					
-					var line = buf.toString();
-					buf = new StringBuf();
-					last = -1;
-					
-					switch line {
-						case '':
-              if (header == null)
-                Progressed;
-              else
-                Done(header);
-						default:
-							if (header == null)
-                switch makeHeader(line, fields = []) {
-                  case Success(null):
-                    Done(this.header = null);
-                  case Success(v): 
-                    this.header = v;
-                    Progressed;
-                  case Failure(e):
-                    Failed(e);
-                }
-							else {
-                fields.push(HeaderField.ofString(line));
-								Progressed;
-							}
-					}
+					nextLine();
 						
 				case ['\r'.code, '\r'.code]:
 					
@@ -191,5 +160,35 @@ class HeaderParser<T> extends ByteWiseParser<T> {
 					buf.addChar(other);
 					Progressed;
 			}
+      
+    function nextLine() {
+      var line = buf.toString();
+      buf = new StringBuf();
+      last = -1;
+      
+      return
+        switch line {
+          case '':
+            if (header == null)
+              Progressed;
+            else
+              Done(header);
+          default:
+            if (header == null)
+              switch makeHeader(line, fields = []) {
+                case Success(null):
+                  Done(this.header = null);
+                case Success(v): 
+                  this.header = v;
+                  Progressed;
+                case Failure(e):
+                  Failed(e);
+              }
+            else {
+              fields.push(HeaderField.ofString(line));
+              Progressed;
+            }
+        }      
+    }
   
 }
