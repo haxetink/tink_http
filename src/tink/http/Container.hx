@@ -2,6 +2,7 @@ package tink.http;
 
 import haxe.io.BytesBuffer;
 import tink.http.Message;
+import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
 

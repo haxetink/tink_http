@@ -3,6 +3,7 @@ package tink.http;
 import tink.io.Source;
 import tink.io.StreamParser;
 import tink.http.Message;
+import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
 import tink.io.Worker;
@@ -77,7 +78,7 @@ class TcpClient {
     req.body.prepend(req.header.toString()).pipeTo(cnx.sink).handle(function (x) {
       cnx.sink.close();//TODO: implement connection reuse
     });
-    return null;
+    
     return cnx.source.parse(new ResponseHeaderParser()).map(function (o) return switch o {
       case Success({ data: header, rest: body }):
         new IncomingResponse(header, body);

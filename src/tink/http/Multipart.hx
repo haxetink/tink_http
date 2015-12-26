@@ -5,6 +5,7 @@ import tink.http.Request.IncomingRequest;
 import tink.io.Sink;
 import tink.io.Source;
 import tink.http.Message;
+import tink.http.Header;
 import haxe.ds.Option;
 import tink.streams.Stream;
 import tink.streams.StreamStep;

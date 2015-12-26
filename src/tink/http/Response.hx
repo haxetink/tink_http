@@ -3,6 +3,7 @@ package tink.http;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import tink.http.Message;
+import tink.http.Header;
 import tink.io.*;
 
 class ResponseHeader extends Header {

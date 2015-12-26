@@ -2,6 +2,7 @@ package tink.http;
 
 import tink.io.*;
 import tink.http.Message;
+import tink.http.Header;
 import tink.io.StreamParser;
 
 
