@@ -113,9 +113,14 @@ class TcpContainer implements Container {
         application.done.handle(server.close);
         
         server.connected.handle(function (cnx) {
-          
           cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
             case Success( { data: header, rest: body } ):
+              
+              switch header.byName('Content-Length') {
+                case Success(v):
+                  body = body.limit(Std.parseInt(v));
+                default:
+              }
               
               application.serve(new IncomingRequest(cnx.peer.host, header, body)).handle(function (res) {
                 
@@ -125,6 +130,7 @@ class TcpContainer implements Container {
                   case SourceFailed(e):
                     e.throwSelf();//this is only here because there's no easy way to append ideal sources
                 });
+                
               });
             case Failure(e):  
               application.onError(e);
