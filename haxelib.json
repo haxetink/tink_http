@@ -1,0 +1,14 @@
+{
+	"name": "tink_http",
+	"url" : "http://haxetink.org/tink_http",
+	"license": "MIT",
+	"tags": ["tink", "cross", "http"],
+	"description": "A syntactic sugar bowl",
+	"version": "0.0.0",
+	"releasenote": "firstChild release",
+	"contributors": ["back2dos"],
+	"dependencies": {
+		"tink_io": "*"
+	},
+	"classPath": "src" 
+}

@@ -73,6 +73,9 @@ abstract HeaderValue(String) from String to String {
           case v: v;
         }];
       }
+      
+  @:from static public function ofInt(i:Int):HeaderValue
+    return Std.string(i);
 }
 
 class HeaderField {

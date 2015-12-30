@@ -29,10 +29,12 @@ class ResponseHeader extends Header {
   }  
 }
 
+private class OutgoingResponseData extends Message<ResponseHeader, IdealSource> {}
+
 @:forward
-abstract OutgoingResponse(Message<ResponseHeader, IdealSource>) {
+abstract OutgoingResponse(OutgoingResponseData) {
   public inline function new(header, body) 
-    this = new Message(header, body);
+    this = new OutgoingResponseData(header, body);
     
   static function blob(bytes:Bytes, contentType:String)
     return new OutgoingResponse(
@@ -42,5 +44,8 @@ abstract OutgoingResponse(Message<ResponseHeader, IdealSource>) {
     
   @:from static function ofString(s:String) 
     return blob(Bytes.ofString(s), 'text/plain');
+    
+  @:from static function ofBytes(b:Bytes) 
+    return blob(b, 'application/octet-stream');
 }
 typedef IncomingResponse = Message<ResponseHeader, Source>;
