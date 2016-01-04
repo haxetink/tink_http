@@ -1,5 +1,6 @@
 package tink.http;
 
+import tink.http.Request.IncomingRequest;
 import tink.io.*;
 import tink.http.Message;
 import tink.http.Header;
@@ -91,4 +92,9 @@ class IncomingRequest extends Message<IncomingRequestHeader, Source> {
     this.clientIp = clientIp;
     super(header, body);
   }
+  
+  static public function parse(clientIp, source:Source) 
+    return
+      source.parse(IncomingRequestHeader.parser()) >> function (parts) return new IncomingRequest(clientIp, parts.data, parts.rest);
+  
 }
