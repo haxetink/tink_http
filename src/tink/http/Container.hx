@@ -1,5 +1,6 @@
 package tink.http;
 
+import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import tink.http.Message;
 import tink.http.Header;
@@ -28,9 +29,12 @@ class NodeContainer implements Container {
   public function run(application:Application) {
     var server = js.node.Http.createServer(function (req:js.node.http.IncomingMessage, res:js.node.http.ServerResponse) {
       application.serve(
-        new IncomingRequest(cast req.method, req.url, new RequestHeaders([]), Source.ofNodeStream(req, 'Incoming HTTP message from ${req.socket.remoteAddress}'))
+        new IncomingRequest(
+          req.socket.remoteAddress, 
+          new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (name in req.headers.keys()) new HeaderField(name, req.headers[name])]), 
+          Source.ofNodeStream(req, 'Incoming HTTP message from ${req.socket.remoteAddress}'))
       ).handle(function (out) {
-        res.writeHead(out.status, 'ok');
+        res.writeHead(out.header.statusCode, Std.string(out.header.statusCode));//TODO: readable status code
         out.body.pipeTo(Sink.ofNodeStream(res, 'Outgoing HTTP response to ${req.socket.remoteAddress}')).handle(function (x) {
           res.end();
         });
@@ -101,9 +105,10 @@ class CgiContainer implements Container {
 class TcpContainer implements Container {
   
   var port:Int;
-  
-  public function new(port:Int) {
+  var maxConcurrent:Int;
+  public function new(port:Int, ?maxConcurrent:Int = 256) {
     this.port = port;
+    this.maxConcurrent = maxConcurrent;
   }
   
   public function run(application:Application) {
@@ -112,8 +117,10 @@ class TcpContainer implements Container {
       case Success(server):
         
         application.done.handle(server.close);
-        
-        server.connected.handle(function (cnx) {
+        var pending = new List();
+        var current = 0;
+                
+        function serve(cnx:tink.tcp.Connection, next)
           cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
             case Success( { data: header, rest: body } ):
               
@@ -128,15 +135,33 @@ class TcpContainer implements Container {
                 res.body.prepend(res.header.toString()).pipeTo(cnx.sink.idealize(application.onError)).handle(function (result) switch result {
                   case AllWritten:
                     cnx.close();
-                  case SourceFailed(e):
-                    e.throwSelf();//this is only here because there's no easy way to append ideal sources
+                    next();
+                  case SourceFailed(_):
+                    //this is only here because currently there's no easy way to append ideal sources
                 });
                 
               });
             case Failure(e):  
               application.onError(e);
               cnx.close();
-          });
+              next();
+          });          
+        
+        server.connected.handle(function (cnx) {
+          pending.add(cnx);
+          
+          function next() 
+            switch pending.pop() {
+              case null:
+                current--;
+              case cnx:
+                serve(cnx, next);
+            }
+            
+          if (current < maxConcurrent) {
+            current++;
+            next();
+          }
           
         });
       case Failure(e):
