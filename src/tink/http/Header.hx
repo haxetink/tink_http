@@ -45,10 +45,10 @@ class Header {
   public function new(fields)
     this.fields = fields;
     
-  public function get(name:String)
+  public function get(name:HeaderName)
     return [for (f in fields) if (f.name == name) f.value];
   
-  public function byName(name:String)
+  public function byName(name:HeaderName)
     return switch get(name) {
       case []:
         Failure(new Error(BadRequest, 'No $name header found'));
@@ -59,7 +59,7 @@ class Header {
     }
     
   public function contentType() 
-    return byName('Content-Type').map(ContentType.ofString);
+    return byName('content-type').map(ContentType.ofString);
 }
 
 abstract HeaderValue(String) from String to String {
@@ -78,9 +78,17 @@ abstract HeaderValue(String) from String to String {
     return Std.string(i);
 }
 
+abstract HeaderName(String) to String {
+  
+  inline function new(s) this = s;
+  
+  @:from static function ofString(s:String)
+    return new HeaderName(s.toLowerCase());
+}
+
 class HeaderField {
   
-  public var name(default, null):String;
+  public var name(default, null):HeaderName;
   public var value(default, null):HeaderValue;
   
   public function new(name, value) {
