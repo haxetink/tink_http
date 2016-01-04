@@ -3,12 +3,12 @@
 	"url" : "http://haxetink.org/tink_http",
 	"license": "MIT",
 	"tags": ["tink", "cross", "http"],
-	"description": "A syntactic sugar bowl",
+	"description": "Universal HTTP abstraction",
 	"version": "0.0.0",
-	"releasenote": "firstChild release",
+	"releasenote": "first release",
 	"contributors": ["back2dos"],
 	"dependencies": {
-		"tink_io": "*"
+		"tink_io": ""
 	},
 	"classPath": "src" 
 }
