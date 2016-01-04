@@ -1,14 +1,20 @@
 {
 	"name": "tink_http",
-	"url" : "http://haxetink.org/tink_http",
 	"license": "MIT",
-	"tags": ["tink", "cross", "http"],
+	"tags": [
+		"tink",
+		"cross",
+		"http"
+	],
+	"classPath": "src",
 	"description": "Universal HTTP abstraction",
+	"contributors": [
+		"back2dos"
+	],
+	"releasenote": "First haxelib release.",
 	"version": "0.0.0",
-	"releasenote": "first release",
-	"contributors": ["back2dos"],
+	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_io": ""
-	},
-	"classPath": "src" 
+	}
 }
