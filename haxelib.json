@@ -11,8 +11,8 @@
 	"contributors": [
 		"back2dos"
 	],
-	"releasenote": "First haxelib release.",
-	"version": "0.0.0",
+	"releasenote": "Add nodejs client. Implement header handling for node also.",
+	"version": "0.1.0",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_io": ""
