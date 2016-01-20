@@ -1,6 +1,7 @@
 package tink.http;
 
 import haxe.DynamicAccess;
+import tink.io.Sink;
 import tink.io.Source;
 import tink.io.StreamParser;
 import tink.http.Message;
@@ -21,11 +22,16 @@ import js.node.http.IncomingMessage;
 using tink.CoreApi;
 using StringTools;
 
+@:forward
+abstract Client(ClientObject) from ClientObject to ClientObject {
+  
+}
+
 interface ClientObject {
   function request(req:OutgoingRequest):Future<IncomingResponse>;
 }
 
-class StdClient {
+class StdClient implements ClientObject {
   var worker:Worker;
   public function new() {}
   public function request(req:OutgoingRequest):Future<IncomingResponse> 
@@ -82,7 +88,7 @@ class StdClient {
 }
 
 #if tink_tcp
-class TcpClient {
+class TcpClient implements ClientObject { 
   public function new() {}
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
     
@@ -102,51 +108,60 @@ class TcpClient {
 }
 #end
 
-@:require(nodejs)
-class NodeClient {
-  #if nodejs
+class NodeClient implements ClientObject {
+  @:require(nodejs)
   public function new() {}
-  public function request(req:OutgoingRequest):Future<IncomingResponse> {
-    return Future.async(function (cb) {
-      js.node.Http.request(
-        {
-          method: cast req.header.method,
-          path: req.header.uri,
-          host: req.header.host,
-          port: req.header.port,
-          headers: {
-            var map = new DynamicAccess<String>();
-            for (h in req.header.fields)
-              map[h.name] = h.value;
-            map;
-          },
-          agent: false,
-        }, 
-        function (msg:IncomingMessage) cb(new IncomingResponse(
-          new ResponseHeader(
-            msg.statusCode,
-            Std.string(msg.statusCode),
-            [for (name in msg.headers.keys()) new HeaderField(name, msg.headers[name])]
-          ),
-          Source.ofNodeStream(msg, 'Response from ${req.header.fullUri()}')
-        ))
-      );
-    });
-
-    //var cnx = Connection.establish({ host: req.header.host, port: req.header.port });
-    //
-    //req.body.prepend(req.header.toString()).pipeTo(cnx.sink).handle(function (x) {
-      //cnx.sink.close();//TODO: implement connection reuse
-    //});
-    //
-    //return cnx.source.parse(new ResponseHeaderParser()).map(function (o) return switch o {
-      //case Success({ data: header, rest: body }):
-        //new IncomingResponse(header, body);
-      //case Failure(e):
-        //new IncomingResponse(new ResponseHeader(e.code, e.message, []), (e.message : Source).append(e));
-    //});
-  }
-  #end
+  public function request(req:OutgoingRequest):Future<IncomingResponse> 
+    return 
+      #if nodejs
+        Future.async(function (cb) {
+          var fwd = js.node.Http.request(
+            {
+              method: cast req.header.method,
+              path: req.header.uri,
+              host: req.header.host,
+              port: req.header.port,
+              headers: {
+                var map = new DynamicAccess<String>();
+                for (h in req.header.fields)
+                  map[h.name] = h.value;
+                map;
+              },
+              agent: false,
+            }, 
+            function (msg:IncomingMessage) cb(new IncomingResponse(
+              new ResponseHeader(
+                msg.statusCode,
+                Std.string(msg.statusCode),
+                [for (name in msg.headers.keys()) new HeaderField(name, msg.headers[name])]
+              ),
+              Source.ofNodeStream(msg, 'Response from ${req.header.fullUri()}')
+            ))
+          );
+          
+          function fail(e:Error)
+            cb(new IncomingResponse(
+              new ResponseHeader(e.code, e.message, []),
+              e.message
+            ));
+            
+          fwd.on('error', function () fail(new Error(502, 'Gateway Error')));
+          
+          req.body.pipeSafelyTo(
+            Sink.ofNodeStream(fwd, 'Request to ${req.header.fullUri()}')
+          ).handle(function (res) {
+            fwd.end();
+            req.body.closeSafely();
+            switch res {
+              case AllWritten:
+              case SinkEnded(_): fail(new Error(502, 'Gateway Error'));
+              case SinkFailed(e, _): fail(new Error(502, 'Gateway Error'));
+            }
+          });
+        });
+    #else
+      throw 'unreachable';
+    #end
 }
 
 class ResponseHeaderParser extends ByteWiseParser<ResponseHeader> {

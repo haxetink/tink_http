@@ -52,7 +52,7 @@ abstract OutgoingResponse(OutgoingResponseData) {
   @:from static function ofError(e:Error)
     return new OutgoingResponse(
       new ResponseHeader(e.code, e.message, []),
-      tink.io.IdealSource.Empty.instance
+      e.message
     );
 }
 typedef IncomingResponse = Message<ResponseHeader, Source>;
