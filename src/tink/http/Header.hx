@@ -163,12 +163,14 @@ class HeaderParser<T> extends ByteWiseParser<T> {
       
     function nextLine() {
       var line = buf.toString();
+      //trace('line: $line');
       buf = new StringBuf();
       last = -1;
       
       return
         switch line {
           case '':
+            //trace('done!');
             if (header == null)
               Progressed;
             else

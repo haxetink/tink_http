@@ -34,11 +34,14 @@ class NodeContainer implements Container {
           new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (name in req.headers.keys()) new HeaderField(name, req.headers[name])]), 
           Source.ofNodeStream(req, 'Incoming HTTP message from ${req.socket.remoteAddress}'))
       ).handle(function (out) {
-        res.writeHead(out.header.statusCode, Std.string(out.header.statusCode));//TODO: readable status code
+        res.writeHead(out.header.statusCode, Std.string(out.header.statusCode), cast [for (h in out.header.fields) [(h.name : String), h.value]]);//TODO: readable status code
         out.body.pipeTo(Sink.ofNodeStream(res, 'Outgoing HTTP response to ${req.socket.remoteAddress}')).handle(function (x) {
           res.end();
         });
       });
+    });
+    application.done.handle(function () { 
+      server.close(); 
     });
     server.listen(port);
     server.on('error', function (e) application.onError(Error.reporter('Failed to bind port $port')(e)));
@@ -100,10 +103,9 @@ class CgiContainer implements Container {
 }
 #end
 
-#if neko
 @:require(tink_tcp)
 class TcpContainer implements Container {
-  
+  #if tink_tcp
   var port:Int;
   var maxConcurrent:Int;
   public function new(port:Int, ?maxConcurrent:Int = 256) {
@@ -119,12 +121,12 @@ class TcpContainer implements Container {
         application.done.handle(server.close);
         var pending = new List();
         var current = 0;
-                
+          
         function serve(cnx:tink.tcp.Connection, next)
           cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
             case Success( { data: header, rest: body } ):
               
-              switch header.byName('Content-Length') {
+              switch header.byName('content-length') {
                 case Success(v):
                   body = body.limit(Std.parseInt(v));
                 default:
@@ -148,6 +150,9 @@ class TcpContainer implements Container {
           });          
         
         server.connected.handle(function (cnx) {
+          //cnx.source.pipeTo(Sink.stdout);
+          //IncomingRequest.parse(cnx.peer, cnx.source).handle(function (x) trace(x));
+          //return;
           pending.add(cnx);
           
           function next() 
@@ -169,6 +174,7 @@ class TcpContainer implements Container {
     });
     #end
   }
+  #else
+  public function run(_) { }
+  #end 
 }
-
-#end

@@ -2,6 +2,7 @@ package tink.http;
 
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
+import tink.core.Error;
 import tink.http.Message;
 import tink.http.Header;
 import tink.io.*;
@@ -47,5 +48,11 @@ abstract OutgoingResponse(OutgoingResponseData) {
     
   @:from static function ofBytes(b:Bytes) 
     return blob(b, 'application/octet-stream');
+    
+  @:from static function ofError(e:Error)
+    return new OutgoingResponse(
+      new ResponseHeader(e.code, e.message, []),
+      tink.io.IdealSource.Empty.instance
+    );
 }
 typedef IncomingResponse = Message<ResponseHeader, Source>;

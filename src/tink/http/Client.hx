@@ -1,5 +1,6 @@
 package tink.http;
 
+import haxe.DynamicAccess;
 import tink.io.Source;
 import tink.io.StreamParser;
 import tink.http.Message;
@@ -7,8 +8,15 @@ import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
 import tink.io.Worker;
+
+#if tink_tcp
 import tink.tcp.Connection;
 import tink.tcp.Endpoint;
+#end
+
+#if nodejs
+import js.node.http.IncomingMessage;
+#end
 
 using tink.CoreApi;
 using StringTools;
@@ -31,13 +39,17 @@ class StdClient {
         
         function headers()
           return 
-            switch r.responseHeaders {
-              case null: [];
-              case v:
-                [for (name in v.keys()) 
-                  new HeaderField(name, v[name])
-                ];
-            }
+            #if sys
+              switch r.responseHeaders {
+                case null: [];
+                case v:
+                  [for (name in v.keys()) 
+                    new HeaderField(name, v[name])
+                  ];
+              }
+            #else
+              [];
+            #end
           
         r.onError = function (msg) {
           if (code == 200) code = 500;
@@ -69,6 +81,7 @@ class StdClient {
     });
 }
 
+#if tink_tcp
 class TcpClient {
   public function new() {}
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
@@ -87,7 +100,54 @@ class TcpClient {
     });
   }
 }
+#end
 
+@:require(nodejs)
+class NodeClient {
+  #if nodejs
+  public function new() {}
+  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+    return Future.async(function (cb) {
+      js.node.Http.request(
+        {
+          method: cast req.header.method,
+          path: req.header.uri,
+          host: req.header.host,
+          port: req.header.port,
+          headers: {
+            var map = new DynamicAccess<String>();
+            for (h in req.header.fields)
+              map[h.name] = h.value;
+            map;
+          },
+          agent: false,
+        }, 
+        function (msg:IncomingMessage) cb(new IncomingResponse(
+          new ResponseHeader(
+            msg.statusCode,
+            Std.string(msg.statusCode),
+            [for (name in msg.headers.keys()) new HeaderField(name, msg.headers[name])]
+          ),
+          Source.ofNodeStream(msg, 'Response from ${req.header.fullUri()}')
+        ))
+      );
+    });
+
+    //var cnx = Connection.establish({ host: req.header.host, port: req.header.port });
+    //
+    //req.body.prepend(req.header.toString()).pipeTo(cnx.sink).handle(function (x) {
+      //cnx.sink.close();//TODO: implement connection reuse
+    //});
+    //
+    //return cnx.source.parse(new ResponseHeaderParser()).map(function (o) return switch o {
+      //case Success({ data: header, rest: body }):
+        //new IncomingResponse(header, body);
+      //case Failure(e):
+        //new IncomingResponse(new ResponseHeader(e.code, e.message, []), (e.message : Source).append(e));
+    //});
+  }
+  #end
+}
 
 class ResponseHeaderParser extends ByteWiseParser<ResponseHeader> {
 	var header:ResponseHeader;
