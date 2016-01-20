@@ -11,8 +11,8 @@
 	"contributors": [
 		"back2dos"
 	],
-	"releasenote": "Add nodejs client. Implement header handling for node also.",
-	"version": "0.1.0",
+	"releasenote": "More work on nodejs client.",
+	"version": "0.1.1",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_io": ""
