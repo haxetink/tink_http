@@ -11,8 +11,8 @@
 	"contributors": [
 		"back2dos"
 	],
-	"releasenote": "More work on nodejs client.",
-	"version": "0.1.1",
+	"releasenote": "Remove logging voodoo.",
+	"version": "0.1.2",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_io": ""
