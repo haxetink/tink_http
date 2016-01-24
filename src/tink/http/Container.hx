@@ -75,8 +75,6 @@ class CgiContainer implements Container {
   
   
   public function run(application:Application) {
-    haxe.Log.trace = function (v:Dynamic, ?pos)
-      Cgi.logMessage('${pos.className}@${pos.lineNumber}: $v');
       
     function doRun() 
       application.serve(getRequest()).handle(function (response) {
