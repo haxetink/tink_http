@@ -121,7 +121,7 @@ class NodeClient implements ClientObject {
               path: req.header.uri,
               host: req.header.host,
               port: req.header.port,
-              headers: {
+              headers: cast {
                 var map = new DynamicAccess<String>();
                 for (h in req.header.fields)
                   map[h.name] = h.value;
