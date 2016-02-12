@@ -161,36 +161,35 @@ class HeaderParser<T> extends ByteWiseParser<T> {
 					Progressed;
 			}
       
-    function nextLine() {
-      var line = buf.toString();
-      //trace('line: $line');
-      buf = new StringBuf();
-      last = -1;
-      
-      return
-        switch line {
-          case '':
-            //trace('done!');
-            if (header == null)
-              Progressed;
-            else
-              Done(header);
-          default:
-            if (header == null)
-              switch makeHeader(line, fields = []) {
-                case Success(null):
-                  Done(this.header = null);
-                case Success(v): 
-                  this.header = v;
-                  Progressed;
-                case Failure(e):
-                  Failed(e);
-              }
-            else {
-              fields.push(HeaderField.ofString(line));
-              Progressed;
+  function nextLine() {
+    var line = buf.toString();
+    
+    buf = new StringBuf();
+    last = -1;
+    
+    return
+      switch line {
+        case '':
+          if (header == null)
+            Progressed;
+          else
+            Done(header);
+        default:
+          if (header == null)
+            switch makeHeader(line, fields = []) {
+              case Success(null):
+                Done(this.header = null);
+              case Success(v): 
+                this.header = v;
+                Progressed;
+              case Failure(e):
+                Failed(e);
             }
-        }      
+          else {
+            fields.push(HeaderField.ofString(line));
+            Progressed;
+          }
+      }      
     }
   
 }
