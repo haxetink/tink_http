@@ -31,7 +31,7 @@ class NodeContainer implements Container {
       application.serve(
         new IncomingRequest(
           req.socket.remoteAddress, 
-          new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (name in req.headers.keys()) new HeaderField(name, (req.headers[name]: String))]), 
+          new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (i in 0...Std.int(req.rawHeaders.length / 2)) new HeaderField(req.rawHeaders[2 * i], req.rawHeaders[2 * i +1])]), 
           Source.ofNodeStream(req, 'Incoming HTTP message from ${req.socket.remoteAddress}'))
       ).handle(function (out) {
         res.writeHead(out.header.statusCode, Std.string(out.header.statusCode), cast [for (h in out.header.fields) [(h.name : String), h.value]]);//TODO: readable status code
