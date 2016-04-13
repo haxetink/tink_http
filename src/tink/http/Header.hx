@@ -62,6 +62,7 @@ class Header {
     return byName('content-type').map(ContentType.ofString);
 }
 
+@:forward
 abstract HeaderValue(String) from String to String {
         
   public function getExtension():Map<String, String>
@@ -78,6 +79,7 @@ abstract HeaderValue(String) from String to String {
     return Std.string(i);
 }
 
+@:forward
 abstract HeaderName(String) to String {
   
   inline function new(s) this = s;
