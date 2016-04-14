@@ -153,8 +153,8 @@ class TcpContainer implements Container {
           });          
         
         server.connected.handle(function (cnx) {
-          serve(cnx, function () { } );
-          return;
+          //serve(cnx, function () { } );
+          //return;
           pending.add(cnx);
           
           function next() 
