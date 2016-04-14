@@ -1,6 +1,7 @@
 package tink.http;
 
 import tink.io.StreamParser;
+import tink.url.Query;
 
 using tink.CoreApi;
 using StringTools;
@@ -31,8 +32,8 @@ class ContentType {
         setType(s.length);
       case pos: 
         setType(pos);
-        for (p in KeyValue.parse(s, ';', pos + 1))
-          ret.extension[p.a] = p.b;
+        for (p in Query.parseString(s, ';', pos + 1))
+          ret.extension[p.name] = p.value;
     }
     
     return ret;
@@ -68,8 +69,8 @@ abstract HeaderValue(String) from String to String {
     return 
       switch this.indexOf(';') {
         case -1: new Map();
-        case v: [for (p in KeyValue.parse(this, ';', v + 1)) p.a => switch p.b.charAt(0) {
-          case '"': p.b.substr(1, p.b.length -2);//TODO: find out how exactly escaping and what not works
+        case v: [for (p in Query.parseString(this, ';', v + 1)) p.name => switch p.value.charAt(0) {
+          case '"': p.value.substr(1, p.value.length -2);//TODO: find out how exactly escaping and what not works
           case v: v;
         }];
       }
@@ -111,55 +112,55 @@ class HeaderField {
 }
 
 class HeaderParser<T> extends ByteWiseParser<T> {
-	var header:T;
+  var header:T;
   var fields:Array<HeaderField>;
-	var buf:StringBuf;
-	var last:Int = -1;
+  var buf:StringBuf;
+  var last:Int = -1;
   
   var makeHeader:String->Array<HeaderField>->Outcome<T, Error>;
   
-	public function new(makeHeader) {
+  public function new(makeHeader) {
     super();
-		this.buf = new StringBuf();
+    this.buf = new StringBuf();
     this.makeHeader = makeHeader;
-	}
+  }
   
-	static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
+  static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
         
   override function read(c:Int):ParseStep<T> 
     return
-			switch [last, c] {
-				case [_, -1]:
+      switch [last, c] {
+        case [_, -1]:
           
           nextLine();
 
-				case ['\r'.code, '\n'.code]:
-					
-					nextLine();
-						
-				case ['\r'.code, '\r'.code]:
-					
-					buf.addChar(last);
-					Progressed;
-					
-				case ['\r'.code, other]:
-					
-					buf.addChar(last);
-					buf.addChar(other);
-					last = -1;
-					Progressed;
-					
-				case [_, '\r'.code]:
-					
-					last = '\r'.code;
-					Progressed;
-					
-				case [_, other]:
-					
-					last = other;
-					buf.addChar(other);
-					Progressed;
-			}
+        case ['\r'.code, '\n'.code]:
+          
+          nextLine();
+            
+        case ['\r'.code, '\r'.code]:
+          
+          buf.addChar(last);
+          Progressed;
+          
+        case ['\r'.code, other]:
+          
+          buf.addChar(last);
+          buf.addChar(other);
+          last = -1;
+          Progressed;
+          
+        case [_, '\r'.code]:
+          
+          last = '\r'.code;
+          Progressed;
+          
+        case [_, other]:
+          
+          last = other;
+          buf.addChar(other);
+          Progressed;
+      }
       
   function nextLine() {
     var line = buf.toString();

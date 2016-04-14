@@ -12,7 +12,7 @@ using StringTools;
 
 class IncomingRequestHeader extends Header {
   public var method(default, null):Method;
-  public var uri(default, null):String;
+  public var uri(default, null):Url;
   public var version(default, null):String;
   
   public function new(method, uri, version, fields) {
@@ -85,11 +85,14 @@ class OutgoingRequestHeader extends Header {
 }
 
 typedef OutgoingRequest = Message<OutgoingRequestHeader, IdealSource>;
+
 class IncomingRequest extends Message<IncomingRequestHeader, Source> {
   
   public var clientIp(default, null):String;
+  public var context(default, null):Context<IncomingRequest>;
   
   public function new(clientIp, header, body) {
+    this.context = new Context(this);
     this.clientIp = clientIp;
     super(header, body);
   }

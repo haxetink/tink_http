@@ -37,7 +37,7 @@ abstract OutgoingResponse(OutgoingResponseData) {
   public inline function new(header, body) 
     this = new OutgoingResponseData(header, body);
     
-  static function blob(bytes:Bytes, contentType:String)
+  static public function blob(bytes:Bytes, contentType:String)
     return new OutgoingResponse(
       new ResponseHeader(200, 'OK', [new HeaderField('Content-Type', contentType), new HeaderField('Content-Length', Std.string(bytes.length))]), 
       bytes
@@ -53,6 +53,7 @@ abstract OutgoingResponse(OutgoingResponseData) {
     return new OutgoingResponse(
       new ResponseHeader(e.code, e.message, []),
       e.message
-    );
+    );    
+    
 }
 typedef IncomingResponse = Message<ResponseHeader, Source>;

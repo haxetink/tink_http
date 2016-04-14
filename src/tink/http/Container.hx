@@ -6,6 +6,7 @@ import tink.http.Message;
 import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
+import tink.io.IdealSink.BlackHole;
 
 import haxe.io.BytesOutput;
 import tink.io.*;
@@ -26,23 +27,26 @@ class NodeContainer implements Container {
     this.port = port;
   }
   
-  public function run(application:Application) {
-    var server = js.node.Http.createServer(function (req:js.node.http.IncomingMessage, res:js.node.http.ServerResponse) {
-      application.serve(
-        new IncomingRequest(
-          req.socket.remoteAddress, 
-          new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (name in req.headers.keys()) new HeaderField(name, req.headers[name])]), 
-          Source.ofNodeStream(req, 'Incoming HTTP message from ${req.socket.remoteAddress}'))
-      ).handle(function (out) {
-        res.writeHead(out.header.statusCode, Std.string(out.header.statusCode), cast [for (h in out.header.fields) [(h.name : String), h.value]]);//TODO: readable status code
-        out.body.pipeTo(Sink.ofNodeStream(res, 'Outgoing HTTP response to ${req.socket.remoteAddress}')).handle(function (x) {
-          res.end();
+  static public function toNodeHandler(handler:IncomingRequest->Future<OutgoingResponse>)
+    return 
+      function (req:js.node.http.IncomingMessage, res:js.node.http.ServerResponse) {
+        handler(
+          new IncomingRequest(
+            req.socket.remoteAddress, 
+            new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (name in req.headers.keys()) new HeaderField(name, req.headers[name])]), 
+            Source.ofNodeStream(req, 'Incoming HTTP message from ${req.socket.remoteAddress}'))
+        ).handle(function (out) {
+          res.writeHead(out.header.statusCode, Std.string(out.header.statusCode), cast [for (h in out.header.fields) [(h.name : String), h.value]]);//TODO: readable status code
+          out.body.pipeTo(Sink.ofNodeStream(res, 'Outgoing HTTP response to ${req.socket.remoteAddress}')).handle(function (x) {
+            res.end();
+          });
         });
-      });
-    });
-    application.done.handle(function () { 
-      server.close(); 
-    });
+      }    
+  
+  
+  public function run(application:Application) {
+    var server = js.node.Http.createServer(toNodeHandler(application.serve));
+    application.done.handle(function () server.close());
     server.listen(port);
     server.on('error', function (e) application.onError(Error.reporter('Failed to bind port $port')(e)));
   }
@@ -106,7 +110,7 @@ class TcpContainer implements Container {
   #if tink_tcp
   var port:Int;
   var maxConcurrent:Int;
-  public function new(port:Int, ?maxConcurrent:Int = 256) {
+  public function new(port:Int, ?maxConcurrent:Int = 1 << 16) {
     this.port = port;
     this.maxConcurrent = maxConcurrent;
   }
@@ -119,10 +123,10 @@ class TcpContainer implements Container {
         application.done.handle(server.close);
         var pending = new List();
         var current = 0;
-          
-        function serve(cnx:tink.tcp.Connection, next)
+        
+        function serve(cnx:tink.tcp.Connection, next:Void->Void)
           cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
-            case Success( { data: header, rest: body } ):
+            case Success({ data: header, rest: body }):
               
               switch header.byName('content-length') {
                 case Success(v):
@@ -132,12 +136,13 @@ class TcpContainer implements Container {
               
               application.serve(new IncomingRequest(cnx.peer.host, header, body)).handle(function (res) {
                 
-                res.body.prepend(res.header.toString()).pipeTo(cnx.sink.idealize(application.onError)).handle(function (result) switch result {
-                  case AllWritten:
-                    cnx.close();
-                    next();
-                  case SourceFailed(_):
-                    //this is only here because currently there's no easy way to append ideal sources
+                res.body.prepend(res.header.toString()).pipeTo(cnx.sink, { end: true }).handle(function (r) {
+                  next(); 
+                  switch r {
+                    case SinkFailed(e) | SourceFailed(e): application.onError(e);
+                    case SinkEnded: application.onError(new Error('${cnx.peer} hung up before the whole body was written'));
+                    default:
+                  }
                 });
                 
               });
@@ -148,9 +153,8 @@ class TcpContainer implements Container {
           });          
         
         server.connected.handle(function (cnx) {
-          //cnx.source.pipeTo(Sink.stdout);
-          //IncomingRequest.parse(cnx.peer, cnx.source).handle(function (x) trace(x));
-          //return;
+          serve(cnx, function () { } );
+          return;
           pending.add(cnx);
           
           function next() 
