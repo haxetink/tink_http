@@ -11,11 +11,11 @@
 	"contributors": [
 		"back2dos"
 	],
-	"releasenote": "Remove logging voodoo.",
-	"version": "0.1.2",
+	"releasenote": "Various improvements.",
+	"version": "0.2.0",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
-		"tink_io": "",
-    "tink_url": ""
+		"tink_url": "",
+		"tink_io": ""
 	}
 }
