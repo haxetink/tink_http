@@ -106,11 +106,24 @@ class TcpClient implements ClientObject {
     });
   }
 }
-#end
+#else
+@:require(tink_tcp)
+extern class TcpClient implements ClientObject {
+  public function new();
+  public function request(req:OutgoingRequest):Future<IncomingResponse>;
+}
+#end 
 
+#if nodejs
 class NodeClient implements ClientObject {
-  @:require(nodejs)
-  public function new() {}
+  
+  public function new() { }
+  
+  function each(a:haxe.extern.EitherType<String, Array<String>>):Array<String>
+    return 
+      if (Std.is(a, String)) [a];
+      else a;
+      
   public function request(req:OutgoingRequest):Future<IncomingResponse> 
     return 
       #if nodejs
@@ -133,9 +146,9 @@ class NodeClient implements ClientObject {
               new ResponseHeader(
                 msg.statusCode,
                 Std.string(msg.statusCode),
-                [for (name in msg.headers.keys()) new HeaderField(name, msg.headers[name])]
+                [for (name in msg.headers.keys()) for (value in each(msg.headers[name])) new HeaderField(name, value)]
               ),
-              Source.ofNodeStream(msg, 'Response from ${req.header.fullUri()}')
+              Source.ofNodeStream('Response from ${req.header.fullUri()}', msg)
             ))
           );
           
@@ -148,14 +161,14 @@ class NodeClient implements ClientObject {
           fwd.on('error', function () fail(new Error(502, 'Gateway Error')));
           
           req.body.pipeSafelyTo(
-            Sink.ofNodeStream(fwd, 'Request to ${req.header.fullUri()}')
+            Sink.ofNodeStream('Request to ${req.header.fullUri()}', fwd)
           ).handle(function (res) {
             fwd.end();
             req.body.closeSafely();
             switch res {
               case AllWritten:
-              case SinkEnded(_): fail(new Error(502, 'Gateway Error'));
-              case SinkFailed(e, _): fail(new Error(502, 'Gateway Error'));
+              case SinkEnded: fail(new Error(502, 'Gateway Error'));
+              case SinkFailed(e): fail(new Error(502, 'Gateway Error'));
             }
           });
         });
@@ -163,6 +176,13 @@ class NodeClient implements ClientObject {
       throw 'unreachable';
     #end
 }
+#else
+@:require(nodejs)
+extern class NodeClient implements ClientObject {
+  public function new();
+  public function request(req:OutgoingRequest):Future<IncomingResponse>;
+}
+#end
 
 class ResponseHeaderParser extends ByteWiseParser<ResponseHeader> {
   var header:ResponseHeader;

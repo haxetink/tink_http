@@ -89,10 +89,8 @@ typedef OutgoingRequest = Message<OutgoingRequestHeader, IdealSource>;
 class IncomingRequest extends Message<IncomingRequestHeader, Source> {
   
   public var clientIp(default, null):String;
-  public var context(default, null):Context<IncomingRequest>;
   
   public function new(clientIp, header, body) {
-    this.context = new Context(this);
     this.clientIp = clientIp;
     super(header, body);
   }

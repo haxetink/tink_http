@@ -29,24 +29,25 @@ class NodeContainer implements Container {
   
   static public function toNodeHandler(handler:IncomingRequest->Future<OutgoingResponse>)
     return 
-      function (req:js.node.http.IncomingMessage, res:js.node.http.ServerResponse) {
+      function (req:js.node.http.IncomingMessage, res:js.node.http.ServerResponse)
         handler(
           new IncomingRequest(
             req.socket.remoteAddress, 
-            new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (name in req.headers.keys()) new HeaderField(name, req.headers[name])]), 
-            Source.ofNodeStream(req, 'Incoming HTTP message from ${req.socket.remoteAddress}'))
+            new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (i in 0...Std.int(req.rawHeaders.length / 2)) new HeaderField(req.rawHeaders[2 * i], req.rawHeaders[2 * i +1])]), 
+            Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', req))
         ).handle(function (out) {
           res.writeHead(out.header.statusCode, Std.string(out.header.statusCode), cast [for (h in out.header.fields) [(h.name : String), h.value]]);//TODO: readable status code
-          out.body.pipeTo(Sink.ofNodeStream(res, 'Outgoing HTTP response to ${req.socket.remoteAddress}')).handle(function (x) {
+          out.body.pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', res)).handle(function (x) {
             res.end();
           });
         });
-      }    
   
   
   public function run(application:Application) {
     var server = js.node.Http.createServer(toNodeHandler(application.serve));
-    application.done.handle(function () server.close());
+    application.done.handle(function () { 
+      server.close(); 
+    });
     server.listen(port);
     server.on('error', function (e) application.onError(Error.reporter('Failed to bind port $port')(e)));
   }
@@ -104,12 +105,11 @@ class CgiContainer implements Container {
   static public var instance(default, null):Container = new CgiContainer(); 
 }
 #end
-
-@:require(tink_tcp)
 class TcpContainer implements Container {
-  #if tink_tcp
+  
   var port:Int;
   var maxConcurrent:Int;
+  @:require(tink_tcp)
   public function new(port:Int, ?maxConcurrent:Int = 1 << 16) {
     this.port = port;
     this.maxConcurrent = maxConcurrent;
@@ -176,7 +176,4 @@ class TcpContainer implements Container {
     });
     #end
   }
-  #else
-  public function run(_) { }
-  #end 
 }
