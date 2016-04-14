@@ -29,5 +29,5 @@ script:
   - haxelib run travix flash
   - haxelib run travix java -lib tink_tcp -lib tink_runloop
   - haxelib run travix cpp -lib tink_tcp -lib tink_runloop
-  - haxelib run travix cs
+  #- haxelib run travix cs
   - haxelib run travix php
