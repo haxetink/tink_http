@@ -148,7 +148,7 @@ class NodeClient implements ClientObject {
                 Std.string(msg.statusCode),
                 [for (name in msg.headers.keys()) for (value in each(msg.headers[name])) new HeaderField(name, value)]
               ),
-              Source.ofNodeStream('Response from ${req.header.fullUri()}', msg)
+              Source.ofNodeStream(msg, 'Response from ${req.header.fullUri()}')
             ))
           );
           
@@ -161,7 +161,7 @@ class NodeClient implements ClientObject {
           fwd.on('error', function () fail(new Error(502, 'Gateway Error')));
           
           req.body.pipeSafelyTo(
-            Sink.ofNodeStream('Request to ${req.header.fullUri()}', fwd)
+            Sink.ofNodeStream(fwd, 'Request to ${req.header.fullUri()}')
           ).handle(function (res) {
             fwd.end();
             req.body.closeSafely();
