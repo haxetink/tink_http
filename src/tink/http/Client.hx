@@ -32,7 +32,7 @@ interface ClientObject {
 }
 
 class StdClient implements ClientObject {
-  var worker:Worker;
+  var worker:Worker = Worker.EAGER;
   public function new() {}
   public function request(req:OutgoingRequest):Future<IncomingResponse> 
     return Future.async(function (cb) {
@@ -81,8 +81,10 @@ class StdClient implements ClientObject {
         case GET | HEAD | OPTIONS:
           send(false);
         default:
-          
-          //r.setPostData(
+          req.body.all().handle(function(bytes) {
+            r.setPostData(bytes.sure().toString());
+            send(true);  
+        });
       }
     });
 }
