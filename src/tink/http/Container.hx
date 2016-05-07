@@ -66,11 +66,16 @@ class CgiContainer implements Container {
   function new() { }
   
   function getRequest() {
+    var full_uri = Cgi.getURI();
+    var params = Cgi.getParamsString(); 
+    if(params != null){
+      full_uri = '$full_uri?$params';
+    }
     return new IncomingRequest(
       Cgi.getClientIP(),
       new IncomingRequestHeader(
         cast Cgi.getMethod(),
-        Cgi.getURI(),
+        full_uri,
         'HTTP/1.1',
         [for (h in Cgi.getClientHeaders()) new HeaderField(h.header, h.value)]
       ),
