@@ -147,7 +147,7 @@ class NodeClient implements ClientObject {
             function (msg:IncomingMessage) cb(new IncomingResponse(
               new ResponseHeader(
                 msg.statusCode,
-                Std.string(msg.statusCode),
+                msg.statusMessage,
                 [for (name in msg.headers.keys()) for (value in each(msg.headers[name])) new HeaderField(name, value)]
               ),
               Source.ofNodeStream('Response from ${req.header.fullUri()}', msg)
