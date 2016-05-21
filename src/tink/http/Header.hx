@@ -1,5 +1,6 @@
 package tink.http;
 
+import tink.http.Header.HeaderField;
 import tink.io.StreamParser;
 import tink.url.Query;
 
@@ -43,8 +44,11 @@ class ContentType {
 class Header {
   public var fields(default, null):Array<HeaderField>;
   
-  public function new(fields)
-    this.fields = fields;
+  public function new(?fields)
+    this.fields = switch fields {
+      case null: [];
+      case v: v;
+    }
     
   public function get(name:HeaderName)
     return [for (f in fields) if (f.name == name) f.value];
@@ -109,6 +113,38 @@ class HeaderField {
       case v: 
         new HeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
     }
+    
+  /**
+   * Constructs a Set-Cookie header. Please note that cookies are HttpOnly by default. 
+   * You can opt out of that behavior by setting `options.scriptable` to true.
+   */  
+  static public function setCookie(key:String, value:String, ?options: { ?expires: Date, ?domain: String, ?path: String, ?secure: Bool, ?scriptable: Bool}) {
+    
+    if (options == null) 
+      options = { };
+      
+    var buf = new StringBuf();
+    
+    inline function addPair(name, value) {
+      if(value == null) return;
+      buf.add("; ");
+      buf.add(name);
+      buf.add(value);
+    }
+    
+    buf.add(key.urlEncode() + '=' + value.urlEncode());
+    
+    if (options.expires != null) 
+      addPair("expires=", DateTools.format(options.expires, "%a, %d-%b-%Y %H:%M:%S GMT"));
+    
+    addPair("domain=", options.domain);
+    addPair("path=", options.path);
+    
+    if (options.secure) addPair("secure", "");
+    if (options.scriptable != true) addPair("HttpOnly", "");
+    
+    return new HeaderField('Set-Cookie', buf.toString());
+  }
 }
 
 class HeaderParser<T> extends ByteWiseParser<T> {

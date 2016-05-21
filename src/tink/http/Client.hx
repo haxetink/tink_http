@@ -32,7 +32,7 @@ interface ClientObject {
 }
 
 class StdClient implements ClientObject {
-  var worker:Worker;
+  var worker:Worker = Worker.EAGER;
   public function new() {}
   public function request(req:OutgoingRequest):Future<IncomingResponse> 
     return Future.async(function (cb) {
@@ -132,8 +132,8 @@ class NodeClient implements ClientObject {
             {
               method: cast req.header.method,
               path: req.header.uri,
-              host: req.header.host,
-              port: req.header.port,
+              host: req.header.host.name,
+              port: req.header.host.port,
               headers: cast {
                 var map = new DynamicAccess<String>();
                 for (h in req.header.fields)

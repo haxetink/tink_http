@@ -8,6 +8,7 @@ import tink.http.Header;
 import tink.io.*;
 
 class ResponseHeader extends Header {
+  
   public var statusCode(default, null):Int;
   public var reason(default, null):String;
   

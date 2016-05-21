@@ -5,6 +5,8 @@ import tink.io.*;
 import tink.http.Message;
 import tink.http.Header;
 import tink.io.StreamParser;
+import tink.url.Auth;
+import tink.url.Host;
 
 
 using tink.CoreApi;
@@ -34,34 +36,26 @@ class IncomingRequestHeader extends Header {
 }
 
 class OutgoingRequestHeader extends Header {
-  public var method(default, null):Method;
-  public var host(default, null):String;//TODO: do something about validating host names
-  public var port(default, null):Int;
-  public var uri(default, null):String;
-  public var auth(default, null):Null<{ var user(default, null):String; var pass(default, null):String; }>;
   
-  public function new(method, host, port, uri:String, auth, fields) {
+  public var method(default, null):Method;
+  public var host(default, null):Host;//TODO: do something about validating host names
+  public var uri(default, null):String;
+  
+  public function new(method, host, ?uri:String, ?fields) {
     this.method = method;
     this.host = host;
-    this.port = port;
     
     if (uri == null) uri = '/';
     else if (uri.charAt(0) != '/')
       uri = '/$uri';
       
     this.uri = uri;
-    this.auth = auth;
+    
     super(fields);
   }
   
-  public function fullUri() {
-    var auth = 
-      if (auth == null) 
-        '';
-      else 
-        '${auth.user.urlEncode()}:${auth.pass.urlEncode()}@';
-    
-    return '//$auth$host:$port$uri';
+  public function fullUri() {    
+    return '//$host$uri';//TODO: this should somehow be provided by tink_url
   }
   
   public function toString() {
@@ -73,7 +67,7 @@ class OutgoingRequestHeader extends Header {
     
     switch get('Host') {
       case []:
-        ret.push(new HeaderField('Host', '$host:$port').toString());  
+        ret.push(new HeaderField('Host', (host:String)).toString());  
       default:
     } 
     
