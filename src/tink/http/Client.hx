@@ -81,8 +81,10 @@ class StdClient implements ClientObject {
         case GET | HEAD | OPTIONS:
           send(false);
         default:
-          
-          //r.setPostData(
+          req.body.all().handle(function(bytes) {
+            r.setPostData(bytes.sure().toString());
+            send(true);  
+        });
       }
     });
 }
@@ -145,7 +147,7 @@ class NodeClient implements ClientObject {
             function (msg:IncomingMessage) cb(new IncomingResponse(
               new ResponseHeader(
                 msg.statusCode,
-                Std.string(msg.statusCode),
+                msg.statusMessage,
                 [for (name in msg.headers.keys()) for (value in each(msg.headers[name])) new HeaderField(name, value)]
               ),
               Source.ofNodeStream('Response from ${req.header.fullUri()}', msg)
