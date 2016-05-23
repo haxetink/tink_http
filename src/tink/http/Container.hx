@@ -21,6 +21,7 @@ interface Container {
 #if nodejs
 class NodeContainer implements Container {
   
+  public var server(default, null):js.node.http.Server;
   var port:Int;
   
   public function new(port) {
@@ -44,9 +45,9 @@ class NodeContainer implements Container {
   
   
   public function run(application:Application) {
-    var server = js.node.Http.createServer(toNodeHandler(application.serve));
+    server = js.node.Http.createServer(toNodeHandler(application.serve));
     application.done.handle(function () { 
-      server.close(); 
+      server.close();
     });
     server.listen(port);
     server.on('error', function (e) application.onError(Error.reporter('Failed to bind port $port')(e)));
