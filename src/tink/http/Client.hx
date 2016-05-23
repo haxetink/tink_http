@@ -94,7 +94,7 @@ class TcpClient implements ClientObject {
   public function new() {}
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
     
-    var cnx = Connection.establish({ host: req.header.host, port: req.header.port });
+    var cnx = Connection.establish({ host: req.header.host.name, port: req.header.host.port });
     
     req.body.prepend(req.header.toString()).pipeTo(cnx.sink).handle(function (x) {
       cnx.sink.close();//TODO: implement connection reuse
