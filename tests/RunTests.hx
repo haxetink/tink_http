@@ -47,7 +47,6 @@ class RunTests {
           c.request(req).handle(function (res) {
             res.body.all().handle(function (o) {
               var raw = o.sure().toString();
-              trace(raw);
               var data:Data = haxe.Json.parse(raw);
               assertEquals((method:String), data.method);
               assertEquals(uri, data.uri);
@@ -59,6 +58,7 @@ class RunTests {
       }
         
       roundtrip(GET);
+      roundtrip(GET, '/?foo=bar&foo=2');
       roundtrip(POST, '/', 'hello there!');
     }
     
@@ -78,7 +78,8 @@ class RunTests {
   static function onServer(f:Host->Future<Noise>) {
     var ret = [];
     #if php
-    Sys.command('haxe', ['build-php.hxml']);
+    if (new Process('haxe', ['build-php.hxml']).exitCode() != 0)
+      throw 'failed to build PHP';
     var server = new Process('php', ['-S', '127.0.0.1:8000', 'testphp/index.php']);
     var done = f(new Host('localhost', 8000));
     ret.push(done);

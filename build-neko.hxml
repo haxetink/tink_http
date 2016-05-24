@@ -1,0 +1,4 @@
+-lib tink_http
+-cp tests
+-main RunNeko
+-neko testneko/index.n
