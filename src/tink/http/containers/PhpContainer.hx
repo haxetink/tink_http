@@ -6,6 +6,7 @@ import tink.http.Handler;
 import tink.http.Header;
 import tink.http.Method;
 import tink.http.Request;
+import tink.io.Sink;
 
 using tink.CoreApi;
 
@@ -36,8 +37,9 @@ class PhpContainer implements Container {
         untyped __call__('http_response_code', res.header.statusCode);
         for (h in res.header.fields)
           untyped __call__('header', h.name, h.value);
-        res.body.all().handle(function (o) {
-          Sys.print(o.sure().getData());
+          
+        var out = Sink.ofOutput('output buffer', @:privateAccess new sys.io.FileOutput(untyped __call__('fopen', 'php://output', "w")));
+        res.body.pipeTo(out, { end: true }).handle(function (o) {
           cb(Done);
         });
       })
