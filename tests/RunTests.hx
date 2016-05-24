@@ -47,6 +47,7 @@ class RunTests {
           c.request(req).handle(function (res) {
             res.body.all().handle(function (o) {
               var raw = o.sure().toString();
+              trace(raw);
               var data:Data = haxe.Json.parse(raw);
               assertEquals((method:String), data.method);
               assertEquals(uri, data.uri);

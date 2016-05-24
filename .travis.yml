@@ -3,17 +3,17 @@ dist: trusty
 
 language: haxe
 
-os:
-  - linux
-  - osx
+#os:
+#  - linux
+#  - osx
   
 haxe:
   - "3.2.1"
-  - development
-  
-matrix:
-  allow_failures:
-    - haxe: development
+#  - development
+#  
+#matrix:
+#  allow_failures:
+#    - haxe: development
     
 install:
   - haxelib install tink_runloop
@@ -23,10 +23,10 @@ install:
 
 script:
   #- haxelib run travix interp
+  - haxelib run travix php
   - haxelib run travix node
   - haxelib run travix neko -lib tink_tcp -lib tink_runloop -D concurrent
   - haxelib run travix neko -lib tink_tcp -lib tink_runloop
-  - haxelib run travix php
   
   #- haxelib run travix python
   #- haxelib run travix flash
