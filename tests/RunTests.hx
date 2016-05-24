@@ -6,6 +6,7 @@ import tink.core.Future;
 import tink.core.Noise;
 import tink.http.Container;
 import tink.http.Client;
+import tink.http.Header.HeaderField;
 import tink.http.Method;
 import tink.http.Multipart;
 import tink.http.Request;
@@ -25,15 +26,28 @@ class RunTests {
     var ret = [];
     
     for (c in clients) {
-      function roundtrip(method:Method, uri:String = '/', ?fields, body:String = '') {
+      function roundtrip(method:Method, uri:String = '/', ?fields:Array<HeaderField>, body:String = '') {
         ret.push(Future.async(function (cb) {
-          if (fields == null)
-            fields = [];
-          var req = new OutgoingRequest(new OutgoingRequestHeader(method, host, uri, fields), body);
           
+          fields = switch fields {
+            case null: [];
+            case v: v.copy();
+          }
+          
+          var req = new OutgoingRequest(new OutgoingRequestHeader(method, host, uri, fields), body);
+          switch body.length {
+            case 0:
+            case v: 
+              switch req.header.get('content-length') {
+                case []:
+                  fields.push(new HeaderField('content-length', Std.string(v)));
+                default:
+              }
+          }
           c.request(req).handle(function (res) {
             res.body.all().handle(function (o) {
               var raw = o.sure().toString();
+              trace(raw);
               var data:Data = haxe.Json.parse(raw);
               assertEquals((method:String), data.method);
               assertEquals(uri, data.uri);
@@ -64,15 +78,30 @@ class RunTests {
   static function onServer(f:Host->Future<Noise>) {
     var ret = [];
     #if php
-    untyped __call__('exec', 'haxe build-php.hxml');
+    Sys.command('haxe', ['build-php.hxml']);
     var server = new Process('php', ['-S', '127.0.0.1:8000', 'testphp/index.php']);
-    ret.push(Future.async(function (cb) { } ));
     var done = f(new Host('localhost', 8000));
     ret.push(done);
     done.handle(function () {
       server.kill();
     });
     #end 
+
+    #if neko
+    Sys.command('haxe', ['build-neko.hxml']);
+    
+    var cwd = Sys.getCwd();
+    Sys.setCwd('testneko');
+    var server = new Process('nekotools', ['server', '-p', '8000', '-rewrite']);
+    Sys.setCwd(cwd);
+    
+    var done = f(new Host('localhost', 8000));
+    ret.push(done);
+    done.handle(function () {
+      server.kill();
+    });
+    
+    #end
     #if (neko || java || cpp)
     ret.push(onContainer(new TcpContainer(2000), f.bind(new Host('localhost', 2000))));
     #end
