@@ -82,7 +82,7 @@ class RunTests {
     if (new Process('haxe', ['build-php.hxml']).exitCode() != 0)
       throw 'failed to build PHP';
     var server = new Process('php', ['-S', '127.0.0.1:8000', 'testphp/index.php']);
-    var done = f(new Host('localhost', 8000));
+    var done = f(new Host('127.0.0.1', 8000));
     ret.push(done);
     done.handle(function () {
       server.kill();
