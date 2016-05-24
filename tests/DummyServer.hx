@@ -7,6 +7,14 @@ import tink.http.Response;
 
 using tink.CoreApi;
 
+typedef Data = {
+  uri:String,
+  ip:String,
+  method:String,
+  headers:Array<{ name:String, value:String }>,
+  body:String
+}
+
 class DummyServer {
   
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> 
@@ -18,13 +26,15 @@ class DummyServer {
       else
         req.body.all().map(function (o) return switch o {
           case Success(body):
-            OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify({
+            
+            var data:Data = {
               uri: req.header.uri.toString(),
               ip: req.clientIp,
               method: req.header.method,
               headers: [for (h in req.header.fields) { name: h.name, value: h.value } ], 
               body: body.toString(),
-            })), 'application/json');
+            };
+            OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify(data)), 'application/json');
           case Failure(e):
             new OutgoingResponse(
               new ResponseHeader(e.code, e.message, [new HeaderField('content-type', 'application/json')]),

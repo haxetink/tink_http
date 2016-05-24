@@ -41,7 +41,7 @@ class OutgoingRequestHeader extends Header {
   public var host(default, null):Host;//TODO: do something about validating host names
   public var uri(default, null):String;
   
-  public function new(method, host, ?uri:String, ?fields) {
+  public function new(method, host:Host, ?uri:String, ?fields) {
     this.method = method;
     this.host = host;
     
