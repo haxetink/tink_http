@@ -15,7 +15,7 @@ class TcpContainer implements Container {
   var onInvalidRequest:Null<Error->Connection->Void>;
   
   @:require(tink_tcp)
-  public function new(port:Int, maxConcurrent:Int = 0, ?onInvalidRequest) {
+  public function new(port:Int, maxConcurrent:Int = 1 << 16, ?onInvalidRequest) {
     this.port = port;
     this.maxConcurrent = maxConcurrent;
     this.onInvalidRequest = onInvalidRequest;
@@ -109,7 +109,6 @@ class TcpContainer implements Container {
           });
         case Failure(e):
           cb(Failed(e));
-          //application.onError(e);
       });
       #end
     });

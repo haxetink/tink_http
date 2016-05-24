@@ -32,8 +32,10 @@ interface ClientObject {
 }
 
 class StdClient implements ClientObject {
-  var worker:Worker = Worker.EAGER;
-  public function new() {}
+  var worker:Worker;
+  public function new(?worker:Worker) {
+    this.worker = worker.ensure();
+  }
   public function request(req:OutgoingRequest):Future<IncomingResponse> 
     return Future.async(function (cb) {
             
@@ -100,7 +102,7 @@ class TcpClient implements ClientObject {
       cnx.sink.close();//TODO: implement connection reuse
     });
     
-    return cnx.source.parse(new ResponseHeaderParser()).map(function (o) return switch o {
+    return cnx.source.parse(ResponseHeader.parser()).map(function (o) return switch o {
       case Success({ data: header, rest: body }):
         new IncomingResponse(header, body);
       case Failure(e):
@@ -185,82 +187,3 @@ extern class NodeClient implements ClientObject {
   public function request(req:OutgoingRequest):Future<IncomingResponse>;
 }
 #end
-
-class ResponseHeaderParser extends ByteWiseParser<ResponseHeader> {
-  var header:ResponseHeader;
-  var fields:Array<HeaderField>;
-  var buf:StringBuf;
-  var last:Int = -1;
-  
-  public function new() {
-    this.buf = new StringBuf();
-    super();
-  }
-  
-  static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
-        
-  override function read(c:Int):ParseStep<ResponseHeader> 
-    return
-      switch [last, c] {
-        case [_, -1]:
-          
-          if (header == null)
-            Progressed;
-          else
-            Done(header);
-          
-        case ['\r'.code, '\n'.code]:
-          
-          var line = buf.toString();
-          buf = new StringBuf();
-          last = -1;
-          
-          switch line {
-            case '':
-              if (header == null)
-                INVALID;
-              else
-                Done(header);
-            default:
-              if (header == null)
-                switch line.split(' ') {
-                  case [protocol, status, reason]:
-                    this.header = new ResponseHeader(Std.parseInt(status), reason, fields = []);
-                    Progressed;
-                  default: 
-                    INVALID;
-                }
-              else {
-                var s = line.indexOf(':');
-                switch [line.substr(0, s), line.substr(s+1).trim()] {
-                  case [name, value]: 
-                    fields.push(new HeaderField(name, value));//urldecode?
-                }
-                Progressed;
-              }
-          }
-            
-        case ['\r'.code, '\r'.code]:
-          
-          buf.addChar(last);
-          Progressed;
-          
-        case ['\r'.code, other]:
-          
-          buf.addChar(last);
-          buf.addChar(other);
-          last = -1;
-          Progressed;
-          
-        case [_, '\r'.code]:
-          
-          last = '\r'.code;
-          Progressed;
-          
-        case [_, other]:
-          
-          last = other;
-          buf.addChar(other);
-          Progressed;
-      }  
-}

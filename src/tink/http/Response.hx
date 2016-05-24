@@ -11,15 +11,16 @@ class ResponseHeader extends Header {
   
   public var statusCode(default, null):Int;
   public var reason(default, null):String;
-  
-  public function new(statusCode, reason, fields) {
+  public var protocol(default, null):String;
+  public function new(statusCode, reason, fields, ?protocol = 'HTTP/1.1') {
     this.statusCode = statusCode;
     this.reason = reason;
+    this.protocol = protocol;
     super(fields);
   }
   
   public function toString() {    
-    var ret = ['HTTP/1.1 $statusCode $reason'];
+    var ret = ['$protocol $statusCode $reason'];
     
     for (h in fields)
       ret.push(h.toString());
@@ -28,7 +29,17 @@ class ResponseHeader extends Header {
     ret.push('');
     
     return ret.join('\r\n');
-  }  
+  }
+  
+  static public function parser():StreamParser<ResponseHeader>
+    return new HeaderParser<ResponseHeader>(function (line, headers) 
+      return switch line.split(' ') {
+        case [protocol, status, reason]:
+          Success(new ResponseHeader(Std.parseInt(status), reason, headers, protocol));
+        default: 
+          Failure(new Error(UnprocessableEntity, 'Invalid HTTP response header'));
+      }
+    );    
 }
 
 private class OutgoingResponseData extends Message<ResponseHeader, IdealSource> {}
