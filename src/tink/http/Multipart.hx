@@ -36,16 +36,14 @@ class Multipart {
   
   static public function check(r:IncomingRequest):Option<Stream<MultipartChunk>> {
     
-    return switch r.header.contentType() {
-      //case Success( { type: 'multipart', extension: _['boundary'] => boundary } ):
-        //Some(
-          //if (boundary != null)
-            //parseSource(switch r.body {
-              //case Plain(s): s;
-            //}, boundary);
-          //else
-            //Stream.failure(new Error(UnprocessableEntity, 'No multipart boundary given'))
-        //);
+    return switch [r.body, r.header.contentType()] {
+      case [Plain(src), Success( { type: 'multipart', extension: _['boundary'] => boundary } )]:
+        Some(
+          if (boundary != null)
+            parseSource(src, boundary);
+          else
+            Stream.failure(new Error(UnprocessableEntity, 'No multipart boundary given'))
+        );
       default:
         None;
     }

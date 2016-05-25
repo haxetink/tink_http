@@ -98,11 +98,23 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
 
 enum IncomingRequestBody {
   Plain(source:Source);
-  Parsed(parts:Array<{ name:String, value: ParsedParam }>);
+  Parsed(parts:Array<BodyPart>);
+}
+
+typedef BodyPart = {
+  var name(default, null):String;
+  var value(default, null):ParsedParam;
 }
 
 enum ParsedParam {
   Value(v:String);
-  TmpFile(originalName:String, tmpName:String);
-  Chunk(originalName:String, data:Bytes);
+  File(handle:UploadedFile);
+}
+
+typedef UploadedFile = {
+  var fileName(default, null):String;
+  var mimeType(default, null):String;
+  var size(default, null):Int;
+  function read():Source;
+  function saveTo(path:String):Surprise<Noise, Error>;
 }

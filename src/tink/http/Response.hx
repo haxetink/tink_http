@@ -61,6 +61,17 @@ abstract OutgoingResponse(OutgoingResponseData) {
     
   @:from static function ofBytes(b:Bytes) 
     return blob(b, 'application/octet-stream');
+    
+  static public function reportError(e:Error) {
+    return new OutgoingResponse(
+      new ResponseHeader(e.code, e.message, [new HeaderField('Content-Type', 'application/json')]),
+      haxe.Json.stringify( {
+        error: e.message,
+        details: e.data,
+        //TODO: add stack trace when it becomes available
+      })
+    );
+  }
 }
 
 typedef IncomingResponse = Message<ResponseHeader, Source>;
