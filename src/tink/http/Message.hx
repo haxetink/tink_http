@@ -2,7 +2,7 @@ package tink.http;
 
 import tink.io.Source;
 
-class Message<H:Header, B:Source> {
+class Message<H:Header, B> {
   
   public var header(default, null):H;
   public var body(default, null):B;

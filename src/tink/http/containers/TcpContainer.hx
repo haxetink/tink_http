@@ -52,7 +52,7 @@ class TcpContainer implements Container {
                   default:
                 }
                 
-                var req = new IncomingRequest(cnx.peer.host, header, body);
+                var req = new IncomingRequest(cnx.peer.host, header, Plain(body));
                 
                 handler.process(req).handle(function (res) {
                   

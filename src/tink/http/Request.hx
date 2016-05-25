@@ -80,7 +80,7 @@ class OutgoingRequestHeader extends Header {
 
 typedef OutgoingRequest = Message<OutgoingRequestHeader, IdealSource>;
 
-class IncomingRequest extends Message<IncomingRequestHeader, Source> {
+class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody> {
   
   public var clientIp(default, null):String;
   
@@ -91,6 +91,10 @@ class IncomingRequest extends Message<IncomingRequestHeader, Source> {
   
   static public function parse(clientIp, source:Source) 
     return
-      source.parse(IncomingRequestHeader.parser()) >> function (parts) return new IncomingRequest(clientIp, parts.data, parts.rest);
+      source.parse(IncomingRequestHeader.parser()) >> function (parts) return new IncomingRequest(clientIp, parts.data, Plain(parts.rest));
   
+}
+
+enum IncomingRequestBody {
+  Plain(source:Source);
 }

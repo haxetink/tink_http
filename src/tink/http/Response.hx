@@ -12,6 +12,7 @@ class ResponseHeader extends Header {
   public var statusCode(default, null):Int;
   public var reason(default, null):String;
   public var protocol(default, null):String;
+  
   public function new(statusCode, reason, fields, ?protocol = 'HTTP/1.1') {
     this.statusCode = statusCode;
     this.reason = reason;
@@ -60,12 +61,6 @@ abstract OutgoingResponse(OutgoingResponseData) {
     
   @:from static function ofBytes(b:Bytes) 
     return blob(b, 'application/octet-stream');
-    
-  @:from static function ofError(e:Error)
-    return new OutgoingResponse(
-      new ResponseHeader(e.code, e.message, []),
-      e.message
-    );    
-    
 }
+
 typedef IncomingResponse = Message<ResponseHeader, Source>;

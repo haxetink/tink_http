@@ -37,10 +37,10 @@ class ModnekoContainer implements Container {
             a;
           }
         ),
-        switch Web.getPostData() {
+        Plain(switch Web.getPostData() {
           case null: Empty.instance;
           case v: v;
-        }
+        })
       )).handle(function (res) {
         
         Web.setReturnCode(res.header.statusCode);

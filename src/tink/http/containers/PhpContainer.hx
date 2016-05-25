@@ -32,7 +32,7 @@ class PhpContainer implements Container {
             ];
           }
         ),
-        (untyped __call__('file_get_contents', 'php://input') : String)
+        Plain((untyped __call__('file_get_contents', 'php://input') : String))
       )).handle(function (res) {
         untyped __call__('http_response_code', res.header.statusCode);
         for (h in res.header.fields)
