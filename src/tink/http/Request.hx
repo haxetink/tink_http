@@ -1,5 +1,6 @@
 package tink.http;
 
+import haxe.io.Bytes;
 import tink.http.Request.IncomingRequest;
 import tink.io.*;
 import tink.http.Message;
@@ -97,4 +98,11 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
 
 enum IncomingRequestBody {
   Plain(source:Source);
+  Parsed(parts:Array<{ name:String, value: ParsedParam }>);
+}
+
+enum ParsedParam {
+  Value(v:String);
+  TmpFile(originalName:String, tmpName:String);
+  Chunk(originalName:String, data:Bytes);
 }

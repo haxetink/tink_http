@@ -46,6 +46,14 @@ class DummyServer {
                 })
               );
           });
+        case Parsed(_):
+          Future.sync(new OutgoingResponse(
+            new ResponseHeader(500, 'unexpected case', [new HeaderField('content-type', 'application/json')]),
+            haxe.Json.stringify( {
+              error: true,
+              message: 'unexpected case'
+            })
+          ));
       }
   
 }
