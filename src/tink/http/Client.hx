@@ -119,66 +119,86 @@ extern class TcpClient implements ClientObject {
 #end 
 
 #if nodejs
+
+typedef NodeAgent<Opt> = {
+  public function request(options:Opt, callback:IncomingMessage->Void):js.node.http.ClientRequest;
+}
+class NodeSecureClient extends NodeClient {
+  override function request(req:OutgoingRequest):Future<IncomingResponse> {
+    var options:js.node.Https.HttpsRequestOptions = {
+      method: cast req.header.method,
+      path: req.header.uri,
+      host: req.header.host.name,
+      port: req.header.host.port,
+      headers: cast {
+        var map = new DynamicAccess<String>();
+        for (h in req.header.fields)
+          map[h.name] = h.value;
+        map;
+      },
+      agent: false,
+    }
+    return nodeRequest(js.node.Https, options, req);
+  }
+}
+
 class NodeClient implements ClientObject {
   
   public function new() { }
   
-  function each(a:haxe.extern.EitherType<String, Array<String>>):Array<String>
+  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+    var options:js.node.Http.HttpRequestOptions = {
+      method: cast req.header.method,
+      path: req.header.uri,
+      host: req.header.host.name,
+      port: req.header.host.port,
+      headers: cast {
+        var map = new DynamicAccess<String>();
+        for (h in req.header.fields)
+          map[h.name] = h.value;
+        map;
+      },
+      agent: false,
+    }
+    return nodeRequest(js.node.Http, options, req);
+  }
+    
+    
+  function nodeRequest<A:NodeAgent<T>, T>(agent:A, options:T, req:OutgoingRequest):Future<IncomingResponse> 
     return 
-      if (Std.is(a, String)) [a];
-      else a;
-      
-  public function request(req:OutgoingRequest):Future<IncomingResponse> 
-    return 
-      #if nodejs
-        Future.async(function (cb) {
-          var fwd = js.node.Http.request(
-            {
-              method: cast req.header.method,
-              path: req.header.uri,
-              host: req.header.host.name,
-              port: req.header.host.port,
-              headers: cast {
-                var map = new DynamicAccess<String>();
-                for (h in req.header.fields)
-                  map[h.name] = h.value;
-                map;
-              },
-              agent: false,
-            }, 
-            function (msg:IncomingMessage) cb(new IncomingResponse(
-              new ResponseHeader(
-                msg.statusCode,
-                msg.statusMessage,
-                [for (name in msg.headers.keys()) for (value in each(msg.headers[name])) new HeaderField(name, value)]
-              ),
-              Source.ofNodeStream('Response from ${req.header.fullUri()}', msg)
-            ))
-          );
+      Future.async(function (cb) {
+        var fwd = agent.request(
+          options,
+          function (msg:IncomingMessage) cb(new IncomingResponse(
+            new ResponseHeader(
+              msg.statusCode,
+              msg.statusMessage,
+              [for (i in 0...msg.rawHeaders.length >> 1) new HeaderField(msg.rawHeaders[2*i], msg.rawHeaders[2*i+1])]
+            ),
+            Source.ofNodeStream('Response from ${req.header.fullUri()}', msg)
+          ))
+        );
+        
+        function fail(e:Error)
+          cb(new IncomingResponse(
+            new ResponseHeader(e.code, e.message, []),
+            e.message
+          ));
           
-          function fail(e:Error)
-            cb(new IncomingResponse(
-              new ResponseHeader(e.code, e.message, []),
-              e.message
-            ));
-            
-          fwd.on('error', function () fail(new Error(502, 'Gateway Error')));
-          
-          req.body.pipeSafelyTo(
-            Sink.ofNodeStream('Request to ${req.header.fullUri()}', fwd)
-          ).handle(function (res) {
-            fwd.end();
-            req.body.closeSafely();
-            switch res {
-              case AllWritten:
-              case SinkEnded: fail(new Error(502, 'Gateway Error'));
-              case SinkFailed(e): fail(new Error(502, 'Gateway Error'));
-            }
-          });
+        fwd.on('error', function () fail(new Error(502, 'Gateway Error')));
+        
+        req.body.pipeSafelyTo(
+          Sink.ofNodeStream('Request to ${req.header.fullUri()}', fwd)
+        ).handle(function (res) {
+          fwd.end();
+          req.body.closeSafely();
+          switch res {
+            case AllWritten:
+            case SinkEnded: fail(new Error(502, 'Gateway Error'));
+            case SinkFailed(e): fail(new Error(502, 'Gateway Error'));
+          }
         });
-    #else
-      throw 'unreachable';
-    #end
+      });
 }
 #else
 @:require(nodejs)
