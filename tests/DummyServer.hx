@@ -27,7 +27,6 @@ class DummyServer {
         case Plain(src):
           src.all().map(function (o) return switch o {
             case Success(body):
-              
               var data:Data = {
                 uri: req.header.uri.toString(),
                 ip: req.clientIp,
@@ -46,14 +45,21 @@ class DummyServer {
                 })
               );
           });
-        case Parsed(_):
-          Future.sync(new OutgoingResponse(
-            new ResponseHeader(500, 'unexpected case', [new HeaderField('content-type', 'application/json')]),
-            haxe.Json.stringify( {
-              error: true,
-              message: 'unexpected case'
-            })
-          ));
+        case Parsed(parts):
+          var data:Data = {
+            uri: req.header.uri.toString(),
+            ip: req.clientIp,
+            method: req.header.method,
+            headers: [for (h in req.header.fields) { name: h.name, value: h.value } ], 
+            body: haxe.Json.stringify([for (p in parts) {
+              name: p.name,
+              value: switch p.value {
+                case Value(s): s;
+                case File(u): u.fileName + '=' + u.mimeType;
+              }
+            }]),
+          };            
+          Future.sync(OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify(data)), 'application/json'));
       }
   
 }

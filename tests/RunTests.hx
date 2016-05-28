@@ -1,6 +1,7 @@
 package;
 
 import haxe.PosInfos;
+import haxe.io.StringInput;
 import sys.io.Process;
 import tink.core.Future;
 import tink.core.Noise;
@@ -96,6 +97,22 @@ class RunTests {
       }
     }
     var done = f(new Host('127.0.0.1', 8000));
+    var h = new haxe.Http('http://127.0.0.1:8000/multipart');
+    var s = 'hello world';
+    
+    h.fileTransfer('test', 'test.txt', new StringInput(s), s.length, "text/plain");
+    h.setParameter('foo', 'bar');
+    h.onError = function (error) throw error;
+    h.onData = function (data) {
+      var data:Data = haxe.Json.parse(data);
+      var a:Array<{ name:String }> = haxe.Json.parse(data.body);
+      var map = [for (x in a) x.name => true];
+      assertEquals(map['test'], true);
+      assertEquals(map['foo'], true);
+    };
+    
+    h.request(true);
+    
     ret.push(done);
     done.handle(function () {
       server.kill();
