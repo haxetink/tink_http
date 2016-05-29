@@ -81,7 +81,7 @@ class RunTests {
     #if php
     if (new Process('haxe', ['build-php.hxml']).exitCode() != 0)
       throw 'failed to build PHP';
-    var server = new Process('exec', ['php', '-S', '127.0.0.1:8000', 'testphp/index.php']);
+    var server = new Process('php', ['-S', '127.0.0.1:8000', 'testphp/index.php']);
     var i = 0;
     while (i < 20) {
       try {
