@@ -54,7 +54,7 @@ class PhpContainer implements Container {
       getServerVar('REMOTE_ADDR'), 
       header,
       switch header.contentType() {
-        case Success({ type: 'multipart', subtype: 'form-data' }):
+        case Success({ type: 'multipart', subtype: 'form-data' }) if (header.method == POST):
           Parsed(
             getParts(untyped __php__("$_POST"), Value)
             .concat(getParts(untyped __php__("$_FILES"), function (v:NativeArray) {
