@@ -120,8 +120,8 @@ class RunTests {
     #end 
 
     #if neko
+    //TODO: test actual mod_neko too
     Sys.command('haxe', ['build-neko.hxml']);
-    
     var cwd = Sys.getCwd();
     Sys.setCwd('testneko');
     var server = new Process('nekotools', ['server', '-p', '8000', '-rewrite']);

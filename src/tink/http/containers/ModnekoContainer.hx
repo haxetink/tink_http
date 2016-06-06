@@ -15,33 +15,40 @@ using tink.CoreApi;
 
 class ModnekoContainer implements Container {
   static public var inst(default, null):ModnekoContainer = new ModnekoContainer();
-  function new() {}
+  function new() { }
+  
+  function getHeader() 
+    return
+      new IncomingRequestHeader(
+        Method.ofString(Web.getMethod(), function (_) return GET),
+        Web.getURI() + switch Web.getParamsString() {
+          case null | '': '';
+          case v: '?' + v;
+        },
+        '1.1', //TODO: do something meaningful here,
+        {
+          var v = @:privateAccess Web._get_client_headers();
+          var a = [];
+          while( v != null ) {
+            a.push(new HeaderField(new String(v[0]), new String(v[1])));
+            v = cast v[2];
+          }
+          a;
+        }
+      );
+      
   public function run(handler:Handler):Future<ContainerResult> {
     return Future.async(function (cb) 
-      handler.process(new IncomingRequest(
-        Web.getClientIP(),
-        new IncomingRequestHeader(
-          Method.ofString(Web.getMethod(), function (_) return GET),
-          Web.getURI() + switch Web.getParamsString() {
-            case null | '': '';
-            case v: '?' + v;
-          },
-          '1.1', //TODO: do something meaningful here,
-          {
-            var v = @:privateAccess Web._get_client_headers();
-            var a = [];
-            while( v != null ) {
-              a.push(new HeaderField(new String(v[0]), new String(v[1])));
-              v = cast v[2];
-            }
-            a;
-          }
-        ),
-        Plain(switch Web.getPostData() {
-          case null: Empty.instance;
-          case v: v;
-        })
-      )).handle(function (res) {
+      handler.process({
+        var header = getHeader();
+        new IncomingRequest(
+          Web.getClientIP(),
+          Plain(switch Web.getPostData() {
+            case null: Empty.instance;
+            case v: v;
+          })
+        );
+      }).handle(function (res) {
         
         Web.setReturnCode(res.header.statusCode);
         

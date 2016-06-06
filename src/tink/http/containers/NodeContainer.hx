@@ -33,8 +33,8 @@ class NodeContainer implements Container {
   
   public function run(handler:Handler) 
     return Future.async(function (cb) {
-      var server = js.node.Http.createServer(toNodeHandler(handler));
       var failures = Signal.trigger();
+      var server = js.node.Http.createServer(toNodeHandler(handler));
       
       function tinkify(e:js.Error)
         return Error.withData(e.message, e);

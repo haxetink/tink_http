@@ -3,6 +3,7 @@ package tink.http.containers;
 import php.NativeArray;
 import sys.io.File;
 import tink.core.Future;
+import tink.core.Named;
 import tink.http.Container;
 import tink.http.Handler;
 import tink.http.Header;
@@ -22,16 +23,16 @@ class PhpContainer implements Container {
   
   function new() { }
  
-  static function getParts<In>(a:NativeArray, process:In->ParsedParam):StructuredBody {
+  static function getParts<In>(a:NativeArray, process:In->BodyPart):StructuredBody {
     var map = php.Lib.hashOfAssociativeArray(a);
     var ret = [];
     for (name in map.keys()) 
       switch process(map[name]) {
         case null: 
-        case v: ret.push({
-          name: name,
-          value: process(map[name]),
-        });
+        case v: ret.push(new Named(
+          name,
+          process(map[name])
+        ));
       }
     return ret;
   }

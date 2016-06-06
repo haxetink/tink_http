@@ -1,5 +1,6 @@
 package tink.http;
 
+import tink.core.Named.NamedWith;
 import tink.http.Header.HeaderField;
 import tink.io.StreamParser;
 import tink.url.Query;
@@ -91,15 +92,7 @@ abstract HeaderName(String) to String {
     return new HeaderName(s.toLowerCase());
 }
 
-class HeaderField {
-  
-  public var name(default, null):HeaderName;
-  public var value(default, null):HeaderValue;
-  
-  public function new(name, value) {
-    this.value = value;
-    this.name = name;
-  }
+class HeaderField extends NamedWith<HeaderName, HeaderValue> {
   
   public function toString() 
     return 

@@ -1,24 +1,22 @@
 package tink.http;
 
 import tink.io.Source;
+import tink.core.Named;
 using tink.CoreApi;
 
-typedef StructuredBody = Array<BodyPart>;
+typedef StructuredBody = Array<Named<BodyPart>>;
 
-typedef BodyPart = {
-  var name(default, null):String;
-  var value(default, null):ParsedParam;
-}
-
-enum ParsedParam {
+enum BodyPart {
   Value(v:String);
   File(handle:UploadedFile);
 }
 
 typedef UploadedFile = {
+  
   var fileName(default, null):String;
   var mimeType(default, null):String;
   var size(default, null):Int;
+  
   function read():Source;
   function saveTo(path:String):Surprise<Noise, Error>;
 }
