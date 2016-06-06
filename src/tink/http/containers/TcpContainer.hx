@@ -67,7 +67,7 @@ class TcpContainer implements Container {
                     if (next != null)
                       next(); 
                     switch r {
-                      case SinkFailed(e) | SourceFailed(e): fail(e);
+                      case SinkFailed(e): fail(e);
                       case SinkEnded: fail(new Error('${cnx.peer} hung up before the whole body was written'));
                       default:
                     }

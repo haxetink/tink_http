@@ -15,7 +15,7 @@ class Multipart {
   static function getChunk(s:Source, delim:Bytes):Surprise<Option<{ chunk:MultipartChunk, rest:Source }>, Error> {
     var split = s.split(delim);
     return
-      split.first.parse(new HeaderParser(function (line, fields) {
+      split.a.parse(new HeaderParser(function (line, fields) {
         return
           Success(if (line == '--') null
           else {
@@ -29,7 +29,7 @@ class Multipart {
               if (o.data == null) None
               else Some({ 
                 chunk: new Message(o.data, o.rest),
-                rest: split.then,
+                rest: split.b,
               });
             
   }
@@ -51,7 +51,7 @@ class Multipart {
   
   static public function parseSource(s:Source, delim:String):Stream<MultipartChunk> {
         
-    s = s.split(Bytes.ofString('--$delim')).then;//TODO: make sure it's on its newline
+    s = s.split(Bytes.ofString('--$delim')).b;//TODO: make sure it's on its newline
     
     var delim = Bytes.ofString('\r\n--$delim');
 
