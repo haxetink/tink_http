@@ -43,6 +43,8 @@ class ModnekoContainer implements Container {
         var header = getHeader();
         new IncomingRequest(
           Web.getClientIP(),
+          header,
+          //TODO: use Web.parseMultiPart when appropriate
           Plain(switch Web.getPostData() {
             case null: Empty.instance;
             case v: v;

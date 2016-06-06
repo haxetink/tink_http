@@ -84,7 +84,7 @@ class StdClient implements ClientObject {
           send(false);
         default:
           req.body.all().handle(function(bytes) {
-            r.setPostData(bytes.sure().toString());
+            r.setPostData(bytes.toString());
             send(true);  
         });
       }
@@ -187,11 +187,11 @@ class NodeClient implements ClientObject {
           
         fwd.on('error', function () fail(new Error(502, 'Gateway Error')));
         
-        req.body.pipeSafelyTo(
+        req.body.pipeTo(
           Sink.ofNodeStream('Request to ${req.header.fullUri()}', fwd)
         ).handle(function (res) {
           fwd.end();
-          req.body.closeSafely();
+          req.body.close();
           switch res {
             case AllWritten:
             case SinkEnded: fail(new Error(502, 'Gateway Error'));
