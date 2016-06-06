@@ -11,8 +11,8 @@
 	"contributors": [
 		"back2dos"
 	],
-	"releasenote": "Various improvements.",
-	"version": "0.2.0",
+	"releasenote": "New container API.",
+	"version": "0.3.0",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_url": "",
