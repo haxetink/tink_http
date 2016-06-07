@@ -1,17 +1,9 @@
 package tink.http;
 
 import haxe.io.Bytes;
-import haxe.io.BytesBuffer;
-import tink.http.Message;
-import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
-import tink.io.IdealSink.BlackHole;
 
-import haxe.io.BytesOutput;
-import tink.io.*;
-
-using StringTools;
 using tink.CoreApi;
 
 interface Container {
