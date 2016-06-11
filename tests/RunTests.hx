@@ -79,23 +79,13 @@ class RunTests {
   
   static function onServer(f:Host->Future<Noise>) {
     var ret = [];
+	
     #if php
+	
     if (new Process('haxe', ['build-php.hxml']).exitCode() != 0)
       throw 'failed to build PHP';
     var server = new Process('php', ['-S', '127.0.0.1:8000', 'testphp/index.php']);
-    var i = 0;
-    while (i < 20) {
-      try {
-        var socket = new sys.net.Socket();
-        socket.connect(new sys.net.Host('127.0.0.1'), 8000);
-        socket.close();
-        break;
-      } catch(e: Dynamic) {
-        Sys.sleep(.1);
-        i++;
-        continue;
-      }
-    }
+    waitForConnection('127.0.0.1', 8000);
     var done = f(new Host('127.0.0.1', 8000));
     var h = new haxe.Http('http://127.0.0.1:8000/multipart');
     var s = 'hello world';
@@ -117,48 +107,65 @@ class RunTests {
     done.handle(function () {
       server.kill();
     });
-    #end 
-
-    #if neko
+	
+    #elseif (neko && nekotools)
+	
     //TODO: test actual mod_neko too
     Sys.command('haxe', ['build-neko.hxml']);
     var cwd = Sys.getCwd();
     Sys.setCwd('testneko');
     var server = new Process('nekotools', ['server', '-p', '8000', '-rewrite']);
     Sys.setCwd(cwd);
-    
-    var done = f(new Host('localhost', 8000));
+	waitForConnection('127.0.0.1', 8000);
+    var done = f(new Host('127.0.0.1', 8000));
     ret.push(done);
     done.handle(function () {
       server.kill();
     });
     
-    #end
-    #if (neko || java || cpp)
+    #elseif (neko || java || cpp)
+	
     ret.push(onContainer(new TcpContainer(2000), f.bind(new Host('localhost', 2000))));
-    #end
-    
-    #if nodejs
+	
+    #elseif nodejs
+	
     ret.push(onContainer(new NodeContainer(3000), f.bind(new Host('localhost', 3000))));
+	
     #end
+	
     return Future.ofMany(ret);
   }
+  
+  static function waitForConnection(host, port) {
+	var i = 0;
+    while (i < 20) {
+      try {
+        var socket = new sys.net.Socket();
+        socket.connect(new sys.net.Host(host), port);
+        socket.close();
+        break;
+      } catch(e: Dynamic) {
+        Sys.sleep(.1);
+        i++;
+        continue;
+      }
+    }
+  }
+  
   static function getClients() {
     var clients:Array<Client> = [];
     
-    #if php
+    #if (php || (neko && nekotools))
       clients.push(new StdClient());
-    #end
-    
-    #if (neko || java || cpp)
+    #elseif (neko || java || cpp)
       clients.push(new TcpClient());
-    #end
-    
-    #if nodejs
+    #elseif nodejs
       clients.push(new NodeClient());
     #end
+	
     return clients;
   }
+  
   static function main() {
     onServer(performTest.bind(_, getClients())).handle(function () {
       Sys.exit(0);//Just in case
