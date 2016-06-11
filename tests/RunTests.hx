@@ -154,6 +154,7 @@ class RunTests {
     return Future.ofMany(ret);
   }
   
+  #if sys
   static function waitForConnection(host, port) {
 	var i = 0;
     while (i < 100) {
@@ -168,6 +169,7 @@ class RunTests {
       }
     }
   }
+  #end
   
   static function getClients() {
     var clients:Array<Client> = [];
