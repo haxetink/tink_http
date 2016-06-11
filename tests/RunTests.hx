@@ -49,7 +49,7 @@ class RunTests {
             res.body.all().handle(function (o) {
               var raw = o.sure().toString();
               trace(raw);
-              var data:Data = haxe.Json.parse(raw);
+			  var data:Data = haxe.Json.parse(raw);
               assertEquals((method:String), data.method);
               assertEquals(uri, data.uri);
               assertEquals(body, data.body);
@@ -108,20 +108,38 @@ class RunTests {
       server.kill();
     });
 	
-    #elseif (neko && nekotools)
+    #elseif (neko && (nekotools || mod_neko))
 	
-    //TODO: test actual mod_neko too
     Sys.command('haxe', ['build-neko.hxml']);
     var cwd = Sys.getCwd();
     Sys.setCwd('testneko');
+	#if nekotools
     var server = new Process('nekotools', ['server', '-p', '8000', '-rewrite']);
+	waitForConnection('0.0.0.0', 8000);
+	#elseif mod_neko
+	sys.io.File.saveContent('.htaccess', ['RewriteEngine On','RewriteBase /','RewriteRule ^(.*)$ index.n [QSA,L]'].join('\n'));
+	Sys.command('docker', ['run', '-d', '-v', sys.FileSystem.fullPath(Sys.getCwd())+':/var/www/html', '-p', '8000:80', '--name', 'tink_http_mod_neko', 'codeurs/mod-neko']);
+	waitForConnection('0.0.0.0', 8000);
+	Sys.sleep(2);
+	#end
     Sys.setCwd(cwd);
-	waitForConnection('127.0.0.1', 8000);
-    var done = f(new Host('127.0.0.1', 8000));
-    ret.push(done);
-    done.handle(function () {
+	function kill() {
+	  #if mod_neko
+	  Sys.command('docker', ['stop', 'tink_http_mod_neko']);
+	  Sys.command('docker', ['rm', 'tink_http_mod_neko']);
+	  #else
       server.kill();
-    });
+	  #end
+	}
+	
+	try {
+	  var done = f(new Host('0.0.0.0', 8000));
+	  ret.push(done);
+	  done.handle(kill);
+	} catch (e: Dynamic) {
+	  Sys.println('Failed: '+e);
+	  kill();
+	}
     
     #elseif (neko || java || cpp)
 	
@@ -138,7 +156,7 @@ class RunTests {
   
   static function waitForConnection(host, port) {
 	var i = 0;
-    while (i < 20) {
+    while (i < 100) {
       try {
         var socket = new sys.net.Socket();
         socket.connect(new sys.net.Host(host), port);
@@ -147,7 +165,6 @@ class RunTests {
       } catch(e: Dynamic) {
         Sys.sleep(.1);
         i++;
-        continue;
       }
     }
   }
@@ -155,7 +172,7 @@ class RunTests {
   static function getClients() {
     var clients:Array<Client> = [];
     
-    #if (php || (neko && nekotools))
+    #if (php || (neko && (nekotools || mod_neko)))
       clients.push(new StdClient());
     #elseif (neko || java || cpp)
       clients.push(new TcpClient());
