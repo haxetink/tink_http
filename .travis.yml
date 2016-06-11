@@ -23,10 +23,12 @@ install:
 
 script:
   #- haxelib run travix interp
-  - haxelib run travix php
+  #- haxelib run travix php
   - haxelib run travix node
   - haxelib run travix neko -lib tink_tcp -lib tink_runloop -D concurrent
   - haxelib run travix neko -lib tink_tcp -lib tink_runloop
+  - haxelib run travix neko -D nekotools
+  - haxelib run travix neko -D mod_neko
   
   #- haxelib run travix python
   #- haxelib run travix flash
