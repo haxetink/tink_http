@@ -213,25 +213,36 @@ extern class NodeClient implements ClientObject {
 }
 #end
 
-#if (js && !nodejs)
-class JsContainerClient implements ClientObject {
+@:access(tink.http.containers.LocalContainer)
+class LocalContainerClient implements ClientObject {
   
-  var server:tink.http.containers.JsContainer.JsContainerServer;
-  public function new(server) {
-    this.server = server;
+  var container:tink.http.containers.LocalContainer;
+  public function new(container) {
+    this.container = container;
   }
   
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
-    return server.serve(new IncomingRequest(
-      '127.0.0.1',
-      new IncomingRequestHeader(req.header.method, req.header.uri, 'HTTP/1.1', req.header.fields),
-      Plain(req.body)
-    )) >>
-      function(res:OutgoingResponse) return new IncomingResponse(
-        res.header,
-        res.body
-      );
-  }
+    return switch container.server {
+      case null:
+        return Future.sync(new IncomingResponse(
+          new ResponseHeader(503, 'LocalContainer is not running', []),
+          tink.io.IdealSource.Empty.instance
+        ));
+      case server:
+        server.serve(new IncomingRequest(
+          '127.0.0.1',
+          new IncomingRequestHeader(req.header.method, req.header.uri, 'HTTP/1.1', req.header.fields),
+          Plain(req.body)
+        )) >>
+        function(res:OutgoingResponse) return new IncomingResponse(
+          res.header,
+          res.body
+        );
+      }
+    }
+    
+}
+#if (js && !nodejs)
 
 class JsSecureClient extends JsClient {
   override function request(req:OutgoingRequest):Future<IncomingResponse> {

@@ -8,20 +8,24 @@ import tink.io.IdealSource;
 
 using tink.CoreApi;
 
-class JsContainer implements Container {
+class LocalContainer implements Container {
+  
+  var server:LocalContainerServer;
+  
   public function new() {}
   
   public function run(handler:Handler) {
     var running = true;
-    return Future.sync(Running(new JsContainerServer(handler)));
+    server = new LocalContainerServer(handler);
+    return Future.sync(Running(server));
   }
 }
 
-class JsContainerServer {
+class LocalContainerServer {
   
   public var failures(default, null):Signal<ContainerFailure>;
-  var running:Bool;
   var handler:Handler;
+  var running:Bool;
   
   public function new(handler) {
     this.handler = handler;
@@ -31,7 +35,7 @@ class JsContainerServer {
   
   public function serve(req:IncomingRequest) {
     if(!running) return Future.sync(new OutgoingResponse(
-      new ResponseHeader(502, 'Gateway Error', []),
+      new ResponseHeader(503, 'Server stopped', []),
       Empty.instance
     ));
     return handler.process(req);
