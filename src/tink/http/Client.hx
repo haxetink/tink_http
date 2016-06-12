@@ -214,7 +214,6 @@ extern class NodeClient implements ClientObject {
 #end
 
 #if (js && !nodejs)
-// browser compatibility see: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Browser_compatibility
 class JsSecureClient extends JsClient {
   override function request(req:OutgoingRequest):Future<IncomingResponse> {
     return jsRequest(req, switch req.header.host {
@@ -245,8 +244,10 @@ class JsClient implements ClientObject {
           var headers = switch http.getAllResponseHeaders() {
             case null: [];
             case v: [for(line in v.split('\r\n')) {
-              var s = line.split(': ');
-              new HeaderField(s[0], s.slice(1).join(': '));
+              if(line != '') {
+                var s = line.split(': ');
+                new HeaderField(s[0], s.slice(1).join(': '));
+              }
             }];
           }
           var header = new ResponseHeader(http.status, http.statusText, headers);
@@ -269,6 +270,18 @@ class JsClient implements ClientObject {
       }
       http.send();
     });
+  }
+  
+  // see: http://stackoverflow.com/a/2557268/3212365
+  static var factories:Array<Void->Dynamic> = [
+    function() return new XMLHttpRequest(), // browser compatibility: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Browser_compatibility
+    function() return untyped __js__('new ActiveXObject("Msxml2.XMLHTTP")'),
+    function() return untyped __js__('new ActiveXObject("Msxml3.XMLHTTP")'),
+    function() return untyped __js__('new ActiveXObject("Microsoft.XMLHTTP")'),
+  ];
+  function getHttp() {
+      for(f in factories) try return f() catch(e:Dynamic) {}
+      throw 'No compatible XMLHttpRequest object can be found';
   }
 }
 #end
