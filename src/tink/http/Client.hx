@@ -207,3 +207,49 @@ extern class NodeClient implements ClientObject {
   public function request(req:OutgoingRequest):Future<IncomingResponse>;
 }
 #end
+
+#if (js && !nodejs)
+class JsSecureClient extends JsClient {
+  override function request(req:OutgoingRequest):Future<IncomingResponse> {
+    return jsRequest(req, 'https');
+  }
+}
+
+class JsClient implements ClientObject {
+  public function new() {}
+  
+  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+    return jsRequest(req, 'http');
+  }
+  
+  function jsRequest(req:OutgoingRequest, scheme:String) {
+    return Future.async(function(cb) {
+      var http = new XMLHttpRequest();
+      http.open(req.header.method, '$scheme://' + req.header.host + req.header.uri);
+      for(header in req.header.fields) http.setRequestHeader(header.name, header.value);
+      http.onreadystatechange = function() {
+        if(http.readyState == 4) { // this is equivalent to onload...
+          var headers = switch http.getAllResponseHeaders() {
+            case null: [];
+            case v: [for(line in v.split('\r\n')) {
+              var s = line.split(': ');
+              new HeaderField(s[0], s.slice(1).join(': '));
+            }];
+          }
+          cb(new IncomingResponse(
+            new ResponseHeader(http.status, http.statusText, headers),
+            http.responseText
+          ));
+        }
+      }
+      http.onerror = function() {
+        cb(new IncomingResponse(
+          new ResponseHeader(502, 'XMLHttpRequest Error', []),
+          Empty.instance
+        ));
+      }
+      http.send();
+    });
+  }
+}
+#end
