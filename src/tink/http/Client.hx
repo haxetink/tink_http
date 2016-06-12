@@ -235,7 +235,7 @@ class JsClient implements ClientObject {
   
   function jsRequest(req:OutgoingRequest, host:String) {
     return Future.async(function(cb) {
-      var http = new XMLHttpRequest();
+      var http = getHttp();
       http.open(req.header.method, host + req.header.uri);
       http.responseType = ARRAYBUFFER;
       for(header in req.header.fields) http.setRequestHeader(header.name, header.value);
