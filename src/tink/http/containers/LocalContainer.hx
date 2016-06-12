@@ -10,39 +10,28 @@ using tink.CoreApi;
 
 class LocalContainer implements Container {
   
-  var server:LocalContainerServer;
-  
-  public function new() {}
-  
-  public function run(handler:Handler) {
-    var running = true;
-    server = new LocalContainerServer(handler);
-    return Future.sync(Running(server));
-  }
-}
-
-class LocalContainerServer {
-  
   public var failures(default, null):Signal<ContainerFailure>;
   var handler:Handler;
   var running:Bool;
   
-  public function new(handler) {
-    this.handler = handler;
-    failures = new SignalTrigger();
-    running = true;
-  }
+  public function new() {}
   
-  public function serve(req:IncomingRequest) {
+  public function run(handler:Handler) {
+    this.handler = handler;
+    running = true;
+    return Future.sync(Running({
+      failures: new SignalTrigger(),
+      shutdown: function (hard:Bool) {
+        running = false;
+        return Future.sync(Noise);
+      }
+    }));
+  }
+  function serve(req:IncomingRequest) {
     if(!running) return Future.sync(new OutgoingResponse(
       new ResponseHeader(503, 'Server stopped', []),
       Empty.instance
     ));
     return handler.process(req);
-  }
-  
-  public function shutdown(hard:Bool) {
-    running = false;
-    return Future.sync(Noise);
   }
 }

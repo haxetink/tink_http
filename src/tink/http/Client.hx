@@ -222,23 +222,15 @@ class LocalContainerClient implements ClientObject {
   }
   
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
-    return switch container.server {
-      case null:
-        return Future.sync(new IncomingResponse(
-          new ResponseHeader(503, 'LocalContainer is not running', []),
-          tink.io.IdealSource.Empty.instance
-        ));
-      case server:
-        server.serve(new IncomingRequest(
-          '127.0.0.1',
-          new IncomingRequestHeader(req.header.method, req.header.uri, 'HTTP/1.1', req.header.fields),
-          Plain(req.body)
-        )) >>
-        function(res:OutgoingResponse) return new IncomingResponse(
-          res.header,
-          res.body
-        );
-      }
+      return container.serve(new IncomingRequest(
+        '127.0.0.1',
+        new IncomingRequestHeader(req.header.method, req.header.uri, 'HTTP/1.1', req.header.fields),
+        Plain(req.body)
+      )) >>
+      function(res:OutgoingResponse) return new IncomingResponse(
+        res.header,
+        res.body
+      );
     }
     
 }
