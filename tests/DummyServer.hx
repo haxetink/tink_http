@@ -7,15 +7,10 @@ import tink.http.Response;
 
 using tink.CoreApi;
 
-typedef Data = {
-  uri:String,
-  ip:String,
-  method:String,
-  headers:Array<{ name:String, value:String }>,
-  body:String
-}
-
 class DummyServer {
+	
+  public static function main()
+    Server.main();
   
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> 
     return 

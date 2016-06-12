@@ -22,16 +22,8 @@ install:
   - haxelib run travix install
 
 script:
-  #- haxelib run travix interp
-  #- haxelib run travix php
-  - haxelib run travix node
-  - haxelib run travix neko -lib tink_tcp -lib tink_runloop -D concurrent
-  - haxelib run travix neko -lib tink_tcp -lib tink_runloop
-  - haxelib run travix neko -D nekotools
-  - haxelib run travix neko -D mod_neko
-  
-  #- haxelib run travix python
-  #- haxelib run travix flash
-  #- haxelib run travix java -lib tink_tcp -lib tink_runloop
-  #- haxelib run travix cpp -lib tink_tcp -lib tink_runloop
-  #- haxelib run travix cs
+  - haxelib run travix neko -D server=NekoToolsServer -D client=NekoClient
+  - haxelib run travix neko -D server=ModNekoServer -D client=NekoClient
+  - haxelib run travix neko -D server=PhpServer -D client=PhpClient
+  - haxelib run travix neko -D server=NekoServer -D client=NekoClient
+  - haxelib run travix neko -D server=JavaServer -D client=NekoClient
