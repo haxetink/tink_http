@@ -240,8 +240,8 @@ class JsClient implements ClientObject {
       http.open(req.header.method, host + req.header.uri);
       http.responseType = ARRAYBUFFER;
       for(header in req.header.fields) http.setRequestHeader(header.name, header.value);
-      http.onreadystatechange = function() {
-        if(http.readyState == 4) { // this is equivalent to onload...
+      http.onreadystatechange = function() if(http.readyState == 4) { // this is equivalent to onload...
+        if(http.status != 0) {
           var headers = switch http.getAllResponseHeaders() {
             case null: [];
             case v: [for(line in v.split('\r\n')) {
@@ -253,6 +253,11 @@ class JsClient implements ClientObject {
           cb(new IncomingResponse(
             new ResponseHeader(http.status, http.statusText, headers),
             Bytes.ofData(http.response)
+          ));
+        } else {
+          cb(new IncomingResponse(
+            new ResponseHeader(502, 'XMLHttpRequest Error', []),
+            tink.io.IdealSource.Empty.instance
           ));
         }
       }
