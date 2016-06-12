@@ -214,6 +214,7 @@ extern class NodeClient implements ClientObject {
 #end
 
 #if (js && !nodejs)
+// browser compatibility see: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Browser_compatibility
 class JsSecureClient extends JsClient {
   override function request(req:OutgoingRequest):Future<IncomingResponse> {
     return jsRequest(req, switch req.header.host {
