@@ -207,3 +207,26 @@ extern class NodeClient implements ClientObject {
   public function request(req:OutgoingRequest):Future<IncomingResponse>;
 }
 #end
+
+#if (js && !nodejs)
+class JsContainerClient implements ClientObject {
+  
+  var server:tink.http.containers.JsContainer.JsContainerServer;
+  public function new(server) {
+    this.server = server;
+  }
+  
+  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+    return server.serve(new IncomingRequest(
+      '127.0.0.1',
+      new IncomingRequestHeader(req.header.method, req.header.uri, 'HTTP/1.1', req.header.fields),
+      Plain(req.body)
+    )) >>
+      function(res:OutgoingResponse) return new IncomingResponse(
+        res.header,
+        res.body
+      );
+  }
+  
+}
+#end
