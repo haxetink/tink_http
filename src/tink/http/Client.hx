@@ -19,6 +19,11 @@ import tink.tcp.Endpoint;
 import js.node.http.IncomingMessage;
 #end
 
+#if (js && !nodejs)
+import haxe.io.Bytes;
+import js.html.XMLHttpRequest;
+#end
+
 using tink.CoreApi;
 using StringTools;
 
@@ -211,7 +216,10 @@ extern class NodeClient implements ClientObject {
 #if (js && !nodejs)
 class JsSecureClient extends JsClient {
   override function request(req:OutgoingRequest):Future<IncomingResponse> {
-    return jsRequest(req, 'https');
+    return jsRequest(req, switch req.header.host {
+        case null: ''; // TODO: js.Browser.window.location?
+        case v: 'https://$v';
+    });
   }
 }
 
@@ -219,13 +227,17 @@ class JsClient implements ClientObject {
   public function new() {}
   
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
-    return jsRequest(req, 'http');
+    return jsRequest(req, switch req.header.host {
+        case null: ''; // TODO: js.Browser.window.location?
+        case v: 'http://$v';
+    });
   }
   
-  function jsRequest(req:OutgoingRequest, scheme:String) {
+  function jsRequest(req:OutgoingRequest, host:String) {
     return Future.async(function(cb) {
       var http = new XMLHttpRequest();
-      http.open(req.header.method, '$scheme://' + req.header.host + req.header.uri);
+      http.open(req.header.method, host + req.header.uri);
+      http.responseType = ARRAYBUFFER;
       for(header in req.header.fields) http.setRequestHeader(header.name, header.value);
       http.onreadystatechange = function() {
         if(http.readyState == 4) { // this is equivalent to onload...
@@ -236,16 +248,17 @@ class JsClient implements ClientObject {
               new HeaderField(s[0], s.slice(1).join(': '));
             }];
           }
+          var header = new ResponseHeader(http.status, http.statusText, headers);
           cb(new IncomingResponse(
             new ResponseHeader(http.status, http.statusText, headers),
-            http.responseText
+            Bytes.ofData(http.response)
           ));
         }
       }
       http.onerror = function() {
         cb(new IncomingResponse(
           new ResponseHeader(502, 'XMLHttpRequest Error', []),
-          Empty.instance
+          tink.io.IdealSource.Empty.instance
         ));
       }
       http.send();
