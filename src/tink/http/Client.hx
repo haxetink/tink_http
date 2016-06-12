@@ -273,7 +273,7 @@ class JsClient implements ClientObject {
   }
   
   // see: http://stackoverflow.com/a/2557268/3212365
-  static var factories:Array<Void->Dynamic> = [
+  static var factories:Array<Void->XMLHttpRequest> = [
     function() return new XMLHttpRequest(), // browser compatibility: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Browser_compatibility
     function() return untyped __js__('new ActiveXObject("Msxml2.XMLHTTP")'),
     function() return untyped __js__('new ActiveXObject("Msxml3.XMLHTTP")'),
