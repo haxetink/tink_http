@@ -22,9 +22,8 @@ class ProcessTools {
 	} 
 	
 	public static function install(target): Bool {
-		var process = new sys.io.Process('haxelib', ['run', 'travix', target]);
-		streamErr(process);
-		return process.exitCode() == 0;
+		Sys.command('haxelib', ['run', 'travix', target]);
+		return true;
 	}
 	
 	public static function streamAll(cmd, args): Process {
