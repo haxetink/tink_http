@@ -7,8 +7,10 @@ import tink.io.Sink;
 class ProcessTools {
 
 	public static function compile(args) {
-		var result = passThrough('haxe', args);
-		if (!result)
+		var process = new Process('haxe', args);
+		streamOut(process);
+		streamErr(process);
+		if (process.exitCode() != 0)
 			throw 'Failed to compile';
 	}
 	
@@ -33,11 +35,11 @@ class ProcessTools {
 	}
 	
 	static function streamOut(process) {
-		Source.ofInput('process stdout', process.stdout).pipeTo(Sink.ofOutput('stdout', Sys.stdout()));
+		Source.ofInput('process stdout', process.stdout).pipeTo(Sink.stdout);
 	}
 	
 	static function streamErr(process) {
-		Source.ofInput('process stderr', process.stderr).pipeTo(Sink.ofOutput('stderr', Sys.stdout()));
+		Source.ofInput('process stderr', process.stderr).pipeTo(Sink.stdout);
 	}
 	
 }

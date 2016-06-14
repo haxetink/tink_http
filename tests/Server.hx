@@ -18,4 +18,7 @@ typedef Server = server.JavaServer;
 #elseif (server=='NodeServer')
 typedef Server = server.NodeServer;
 
+#elseif (server=='CppServer')
+typedef Server = server.CppServer;
+
 #end

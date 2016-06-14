@@ -19,11 +19,8 @@ class Runner extends buddy.SingleSuite {
 			it('should respond', function (done) {
 				roundtrip(clients[0], GET).handle(function(res) {
 					res.body.all().handle(function (o) {
-						var raw = o.sure().toString();
-						trace(raw);
-						var data: Data = haxe.Json.parse(raw);
-						data.method.should.be('GET');
-						data.uri.should.be('/');
+						var raw: String = o.sure().toString();
+						raw.should.be('ok');
 						done();
 					});
 				});

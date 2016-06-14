@@ -4,11 +4,9 @@ class TcpHandler {
 
 	public static function main() {
 		#if is_server
-		var container = new tink.http.containers.TcpContainer(Std.parseInt(Sys.args()[0]));
-		container.run(DummyServer.handleRequest).handle(function (r) switch r {
-			case Running(server):
-			case v: 
-				throw 'unexpected $v';
+		@:privateAccess tink.RunLoop.create(function() {
+			var container = new tink.http.containers.TcpContainer(Std.parseInt(Sys.args()[0]));
+			container.run(DummyServer.handleRequest);
 		});
 		#end
 	}

@@ -4,6 +4,10 @@ import haxe.io.Bytes;
 import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
+import tink.io.Buffer;
+import tink.io.Sink;
+import haxe.io.BytesOutput;
+import tink.io.Worker;
 
 using tink.CoreApi;
 
@@ -12,7 +16,8 @@ class DummyServer {
   public static function main()
     Server.main();
   
-  static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> 
+  static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
+	return Future.sync(('ok': OutgoingResponse));
     return 
       if (req.header.uri == '/close') {
         Sys.exit(0);
@@ -20,6 +25,9 @@ class DummyServer {
       }
       else switch req.body {
         case Plain(src):
+			if (!Reflect.hasField(src, 'surplus')) {
+				Future.sync(('empty body': OutgoingResponse));
+			} else
           src.all().map(function (o) return switch o {
             case Success(body):
               var data:Data = {
@@ -56,5 +64,6 @@ class DummyServer {
           };            
           Future.sync(OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify(data)), 'application/json'));
       }
+  }
   
 }

@@ -9,26 +9,30 @@ class RunTests {
 	static var port = 8000;
 	
 	public static function main() {
-		var result = false;
-		try {
-			var args = [
-				'-lib', 'tink_http', '-cp', 'tests', '-lib', 'buddy',
-				'-D', 'server='+server(),
-				'-D', 'client='+client(),
-			];
-			Server.compile(args);
-			Client.compile(args);
-			Server.start(port);
-			waitForConnection(port);
-			result = Client.run();
-			Server.stop();
-		} catch(e: Dynamic) {
-			Sys.println('\n'+e);
-			Sys.println(CallStack.toString(CallStack.exceptionStack()));
-			Server.stop();
-		}
-		if (!result)
-			Sys.exit(result ? 0 : 1);
+		@:privateAccess tink.RunLoop.create(function () {
+			var result = false;
+			try {
+				var args = [
+					'-lib', 'tink_http', '-cp', 'tests', '-lib', 'buddy',
+					'-D', 'server='+server(),
+					'-D', 'client='+client(),
+				];
+				Server.compile(args);
+				Client.compile(args);
+				try {
+					Server.start(port);
+					waitForConnection(port);
+					result = Client.run();
+					Server.stop();
+				} catch(e: Dynamic) {
+					Sys.println(e);
+					Sys.print(CallStack.toString(CallStack.exceptionStack()));
+				}
+			} catch(e: Dynamic) {}
+			tink.RunLoop.current.done.handle(function(_)
+				Sys.exit(result ? 0 : 1)
+			);
+		});
 	}
 	
 	static function waitForConnection(port: Int) {
