@@ -7,7 +7,7 @@ class CppServer {
 	static var server: Process;
 
 	public static function compile(args) {
-		ProcessTools.install('java');
+		ProcessTools.install('cpp');
 		ProcessTools.compile(args.concat([
 			'-D', 'is_server',
 			'-D', 'concurrent',

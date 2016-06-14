@@ -7,11 +7,7 @@ import tink.io.Sink;
 class ProcessTools {
 
 	public static function compile(args) {
-		var process = new Process('haxe', args);
-		streamOut(process);
-		streamErr(process);
-		if (process.exitCode() != 0)
-			throw 'Failed to compile';
+		return Sys.command('haxe', args);
 	}
 	
 	public static function passThrough(cmd, args): Bool {
