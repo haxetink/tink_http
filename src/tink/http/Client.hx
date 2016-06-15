@@ -235,7 +235,6 @@ class LocalContainerClient implements ClientObject {
     
 }
 #if (js && !nodejs)
-
 class JsSecureClient extends JsClient {
   override function request(req:OutgoingRequest):Future<IncomingResponse> {
     return jsRequest(req, switch req.header.host {

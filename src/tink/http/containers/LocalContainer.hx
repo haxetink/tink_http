@@ -10,7 +10,6 @@ using tink.CoreApi;
 
 class LocalContainer implements Container {
   
-  public var failures(default, null):Signal<ContainerFailure>;
   var handler:Handler;
   var running:Bool;
   
