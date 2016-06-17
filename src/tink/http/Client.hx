@@ -9,6 +9,7 @@ import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
 import tink.io.Worker;
+import tink.io.IdealSource;
 
 #if tink_tcp
 import tink.tcp.Connection;
@@ -22,6 +23,7 @@ import js.node.http.IncomingMessage;
 #if (js && !nodejs)
 import haxe.io.Bytes;
 import js.html.XMLHttpRequest;
+import js.html.Int8Array;
 #end
 
 using tink.CoreApi;
@@ -253,22 +255,25 @@ class JsClient implements ClientObject {
           var header = new ResponseHeader(http.status, http.statusText, headers);
           cb(new IncomingResponse(
             new ResponseHeader(http.status, http.statusText, headers),
-            Bytes.ofData(http.response)
+            switch http.response {
+              case null: Empty.instance;
+              case v: Bytes.ofData(v);
+            }
           ));
         } else {
           cb(new IncomingResponse(
             new ResponseHeader(502, 'XMLHttpRequest Error', []),
-            tink.io.IdealSource.Empty.instance
+            Empty.instance
           ));
         }
       }
       http.onerror = function() {
         cb(new IncomingResponse(
           new ResponseHeader(502, 'XMLHttpRequest Error', []),
-          tink.io.IdealSource.Empty.instance
+          Empty.instance
         ));
       }
-      http.send();
+      req.body.all().handle(function(bytes) http.send(new Int8Array(bytes.getData())));
     });
   }
   
