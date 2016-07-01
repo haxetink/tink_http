@@ -22,11 +22,11 @@ class NekoClient {
 			{
 				name: 'Neko std client',
 				client: new StdClient()
-			},
+			}/*,
 			{
 				name: 'Neko tcp client',
 				client: new TcpClient()
-			}
+			}*/
 		];
 	}
 	#end

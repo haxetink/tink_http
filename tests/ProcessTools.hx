@@ -19,7 +19,7 @@ class ProcessTools {
 		var travis = Sys.getEnv('TRAVIS') == 'true';
 		if (travis) Sys.println('travis_fold:start:install-$target.$counter');
 		Sys.command('haxelib', ['run', 'travix', target]);
-		if (travis) Sys.println('travis_fold:start:install-$target.$counter');
+		if (travis) Sys.println('travis_fold:end:install-$target.$counter');
 		counter++;
 	}
 	
