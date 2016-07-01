@@ -12,15 +12,15 @@ class ProcessTools {
 	static var counter = 0;
 	
 	public static function compile(args) {
+		var travis = Sys.getEnv('TRAVIS') == 'true';
+		if (travis) Sys.println('travis_fold:start:compile-$target.$counter');
 		if (Sys.command('haxe', args) != 0) throw 'Could not compile';
+		if (travis) Sys.println('travis_fold:end:compile-$target.$counter');
+		counter++;
 	}
 	
 	public static function install(target) {
-		var travis = Sys.getEnv('TRAVIS') == 'true';
-		if (travis) Sys.println('travis_fold:start:install-$target.$counter');
 		Sys.command('haxelib', ['run', 'travix', target]);
-		if (travis) Sys.println('travis_fold:end:install-$target.$counter');
-		counter++;
 	}
 	
 	public static function streamAll(cmd, args): Process {
