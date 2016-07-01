@@ -23,9 +23,9 @@ install:
 
 script:
   - haxelib run travix neko -D server=NekoToolsServer -D client=NekoClient
-  - haxelib run travix neko -D server=ModNekoServer -D client=NekoClient
   - haxelib run travix neko -D server=PhpServer -D client=PhpClient
+  - haxelib run travix neko -D server=NodeServer -D client=NodeClient
   - haxelib run travix neko -D server=NekoServer -D client=NekoClient
   - haxelib run travix neko -D server=JavaServer -D client=NekoClient
-  - haxelib run travix neko -D server=NodeServer -D client=NodeClient
   - haxelib run travix neko -D server=CppServer -D client=NekoClient
+  - haxelib run travix neko -D server=ModNekoServer -D client=NekoClient
