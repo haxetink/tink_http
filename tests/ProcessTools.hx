@@ -13,9 +13,9 @@ class ProcessTools {
 	
 	public static function compile(args) {
 		var travis = Sys.getEnv('TRAVIS') == 'true';
-		if (travis) Sys.println('travis_fold:start:compile-$target.$counter');
+		if (travis) Sys.println('travis_fold:start:compile.$counter');
 		if (Sys.command('haxe', args) != 0) throw 'Could not compile';
-		if (travis) Sys.println('travis_fold:end:compile-$target.$counter');
+		if (travis) Sys.println('travis_fold:end:compile.$counter');
 		counter++;
 	}
 	
