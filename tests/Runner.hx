@@ -24,7 +24,7 @@ class Runner extends buddy.SingleSuite {
 	
 	var clients = Client.getClients();
 		
-    public function new()
+    public function new() {
         describe('tink_http', {
 			
 			it('should respond', function (done) 
@@ -46,6 +46,7 @@ class Runner extends buddy.SingleSuite {
 			);
 			
         });
+	}
 	
 	function toData(res: IncomingResponse): Future<Data>
 		return res.body.all().map(function (o) {

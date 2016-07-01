@@ -4,6 +4,8 @@ import sys.io.Process;
 
 class JavaServer {
 	
+	#if neko
+	
 	static var server: Process;
 
 	public static function compile(args) {
@@ -24,8 +26,12 @@ class JavaServer {
 	
 	public static function stop()
 		server.kill();
-		
+	
+	#else
+	
 	public static function main()
 		TcpHandler.main();
+		
+	#end
 	
 }
