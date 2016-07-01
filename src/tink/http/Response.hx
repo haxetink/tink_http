@@ -72,6 +72,14 @@ abstract OutgoingResponse(OutgoingResponseData) {
       })
     );
   }
+  static public function redirect(url:String, permanent = false) {
+    var code = permanent ? 301 : 302;
+    var message = permanent ? 'Moved Permanently' : 'Found';
+    return new OutgoingResponse(
+      new ResponseHeader(code, message, [new HeaderField('location', url)]),
+        tink.io.IdealSource.Empty.instance
+    );
+  }
 }
 
 typedef IncomingResponse = Message<ResponseHeader, Source>;
