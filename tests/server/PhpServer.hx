@@ -4,6 +4,8 @@ import sys.io.Process;
 
 class PhpServer {
 	
+	#if neko
+	
 	static var server: Process;
 
 	public static function compile(args) {
@@ -20,9 +22,11 @@ class PhpServer {
 	public static function stop()
 		server.kill();
 	
-	#if php
+	#elseif php
+	
 	public static function main()
 		tink.http.containers.PhpContainer.inst.run(DummyServer.handleRequest);
+		
 	#end
 	
 }

@@ -15,13 +15,18 @@ class JavaClient {
 	}
 	
 	public static function run()
-		return ProcessTools.passThrough('java', ['-jar', 'bin/java/Runner.jar']);
+		return ProcessTools.streamAll('java', ['-jar', 'bin/java/Runner.jar']).exitCode() == 0;
 		
 	#else
 	
 	public static function getClients() {
 		var clients:Array<Client> = [];
-		return [new tink.http.Client.TcpClient()];
+		return [
+			{
+				name: 'Java Tcp client',
+				client: new tink.http.Client.TcpClient()
+			}
+		];
 	}
 	
 	#end

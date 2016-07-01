@@ -4,6 +4,8 @@ import sys.io.Process;
 
 class CppServer {
 	
+	#if neko
+	
 	static var server: Process;
 
 	public static function compile(args) {
@@ -26,7 +28,11 @@ class CppServer {
 	public static function stop()
 		server.kill();
 		
+	#else
+		
 	public static function main()
 		TcpHandler.main();
+		
+	#end
 	
 }

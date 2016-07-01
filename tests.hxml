@@ -1,8 +1,4 @@
---macro RunTests.haltCompiler()
 -D concurrent
 -cp tests
 -lib buddy
--lib tink_concurrent
--lib tink_io
--lib tink_runloop
 -main RunTests

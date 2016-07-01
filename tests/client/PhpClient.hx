@@ -13,11 +13,16 @@ class PhpClient {
 	}
 	
 	public static function run()
-		return ProcessTools.passThrough('php', ['bin/php/client/index.php']);
+		return ProcessTools.streamAll('php', ['bin/php/client/index.php']).exitCode() == 0;
 
 	public static function getClients() {
 		var clients:Array<Client> = [];
-		return [new StdClient()];
+		return [
+			{
+				name: 'Php client',
+				client: new StdClient()
+			}
+		];
 	}
   
 }

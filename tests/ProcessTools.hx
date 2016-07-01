@@ -1,40 +1,40 @@
 package;
 
+import haxe.io.Input;
 import sys.io.Process;
 import tink.io.Source;
 import tink.io.Sink;
+import neko.vm.Thread;
+import haxe.io.Eof;
 
 class ProcessTools {
-
+	
+	static var counter = 0;
+	
 	public static function compile(args) {
-		return Sys.command('haxe', args);
+		if (Sys.command('haxe', args) != 0) throw 'Could not compile';
 	}
 	
-	public static function passThrough(cmd, args): Bool {
-		var process = new Process(cmd, args);
-		streamOut(process);
-		streamErr(process);
-		return process.exitCode() == 0;
-	} 
-	
-	public static function install(target): Bool {
+	public static function install(target) {
+		var travis = Sys.getEnv('TRAVIS') == 'true';
+		if (travis) Sys.println('travis_fold:start:install-$target.$counter');
 		Sys.command('haxelib', ['run', 'travix', target]);
-		return true;
+		if (travis) Sys.println('travis_fold:start:install-$target.$counter');
+		counter++;
 	}
 	
 	public static function streamAll(cmd, args): Process {
 		var process = new Process(cmd, args);
-		streamOut(process);
-		streamErr(process);
+		stream(process.stderr);
+		stream(process.stdout);
 		return process;
 	}
 	
-	static function streamOut(process) {
-		Source.ofInput('process stdout', process.stdout).pipeTo(Sink.stdout);
-	}
-	
-	static function streamErr(process) {
-		Source.ofInput('process stderr', process.stderr).pipeTo(Sink.stdout);
+	static function stream(input: Input) {
+		var stdout = Sys.stdout();
+		Thread.create(function()
+			while(true) try stdout.writeByte(input.readByte()) catch(e: Eof) break
+		);
 	}
 	
 }

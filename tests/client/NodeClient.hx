@@ -14,13 +14,18 @@ class NodeClient {
 	}
 	
 	public static function run()
-		return ProcessTools.passThrough('node', ['bin/node/runner.js']);
+		return ProcessTools.streamAll('node', ['bin/node/runner.js']).exitCode() == 0;
 		
 	#else
 	
 	public static function getClients() {
 		var clients:Array<Client> = [];
-		return [new tink.http.Client.NodeClient()];
+		return [
+			{
+				name: 'Node client',
+				client: new tink.http.Client.NodeClient()
+			}
+		];
 	}
 	
 	#end
