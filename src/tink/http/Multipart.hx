@@ -4,14 +4,30 @@ import haxe.io.Bytes;
 import tink.http.Request.IncomingRequest;
 import tink.io.Sink;
 import tink.io.Source;
+import tink.io.IdealSource;
 import tink.http.Message;
 import tink.http.Header;
 import haxe.ds.Option;
 import tink.streams.Stream;
 import tink.streams.StreamStep;
 using tink.CoreApi;
+using Lambda;
 
 class Multipart {
+  
+  public var boundary(default, null):String;
+  public var body(default, null):Source;
+  
+  public function new(chunks:Array<MultipartChunk>, ?boundary:String) {
+    if(boundary == null) boundary = [for(i in 0...20) String.fromCharCode(Std.random(26) + 65)].join(''); // just a random A-Z string
+    this.boundary = boundary;
+    
+    body = chunks.fold(
+      function(chunk, prev:Source) return prev.append(chunk.asSource().prepend('--$boundary\r\n').append('\r\n')),
+      Empty.instance
+    ).append('--$boundary--\r\n');
+  }
+  
   static function getChunk(s:Source, delim:Bytes):Surprise<Option<{ chunk:MultipartChunk, rest:Source }>, Error> {
     var split = s.split(delim);
     return
@@ -69,4 +85,10 @@ class Multipart {
   }
 }
 
-typedef MultipartChunk = Message<Header, Source>;
+@:forward
+abstract MultipartChunk(Message<Header, Source>) from Message<Header, Source> {
+  @:to
+  public inline function asSource():Source {
+    return (this.header.fields.join('\r\n'):Source).append('\r\n\r\n').append(this.body);
+  }
+}
