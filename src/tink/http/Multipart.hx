@@ -23,7 +23,7 @@ class Multipart {
     this.boundary = boundary;
     
     body = chunks.fold(
-      function(chunk, prev:Source) return prev.append(chunk.asSource().prepend('--$boundary\r\n').append('\r\n')),
+      function(chunk, prev:Source) return prev.append('--$boundary\r\n').append(chunk).append('\r\n'),
       Empty.instance
     ).append('--$boundary--\r\n');
   }
