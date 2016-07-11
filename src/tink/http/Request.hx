@@ -79,7 +79,7 @@ class OutgoingRequestHeader extends Header {
   }
 }
 
-typedef OutgoingRequest = Message<OutgoingRequestHeader, IdealSource>;
+class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}
 
 class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody> {
   

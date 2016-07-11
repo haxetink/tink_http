@@ -9,9 +9,13 @@ using tink.CoreApi;
 using StringTools;
 
 class ContentType {
+  public var fullType(get, never):String;
+    inline function get_fullType()
+      return '$type/$subtype';
+      
   public var type(default, null):String = '*';
   public var subtype(default, null):String = '*';
-  public var extension(default, null):Null<Map<String, String>>;
+  public var extension(default, null):Map<String, String>;
   
   function new() { 
     extension = new Map();
@@ -20,7 +24,7 @@ class ContentType {
   static public function ofString(s:String) {
     var ret = new ContentType();
     
-    inline function setType(max)
+    inline function setType(max) 
       switch s.indexOf('/') {
         case -1:
           ret.type = s;
@@ -28,6 +32,7 @@ class ContentType {
           ret.type = s.substring(0, pos);
           ret.subtype = s.substring(pos + 1, max);
       }
+    
       
     switch s.indexOf(';') {
       case -1: 
