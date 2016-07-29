@@ -87,7 +87,7 @@ abstract HeaderValue(String) from String to String {
           result.push({value: v, extensions: []});
         case i:
           result.push({value: v.substr(0, i), extensions: [for(p in Query.parseString(v, ';', i+1)) {
-            if(p.value.charCodeAt(0) == '"'.code) @:privateAccess p.value = p.value.substr(1, p.value.length - 2);
+            if(p.value.charCodeAt(0) == '"'.code) @:privateAccess p.value = p.value.substr(1, p.value.length - 2); //TODO: find out how exactly escaping and what not works
             p;
           }]});
       }
