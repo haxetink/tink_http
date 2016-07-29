@@ -76,15 +76,25 @@ class Header {
 abstract HeaderValue(String) from String to String {
         
   public function getExtension():Map<String, String>
-    return 
-      switch this.indexOf(';') {
-        case -1: new Map();
-        case v: [for (p in Query.parseString(this, ';', v + 1)) p.name => switch p.value.charAt(0) {
-          case '"': p.value.substr(1, p.value.length -2);//TODO: find out how exactly escaping and what not works
-          case v: v;
-        }];
-      }
+    return [for(e in parse()[0].extensions) e.name => e.value];
       
+  public function parse() {
+    var result = [];
+    for(v in this.split(',')) {
+      v = v.trim();
+      switch v.indexOf(';') {
+        case -1:
+          result.push({value: v, extensions: []});
+        case i:
+          result.push({value: v.substr(0, i), extensions: [for(p in Query.parseString(v, ';', i+1)) {
+            if(p.value.charCodeAt(0) == '"'.code) @:privateAccess p.value = p.value.substr(1, p.value.length - 2);
+            p;
+          }]});
+      }
+    }
+    return result;
+  }
+  
   @:from static public function ofInt(i:Int):HeaderValue
     return Std.string(i);
 }
