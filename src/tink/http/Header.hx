@@ -49,7 +49,6 @@ class ContentType {
 
 class Header {
   public var fields(default, null):Array<HeaderField>;
-  
   public function new(?fields)
     this.fields = switch fields {
       case null: [];
@@ -62,15 +61,18 @@ class Header {
   public function byName(name:HeaderName)
     return switch get(name) {
       case []:
-        Failure(new Error(BadRequest, 'No $name header found'));
+        Failure(new Error(UnprocessableEntity, 'No $name header found'));
       case [v]:
         Success(v);
       case v: 
-        Failure(new Error(BadRequest, 'Multiple entries for $name header'));
+        Failure(new Error(UnprocessableEntity, 'Multiple entries for $name header'));
     }
     
   public function contentType() 
     return byName('content-type').map(ContentType.ofString);
+    
+  public inline function iterator()
+    return fields.iterator();
 }
 
 abstract HeaderValue(String) from String to String {
@@ -124,7 +126,9 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
       case v: 
         new HeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
     }
-    
+  static var DAYS = 'Sun,Mon,Tue,Wen,Thu,Fri,Sat'.split(',');
+  static var MONTHS = 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
+  
   /**
    * Constructs a Set-Cookie header. Please note that cookies are HttpOnly by default. 
    * You can opt out of that behavior by setting `options.scriptable` to true.
@@ -146,7 +150,7 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
     buf.add(key.urlEncode() + '=' + value.urlEncode());
     
     if (options.expires != null) 
-      addPair("expires=", DateTools.format(options.expires, "%a, %d-%b-%Y %H:%M:%S GMT"));
+      addPair("expires=", DateTools.format(options.expires, DAYS[options.expires.getDay()] + ", %d-"+MONTHS[options.expires.getMonth()]+"-%Y %H:%M:%S GMT"));
     
     addPair("domain=", options.domain);
     addPair("path=", options.path);
