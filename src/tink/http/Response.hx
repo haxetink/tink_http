@@ -52,12 +52,27 @@ abstract OutgoingResponse(OutgoingResponseData) {
   public inline function new(header, body) 
     this = new OutgoingResponseData(header, body);
     
-  static public function blob(?code = 200, bytes:Bytes, contentType:String)
-    return new OutgoingResponse(
-      new ResponseHeader(code, 'OK', [new HeaderField('Content-Type', contentType), new HeaderField('Content-Length', Std.string(bytes.length))]), 
-      bytes
-    );
+  static public function blob(?code = 200, bytes:Bytes, contentType:String, ?headers)
+    return 
+        new OutgoingResponse(
+          new ResponseHeader(
+            code, 
+            'OK', 
+            [
+              new HeaderField('Content-Type', contentType), 
+              new HeaderField('Content-Length', Std.string(bytes.length))
+            ].concat(switch headers {
+              case null: [];
+              case v: v;
+            })), 
+          bytes
+        );
+  
+  static public function chunked(contentType:String, ?headers, source:IdealSource) {
+    //TODO: implement
     
+  }
+        
   @:from static function ofString(s:String) 
     return blob(Bytes.ofString(s), 'text/plain');
     
