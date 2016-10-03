@@ -143,7 +143,7 @@ class PhpClient implements ClientObject {
       req.body.all().handle(function(bytes) {
         var options = php.Lib.associativeArrayOfObject({
         http: php.Lib.associativeArrayOfObject({
-            header: req.header.fields.join('\r\n') + '\r\n',
+            header: req.header.fields.map(function(f) return f.toString()).join('\r\n') + '\r\n',
             method: req.header.method,
             content: bytes.getData().toString(),
           }),
