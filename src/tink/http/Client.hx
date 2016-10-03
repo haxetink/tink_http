@@ -145,7 +145,7 @@ class PhpClient implements ClientObject {
         http: php.Lib.associativeArrayOfObject({
             header: req.header.fields.join('\r\n') + '\r\n',
             method: req.header.method,
-            content: bytes,
+            content: bytes.getData().toString(),
           }),
         });
         var context = untyped __call__('stream_context_create', options);
