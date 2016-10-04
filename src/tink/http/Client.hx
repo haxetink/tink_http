@@ -143,6 +143,7 @@ class PhpClient implements ClientObject {
       req.body.all().handle(function(bytes) {
         var options = php.Lib.associativeArrayOfObject({
         http: php.Lib.associativeArrayOfObject({
+            // protocol_version: // TODO: req does not define the version?
             header: req.header.fields.map(function(f) return f.toString()).join('\r\n') + '\r\n',
             method: req.header.method,
             content: bytes.getData().toString(),
@@ -153,10 +154,9 @@ class PhpClient implements ClientObject {
         var result:haxe.io.Input = @:privateAccess new sys.io.FileInput(untyped __call__('fopen', url, 'rb', false, context));
         var headers:Source = php.Lib.toHaxeArray(untyped __php__("$http_response_header")).join('\r\n') + '\r\n';
         headers.parse(ResponseHeader.parser()).handle(function(o) switch o {
-          case Success(parsed): 
-            var header = parsed.data;
+          case Success(parsed):
             cb(new IncomingResponse(
-              new ResponseHeader(header.statusCode, header.reason, header.fields),
+              parsed.data,
               result.readAll()
             ));
           case Failure(e):
