@@ -78,7 +78,7 @@ class Header {
 abstract HeaderValue(String) from String to String {
         
   public function getExtension():Map<String, String>
-    return [for(e in parse()[0].extensions) e.name => e.value];
+    return [for(e in parse()[0].extensions) e.name => e.value.toString()];
       
   public function parse()
     return [for(v in this.split(',')) {
@@ -92,10 +92,12 @@ abstract HeaderValue(String) from String to String {
         case i:
           {
             value: v.substr(0, i),
-            extensions: [for(p in Query.parseString(v, ';', i+1)) {
-              if(p.value.charCodeAt(0) == '"'.code) @:privateAccess p.value = p.value.substr(1, p.value.length - 2); //TODO: find out how exactly escaping and what not works
-              p;
-            }],
+            extensions: [for (p in Query.parseString(v, ';', i + 1)) 
+              new Named(p.value, switch p.value.toString() {
+                case quoted if (quoted.charCodeAt(0) == '"'.code): quoted.substr(1, quoted.length - 2);//TODO: find out how exactly escaping and what not works
+                case v: v;
+              })
+            ],
           };
       }
     }];
