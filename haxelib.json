@@ -11,8 +11,8 @@
 	"contributors": [
 		"back2dos"
 	],
-	"releasenote": "Added multipart composition and various clients.",
-	"version": "0.4.0",
+	"releasenote": "Added PHP client. Various other improvements.",
+	"version": "0.5.0",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_url": "",
