@@ -376,15 +376,11 @@ class CurlClient implements ClientObject {
       else {
         #if (sys || nodejs)
           function(args, body) {
-            if(body != null) {
-              args.push('--data-binary');
-              args.push('@-');
-            }
+            args.push('--data-binary');
+            args.push('@-');
             var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
-            if(body != null) {
-              var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
-              body.pipeTo(sink).handle(function(_) sink.close());
-            }
+            var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
+            body.pipeTo(sink).handle(function(_) sink.close());
             return #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
           }
         #else
