@@ -368,22 +368,22 @@ class SecureCurlClient extends CurlClient {
 
 // Does not restrict to any platform as long as they can run the curl command somehow
 class CurlClient implements ClientObject {
-  var curl:Array<String>->?Source->Source;
+  var curl:Array<String>->Source->Source;
   var protocol:String = 'http';
-  public function new(?curl:Array<String>->?Source->Source) {
+  public function new(?curl:Array<String>->Source->Source) {
     this.curl = 
       if(curl != null) curl;
       else {
         #if (sys || nodejs)
-          function(args, ?data) {
-            if(data != null) {
+          function(args, body) {
+            if(body != null) {
               args.push('--data-binary');
               args.push('@-');
             }
             var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
-            if(data != null) {
+            if(body != null) {
               var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
-              data.pipeTo(sink).handle(function(_) sink.close());
+              body.pipeTo(sink).handle(function(_) sink.close());
             }
             return #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
           }
@@ -407,14 +407,11 @@ class CurlClient implements ClientObject {
     
     args.push('$protocol:' + req.header.fullUri());
     
-    return req.body.all() >> 
-      function(bytes:haxe.io.Bytes) {
-        return curl(args, bytes.length == 0 ? null : bytes).parse(ResponseHeader.parser()).map(function (o) return switch o {
-          case Success({ data: header, rest: body }):
-            new IncomingResponse(header, body);
-          case Failure(e):
-            new IncomingResponse(new ResponseHeader(e.code, e.message, []), (e.message : Source).append(e));
-        });
-      }
+    return curl(args, req.body).parse(ResponseHeader.parser()).map(function (o) return switch o {
+      case Success({ data: header, rest: body }):
+        new IncomingResponse(header, body);
+      case Failure(e):
+        new IncomingResponse(new ResponseHeader(e.code, e.message, []), (e.message : Source).append(e));
+    });
   }
 }
