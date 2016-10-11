@@ -37,8 +37,8 @@ class ResponseHeader extends Header {
   static public function parser():StreamParser<ResponseHeader>
     return new HeaderParser<ResponseHeader>(function (line, headers) 
       return switch line.split(' ') {
-        case [protocol, status, reason]:
-          Success(new ResponseHeader(Std.parseInt(status), reason, headers, protocol));
+        case v if(v.length >= 3):
+          Success(new ResponseHeader(Std.parseInt(v[1]), v.slice(2).join(' '), headers, v[0]));
         default: 
           Failure(new Error(UnprocessableEntity, 'Invalid HTTP response header'));
       }
