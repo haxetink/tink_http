@@ -396,6 +396,8 @@ class CurlClient implements ClientObject {
     args.push('-X');
     args.push(req.header.method);
     
+    // TODO: http version
+    
     for(header in req.header.fields) {
       args.push('-H');
       args.push('${header.name}: ${header.value}');
