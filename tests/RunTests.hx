@@ -2,6 +2,7 @@ import haxe.CallStack;
 import neko.vm.Thread;
 import sys.net.Host;
 import sys.net.Socket;
+import sys.io.File;
 import Ansi.report;
 
 class RunTests {
@@ -48,6 +49,7 @@ class RunTests {
       }
     }
     
+    File.saveContent('tests.hxml', '-cp tests\n-lib buddy');
 		Sys.sleep(.01);
 		Sys.exit(result ? 0 : 1);
 	}
