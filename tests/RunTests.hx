@@ -66,13 +66,13 @@ class RunTests {
 	static function waitForConnection(port: Int) {
     var connected = false;
     Thread.create(function() {
-      var i = 60;
+      var i = 120;
 			while (i > 0) {
         i--;
         Sys.sleep(1);
       }
       if (!connected)
-        fail('Could not connect to server (timeout: 60s)');
+        fail('Could not connect to server (timeout: 120s)');
 		});
 		var i = 0;
 		while (i < 20) {

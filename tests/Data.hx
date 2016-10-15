@@ -1,5 +1,3 @@
-package;
-
 typedef Data = {
 	uri: String,
 	ip: String,

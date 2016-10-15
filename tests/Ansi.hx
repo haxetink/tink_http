@@ -1,5 +1,3 @@
-package;
-
 @:enum
 abstract AnsiColor(Int) {
   var Black = 0;

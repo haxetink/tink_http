@@ -36,7 +36,7 @@ class Context {
     var code = ProcessTools.travix('neko', mainArgs(port, 'modneko')).exitCode();
     if (code != 0) 
       throw 'Unable to build mod neko server';
-    FileSystem.rename('bin/neko/tests.n', 'index.n');
+    FileSystem.rename('bin/neko/tests.n', 'bin/neko/index.n');
     setEnv();
   }
   

@@ -25,37 +25,37 @@ class Runner extends buddy.SingleSuite {
   var clients = Context.clients.array();
     
   public function new() {
-  describe('tink_http', {
-  
-    it('should respond', function (done) 
-    request({uri: '/'}, function (res)
-      return toData(res).map(function(data: Data) {
-      data.uri.should.be('/');
-      return Noise;
-      })
-    ).handle(done)
-    );
+    describe('tink_http', {
     
-    it('should return the http method', function (done) 
-    request({uri: '/', method: GET}, function (res)
-      return toData(res).map(function(data: Data) {
-      data.method.should.be('GET');
-      return Noise;
-      })
-    ).handle(done)
-    );
-  
-  });
+      it('should respond', function (done) 
+        request({uri: '/'}, function (res)
+          return toData(res).map(function(data: Data) {
+            data.uri.should.be('/');
+            return Noise;
+          })
+        ).handle(done)
+      );
+      
+      it('should return the http method', function (done) 
+        request({uri: '/', method: GET}, function (res)
+          return toData(res).map(function(data: Data) {
+            data.method.should.be('GET');
+            return Noise;
+          })
+        ).handle(done)
+      );
+    
+    });
   }
   
   function toData(res: IncomingResponse): Future<Data>
     return res.body.all().map(function (o) {
       var raw: String = o.sure().toString();
       var data: Data = null;
-    try
-    data = Json.parse(raw)
-    catch (e: Dynamic)
-    throw 'Could not parse response as json:\n$raw\n\n$e';
+      try
+        data = Json.parse(raw)
+      catch (e: Dynamic)
+        throw 'Could not parse response as json:\n$raw\n\n$e';
       return data;
     });
   

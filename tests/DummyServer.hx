@@ -1,5 +1,3 @@
-package;
-
 import haxe.io.Bytes;
 import tink.http.Header;
 import tink.http.Request;
