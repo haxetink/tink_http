@@ -1,66 +1,102 @@
-package;
-
 import haxe.CallStack;
+import neko.vm.Thread;
+import sys.net.Host;
+import sys.net.Socket;
+import Ansi.report;
 
 class RunTests {
 	
 	public static var port = 8000;
 	
-	#if !neko
-	
-	public static function main() {}
-	
-	#else
-	
 	public static function main() {
-		var result = false;
-		try {
-			var args = [
-				'-lib', 'tink_http', '-cp', 'tests', '-lib', 'buddy',
-				'-D', 'server='+server(),
-				'-D', 'client='+client(),
-			];
-			Server.compile(args);
-			Client.compile(args);
-			try {
-				Server.start(port);
-				waitForConnection(port);
-				result = Client.run();
-				Server.stop();
-			} catch(e: Dynamic) {
-				Sys.println(e);
-				Sys.print(CallStack.toString(CallStack.exceptionStack()));
-			}
-		} catch(e: Dynamic) {}
+    checkPort(port);
+      
+    var containers: String = Env.getDefine('containers');
+    if (containers == null)
+      fail('No containers set, use -D containers=php,neko');
+    var targets: String = Env.getDefine('targets');
+    if (targets == null)
+      fail('No targets set, use -D targets=php,neko');
+      
+    var result = true;
+    for (container in containers.split(',')) {
+      if (!Context.containers.exists(container))
+        fail('Container $container not available');
+        
+      var server = Context.containers.get(container);
+      try {
+        Sys.println(Ansi.text(Cyan, '>> Building container $container'));
+        var process = server(port);
+        waitForConnection(port);
+        
+        for (target in targets.split(',')) {
+          report('Running target $target');
+          var runner = ProcessTools.travix(target, ['-lib buddy', '-D port=$port', '-main Runner']);
+          var code = runner.exitCode();
+          if (code != 0)
+            Ansi.fail('$target failed');
+          result = result && code == 0;
+          if (!result) break;
+        }
+        
+        close(port);
+        process.kill();
+        report('Stopped container $container');
+      } catch(e: Dynamic) {
+        Sys.println(e);
+        Sys.print(CallStack.toString(CallStack.exceptionStack()));
+      }
+    }
+    
 		Sys.sleep(.01);
 		Sys.exit(result ? 0 : 1);
 	}
+  
+  static function fail(msg) {
+    Ansi.fail(msg);
+		Sys.exit(1);
+  }
+  
+  static function close(port: Int) {
+    var http = new haxe.Http('http://127.0.0.1:$port/close');
+    http.onData = function(_) null;
+    http.request();
+  }
 	
 	static function waitForConnection(port: Int) {
+    var connected = false;
+    Thread.create(function() {
+      var i = 60;
+			while (i > 0) {
+        i--;
+        Sys.sleep(1);
+      }
+      if (!connected)
+        fail('Could not connect to server (timeout: 60s)');
+		});
 		var i = 0;
 		while (i < 20) {
 			var http = new haxe.Http('http://127.0.0.1:'+port+'/active');
 			var result = false;
-			http.onData = function(_)
-				result = true;
+			http.onData = function(_) result = true;
 			http.request();
-			if (result) return;
-			else Sys.sleep(.1);
+			if (result) {
+        connected = true;
+        return true;
+      } else {
+        Sys.sleep(.1);
+      }
 		}
-		throw 'Could not connect to server';
+		fail('Could not connect to server');
+    return false;
 	}
-	
-	// Stop compiling on other targets so dependencies can easily be installed through travix
-	public static function haltCompiler()
-		if (Sys.args().filter(function(arg) return arg == '-neko').length == 0)
-			Sys.exit(0);
-	
-	macro static function server() 
-		return macro $v{haxe.macro.Context.definedValue('server')};
-		
-	macro static function client() 
-		return macro $v{haxe.macro.Context.definedValue('client')};
-	
-	#end
+  
+  static function checkPort(port: Int) {
+    var socket = new Socket();
+    try {
+      socket.connect(new Host('127.0.0.1'), port);
+      fail('Another process is already bound to port $port');
+    } catch (e: Dynamic) {}
+  }
 	
 }

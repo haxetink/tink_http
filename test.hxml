@@ -1,0 +1,6 @@
+-lib tink_http
+-cp tests
+-main RunTests
+-neko bin/test.n
+-dce full
+-cmd neko bin/test.n

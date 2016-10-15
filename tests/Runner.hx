@@ -1,5 +1,3 @@
-package;
-
 import tink.http.Header.HeaderField;
 import tink.http.Method;
 import tink.http.Multipart;
@@ -12,6 +10,8 @@ import tink.http.Response;
 using buddy.Should;
 using tink.CoreApi;
 
+using Lambda;
+
 typedef Request = {
 	?method: Method,
 	uri: String,
@@ -22,36 +22,40 @@ typedef Request = {
 @colorize
 class Runner extends buddy.SingleSuite {
 	
-	var clients = Client.getClients();
+	var clients = Context.clients.array();
 		
-    public function new() {
-        describe('tink_http', {
-			
-			it('should respond', function (done) 
-				request({uri: '/'}, function (res)
-					return toData(res).map(function(data: Data) {
-						data.uri.should.be('/');
-						return Noise;
-					})
-				).handle(done)
-			);
-			
-			it('should return the http method', function (done) 
-				request({uri: '/', method: GET}, function (res)
-					return toData(res).map(function(data: Data) {
-						data.method.should.be('GET');
-						return Noise;
-					})
-				).handle(done)
-			);
-			
-        });
+  public function new() {
+    describe('tink_http', {
+    
+      it('should respond', function (done) 
+        request({uri: '/'}, function (res)
+          return toData(res).map(function(data: Data) {
+            data.uri.should.be('/');
+            return Noise;
+          })
+        ).handle(done)
+      );
+      
+      it('should return the http method', function (done) 
+        request({uri: '/', method: GET}, function (res)
+          return toData(res).map(function(data: Data) {
+            data.method.should.be('GET');
+            return Noise;
+          })
+        ).handle(done)
+      );
+    
+    });
 	}
 	
 	function toData(res: IncomingResponse): Future<Data>
 		return res.body.all().map(function (o) {
 			var raw: String = o.sure().toString();
-			var data: Data = Json.parse(raw);
+			var data: Data = null;
+      try
+        data = Json.parse(raw)
+      catch (e: Dynamic)
+        throw 'Could not parse response as json:\n$raw\n\n$e';
 			return data;
 		});
 	
@@ -65,7 +69,7 @@ class Runner extends buddy.SingleSuite {
 				req.body = '';
 			if (req.method == null) 
 				req.method = GET;
-			var outgoing = new OutgoingRequest(new OutgoingRequestHeader(req.method, new Host('127.0.0.1', RunTests.port), req.uri, fields), req.body);
+			var outgoing = new OutgoingRequest(new OutgoingRequestHeader(req.method, new Host('127.0.0.1', Std.parseInt(Env.getDefine('port'))), req.uri, fields), req.body);
 			switch req.body.length {
 				case 0:
 				case v:
@@ -75,7 +79,7 @@ class Runner extends buddy.SingleSuite {
 						default:
 					}
 			}
-			return client.client.request(outgoing).flatMap(test);
+			return client.request(outgoing).flatMap(test);
 		}));
 		
 }

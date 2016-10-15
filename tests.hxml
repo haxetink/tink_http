@@ -1,4 +1,0 @@
--D concurrent
--cp tests
--lib buddy
--main RunTests
