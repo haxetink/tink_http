@@ -19,7 +19,8 @@ class DummyServer {
     #if (tink_runloop || nodejs)
     Sys.println('>> Server $server listening on $port');
     #end
-    Context.servers.get(server)(port, handleRequest);
+    var main = Context.servers.get(server);
+    main(port, handleRequest);
   }
   
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
