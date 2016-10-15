@@ -9,9 +9,13 @@ using tink.CoreApi;
 using StringTools;
 
 class ContentType {
+  public var fullType(get, never):String;
+    inline function get_fullType()
+      return '$type/$subtype';
+      
   public var type(default, null):String = '*';
   public var subtype(default, null):String = '*';
-  public var extension(default, null):Null<Map<String, String>>;
+  public var extension(default, null):Map<String, String>;
   
   function new() { 
     extension = new Map();
@@ -20,7 +24,7 @@ class ContentType {
   static public function ofString(s:String) {
     var ret = new ContentType();
     
-    inline function setType(max)
+    inline function setType(max) 
       switch s.indexOf('/') {
         case -1:
           ret.type = s;
@@ -28,6 +32,7 @@ class ContentType {
           ret.type = s.substring(0, pos);
           ret.subtype = s.substring(pos + 1, max);
       }
+    
       
     switch s.indexOf(';') {
       case -1: 
@@ -44,7 +49,6 @@ class ContentType {
 
 class Header {
   public var fields(default, null):Array<HeaderField>;
-  
   public function new(?fields)
     this.fields = switch fields {
       case null: [];
@@ -57,29 +61,47 @@ class Header {
   public function byName(name:HeaderName)
     return switch get(name) {
       case []:
-        Failure(new Error(BadRequest, 'No $name header found'));
+        Failure(new Error(UnprocessableEntity, 'No $name header found'));
       case [v]:
         Success(v);
       case v: 
-        Failure(new Error(BadRequest, 'Multiple entries for $name header'));
+        Failure(new Error(UnprocessableEntity, 'Multiple entries for $name header'));
     }
     
   public function contentType() 
     return byName('content-type').map(ContentType.ofString);
+    
+  public inline function iterator()
+    return fields.iterator();
 }
 
 abstract HeaderValue(String) from String to String {
         
   public function getExtension():Map<String, String>
-    return 
-      switch this.indexOf(';') {
-        case -1: new Map();
-        case v: [for (p in Query.parseString(this, ';', v + 1)) p.name => switch p.value.charAt(0) {
-          case '"': p.value.substr(1, p.value.length -2);//TODO: find out how exactly escaping and what not works
-          case v: v;
-        }];
-      }
+    return [for(e in parse()[0].extensions) e.name => e.value.toString()];
       
+  public function parse()
+    return [for(v in this.split(',')) {
+      v = v.trim();
+      switch v.indexOf(';') {
+        case -1:
+          {
+            value: v,
+            extensions: [],
+          }
+        case i:
+          {
+            value: v.substr(0, i),
+            extensions: [for (p in Query.parseString(v, ';', i + 1)) 
+              new Named(p.value, switch p.value.toString() {
+                case quoted if (quoted.charCodeAt(0) == '"'.code): quoted.substr(1, quoted.length - 2);//TODO: find out how exactly escaping and what not works
+                case v: v;
+              })
+            ],
+          };
+      }
+    }];
+  
   @:from static public function ofInt(i:Int):HeaderValue
     return Std.string(i);
 }
@@ -106,7 +128,9 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
       case v: 
         new HeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
     }
-    
+  static var DAYS = 'Sun,Mon,Tue,Wen,Thu,Fri,Sat'.split(',');
+  static var MONTHS = 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
+  
   /**
    * Constructs a Set-Cookie header. Please note that cookies are HttpOnly by default. 
    * You can opt out of that behavior by setting `options.scriptable` to true.
@@ -128,7 +152,7 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
     buf.add(key.urlEncode() + '=' + value.urlEncode());
     
     if (options.expires != null) 
-      addPair("expires=", DateTools.format(options.expires, "%a, %d-%b-%Y %H:%M:%S GMT"));
+      addPair("expires=", DateTools.format(options.expires, DAYS[options.expires.getDay()] + ", %d-"+MONTHS[options.expires.getMonth()]+"-%Y %H:%M:%S GMT"));
     
     addPair("domain=", options.domain);
     addPair("path=", options.path);

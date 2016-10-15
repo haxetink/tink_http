@@ -125,6 +125,53 @@ extern class TcpClient implements ClientObject {
 }
 #end 
 
+#if php
+
+class SecurePhpClient extends PhpClient {
+  public function new() {
+    super();
+    protocol = 'https';
+  }
+}
+
+class PhpClient implements ClientObject {
+  var protocol:String = 'http';
+  public function new() {}
+  
+  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+    return Future.async(function(cb) {
+      req.body.all().handle(function(bytes) {
+        var options = php.Lib.associativeArrayOfObject({
+          http: php.Lib.associativeArrayOfObject({
+            // protocol_version: // TODO: req does not define the version?
+            header: req.header.fields.map(function(f) return f.toString()).join('\r\n') + '\r\n',
+            method: req.header.method,
+            content: bytes.getData().toString(),
+          }),
+        });
+        var context = untyped __call__('stream_context_create', options);
+        var url = '$protocol:' + req.header.fullUri();
+        var result = @:privateAccess new sys.io.FileInput(untyped __call__('fopen', url, 'rb', false, context));
+        var headers:Source = php.Lib.toHaxeArray(untyped __php__("$http_response_header")).join('\r\n') + '\r\n';
+        headers.parse(ResponseHeader.parser()).handle(function(o) switch o {
+          case Success(parsed):
+            cb(new IncomingResponse(
+              parsed.data,
+              result.readAll()
+            ));
+          case Failure(e):
+            cb(new IncomingResponse(
+              new ResponseHeader(500, 'Header parse error', []),
+              Std.string(e)
+            ));
+        });
+      });
+    });
+  }
+}
+
+#end
+
 #if nodejs
 
 typedef NodeAgent<Opt> = {
@@ -215,6 +262,27 @@ extern class NodeClient implements ClientObject {
 }
 #end
 
+@:access(tink.http.containers.LocalContainer)
+class LocalContainerClient implements ClientObject {
+  
+  var container:tink.http.containers.LocalContainer;
+  public function new(container) {
+    this.container = container;
+  }
+  
+  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+      return container.serve(new IncomingRequest(
+        '127.0.0.1',
+        new IncomingRequestHeader(req.header.method, req.header.uri, 'HTTP/1.1', req.header.fields),
+        Plain(req.body)
+      )) >>
+      function(res:OutgoingResponse) return new IncomingResponse(
+        res.header,
+        res.body
+      );
+    }
+    
+}
 #if (js && !nodejs)
 class JsSecureClient extends JsClient {
   override function request(req:OutgoingRequest):Future<IncomingResponse> {
@@ -290,3 +358,58 @@ class JsClient implements ClientObject {
   }
 }
 #end
+
+class SecureCurlClient extends CurlClient {
+  public function new(?curl) {
+    super(curl);
+    protocol = 'https';
+  }
+}
+
+// Does not restrict to any platform as long as they can run the curl command somehow
+class CurlClient implements ClientObject {
+  var curl:Array<String>->Source->Source;
+  var protocol:String = 'http';
+  public function new(?curl:Array<String>->Source->Source) {
+    this.curl = 
+      if(curl != null) curl;
+      else {
+        #if (sys || nodejs)
+          function(args, body) {
+            args.push('--data-binary');
+            args.push('@-');
+            var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
+            var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
+            body.pipeTo(sink).handle(function(_) sink.close());
+            return #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
+          }
+        #else
+          throw "curl function not supplied";
+        #end
+      }
+  }
+  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+    var args = [];
+    
+    args.push('-is');
+    
+    args.push('-X');
+    args.push(req.header.method);
+    
+    // TODO: http version
+    
+    for(header in req.header.fields) {
+      args.push('-H');
+      args.push('${header.name}: ${header.value}');
+    }
+    
+    args.push('$protocol:' + req.header.fullUri());
+    
+    return curl(args, req.body).parse(ResponseHeader.parser()).map(function (o) return switch o {
+      case Success({ data: header, rest: body }):
+        new IncomingResponse(header, body);
+      case Failure(e):
+        new IncomingResponse(new ResponseHeader(e.code, e.message, []), (e.message : Source).append(e));
+    });
+  }
+}

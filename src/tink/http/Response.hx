@@ -7,6 +7,8 @@ import tink.http.Message;
 import tink.http.Header;
 import tink.io.*;
 
+using tink.CoreApi;
+
 class ResponseHeader extends Header {
   
   public var statusCode(default, null):Int;
@@ -34,9 +36,9 @@ class ResponseHeader extends Header {
   
   static public function parser():StreamParser<ResponseHeader>
     return new HeaderParser<ResponseHeader>(function (line, headers) 
-      return switch line.split(' ') {
-        case [protocol, status, reason]:
-          Success(new ResponseHeader(Std.parseInt(status), reason, headers, protocol));
+      return switch line.split(' ') {//TODO: we should probably not split here in the first place.
+        case v if(v.length >= 3):
+          Success(new ResponseHeader(Std.parseInt(v[1]), v.slice(2).join(' '), headers, v[0]));
         default: 
           Failure(new Error(UnprocessableEntity, 'Invalid HTTP response header'));
       }
@@ -50,12 +52,27 @@ abstract OutgoingResponse(OutgoingResponseData) {
   public inline function new(header, body) 
     this = new OutgoingResponseData(header, body);
     
-  static public function blob(bytes:Bytes, contentType:String)
-    return new OutgoingResponse(
-      new ResponseHeader(200, 'OK', [new HeaderField('Content-Type', contentType), new HeaderField('Content-Length', Std.string(bytes.length))]), 
-      bytes
-    );
+  static public function blob(?code = 200, bytes:Bytes, contentType:String, ?headers)
+    return 
+        new OutgoingResponse(
+          new ResponseHeader(
+            code, 
+            'OK', 
+            [
+              new HeaderField('Content-Type', contentType), 
+              new HeaderField('Content-Length', Std.string(bytes.length))
+            ].concat(switch headers {
+              case null: [];
+              case v: v;
+            })), 
+          bytes
+        );
+  
+  static public function chunked(contentType:String, ?headers, source:IdealSource) {
+    //TODO: implement
     
+  }
+        
   @:from static function ofString(s:String) 
     return blob(Bytes.ofString(s), 'text/plain');
     
@@ -65,7 +82,7 @@ abstract OutgoingResponse(OutgoingResponseData) {
   static public function reportError(e:Error) {
     return new OutgoingResponse(
       new ResponseHeader(e.code, e.message, [new HeaderField('Content-Type', 'application/json')]),
-      haxe.Json.stringify( {
+      haxe.Json.stringify({//TODO: reconsider the wisdom of json encoding this way, since it relies on reflection
         error: e.message,
         details: e.data,
         //TODO: add stack trace when it becomes available
@@ -74,4 +91,15 @@ abstract OutgoingResponse(OutgoingResponseData) {
   }
 }
 
-typedef IncomingResponse = Message<ResponseHeader, Source>;
+class IncomingResponse extends Message<ResponseHeader, Source> {
+  
+  static public function readAll(res:IncomingResponse) 
+    return res.body.all() 
+      >> function (b:Bytes) 
+        return 
+          if (res.header.statusCode >= 400) 
+            Failure(Error.withData(res.header.statusCode, res.header.reason, b.toString()))
+          else
+            Success(b);
+        
+}

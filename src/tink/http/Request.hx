@@ -8,6 +8,8 @@ import tink.http.Header;
 import tink.io.StreamParser;
 import tink.url.Auth;
 import tink.url.Host;
+import tink.url.Query;
+import tink.Url;
 
 
 using tink.CoreApi;
@@ -25,6 +27,23 @@ class IncomingRequestHeader extends Header {
     super(fields);
   }
   
+  var cookies:Map<String, String>;
+  
+  function getCookies() {
+    if (cookies == null)
+      cookies = [for (header in get('cookie')) for (entry in Query.parseString(header, ';')) entry.name => entry.value.toString()];
+      
+    return cookies;
+  }
+  
+  public function cookieNames() {
+    return cookies.keys();
+  }
+  
+  public function getCookie(name:String) {
+    return getCookies()[name];
+  }
+  
   static public function parser():StreamParser<IncomingRequestHeader>
     return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
       return switch line.split(' ') {
@@ -40,22 +59,34 @@ class OutgoingRequestHeader extends Header {
   
   public var method(default, null):Method;
   public var host(default, null):Host;//TODO: do something about validating host names
-  public var uri(default, null):String;
+  public var uri(default, null):Url;
   
-  public function new(method, host:Host, ?uri:String, ?fields) {
+  public function new(method, host:Host, ?uri:Url, ?fields) {
     this.method = method;
     this.host = host;
     
-    if (uri == null) uri = '/';
-    else if (uri.charAt(0) != '/')
-      uri = '/$uri';
+    if (uri == null) 
+      uri = '/';
       
+    @:privateAccess {
+      uri = new Url({
+        path: switch (uri.path:String) {
+          case null | '': '/';
+          case _.charAt(0) => '/': uri.path;
+          case v: '/$v';
+        },
+        query: uri.query,
+        payload: null,
+      });
+      Url.makePayload(cast uri);
+    };
+    
     this.uri = uri;
     
     super(fields);
   }
   
-  public function fullUri() {    
+  public function fullUri() {
     return '//$host$uri';//TODO: this should somehow be provided by tink_url
   }
   
@@ -79,7 +110,7 @@ class OutgoingRequestHeader extends Header {
   }
 }
 
-typedef OutgoingRequest = Message<OutgoingRequestHeader, IdealSource>;
+class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}
 
 class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody> {
   
