@@ -11,6 +11,11 @@ typedef ContainerInterface = Int -> {function kill(): Void;};
 
 class Context {
   
+  #if php
+	static function __init__()
+		untyped __call__('ini_set', 'xdebug.max_nesting_level', 100000);
+	#end
+  
   static inline var RUN = 'RUN_SERVER';
   
   #if neko
@@ -46,8 +51,9 @@ class Context {
       var code = ProcessTools.travix('php', mainArgs(port, 'php')).exitCode();
       if (code != 0) 
         throw 'Unable to build php server';
+      FileSystem.rename('bin/php/index.php', 'bin/php/server.php');
       setEnv();
-      return ProcessTools.streamAll('php', ['-S', '127.0.0.1:'+port, 'bin/php/server/index.php']);
+      return ProcessTools.streamAll('php', ['-S', '127.0.0.1:'+port, 'bin/php/server.php']);
     },
     
     'neko-tools' => function(port) {

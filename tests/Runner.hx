@@ -30,7 +30,10 @@ class Runner extends buddy.SingleSuite {
       it('should respond', function (done) 
         request({uri: '/'}, function (res)
           return toData(res).map(function(data: Data) {
-            data.uri.should.be('/');
+            if (data == null) 
+              fail('No response data');
+            else
+              data.uri.should.be('/');
             return Noise;
           })
         ).handle(done)
@@ -39,7 +42,10 @@ class Runner extends buddy.SingleSuite {
       it('should return the http method', function (done) 
         request({uri: '/', method: GET}, function (res)
           return toData(res).map(function(data: Data) {
-            data.method.should.be('GET');
+            if (data == null) 
+              fail('No response data');
+            else
+              data.method.should.be('GET');
             return Noise;
           })
         ).handle(done)

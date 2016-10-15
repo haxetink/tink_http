@@ -22,11 +22,11 @@ install:
   - haxelib run travix install
 
 script:
-  # Test all clients
-  - haxe test.hxml -D containers=node -D targets=php,node,neko,java
+  # Test all quite clients
+  - haxe test.hxml -D containers=node -D targets=php,node,neko
 
   # Test servers
-  - haxe test.hxml -D containers=php -D targets=php
+  - haxe test.hxml -D containers=php -D targets=neko
   - haxe test.hxml -D containers=node -D targets=node
   - haxe test.hxml -D containers=neko-tools -D targets=neko
   - haxe test.hxml -D containers=neko-mod -D targets=neko
