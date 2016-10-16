@@ -3,7 +3,6 @@ import neko.vm.Thread;
 import sys.net.Host;
 import sys.net.Socket;
 import sys.io.File;
-import Ansi.report;
 
 class RunTests {
 	
@@ -26,12 +25,12 @@ class RunTests {
         
       var server = Context.containers.get(container);
       try {
-        Sys.println(Ansi.text(Cyan, '>> Building container $container'));
+        Sys.println(Ansi.text(Cyan, '\n>> Building container $container'));
         var process = server(port);
         waitForConnection(port);
         
         for (target in targets.split(',')) {
-          report('Running target $target');
+          Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
           var runner = ProcessTools.travix(target, ['-lib buddy', '-D port=$port', '-main Runner']);
           var code = runner.exitCode();
           if (code != 0)
@@ -42,7 +41,6 @@ class RunTests {
         
         close(port);
         process.kill();
-        report('Stopped container $container');
       } catch(e: Dynamic) {
         Sys.println(e);
         Sys.print(CallStack.toString(CallStack.exceptionStack()));

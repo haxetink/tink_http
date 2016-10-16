@@ -16,9 +16,6 @@ class Ansi {
   public static function text(color: AnsiColor, text: String)
     return '\x1B[3${color}m${text}\x1B[39m';
     
-  public static function report(msg)
-    Sys.println(text(Green, '>> $msg'));
-    
   public static function fail(msg)
     Sys.println(text(Red, '>> Failed: $msg'));
   

@@ -61,7 +61,7 @@ class Runner extends buddy.SingleSuite {
       try
         data = Json.parse(raw)
       catch (e: Dynamic)
-        throw 'Could not parse response as json:\n$raw\n\n$e';
+        throw 'Could not parse response as json:\n"$raw"\n\n$e';
       return data;
     });
   

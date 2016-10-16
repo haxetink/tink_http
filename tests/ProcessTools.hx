@@ -24,11 +24,10 @@ class ProcessTools {
     var stdout = Sys.stdout();
     Thread.create(function()
       while (true)
-    try {
-      stdout.writeByte(input.readByte());
-      stdout.flush();
-    } catch (e: Eof) 
-      break
+        try
+          Sys.println(input.readLine())
+        catch (e: Eof) 
+          break
     );
   }
   
