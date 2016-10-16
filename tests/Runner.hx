@@ -1,91 +1,99 @@
+import tink.http.Client;
 import tink.http.Header.HeaderField;
 import tink.http.Method;
-import tink.http.Multipart;
 import tink.http.Request;
-import tink.io.IdealSource;
-import tink.url.Host;
+import tink.http.Response.IncomingResponse;
 import haxe.Json;
-import tink.http.Response;
 
 using buddy.Should;
 using tink.CoreApi;
 
 using Lambda;
 
-typedef Request = {
-  ?method: Method,
-  uri: String,
-  ?headers: Array<HeaderField>,
-  ?body: String
+typedef Target = {
+  name: String, client: Client
 }
 
 @colorize
 class Runner extends buddy.SingleSuite {
   
-  var clients = Context.clients.array();
-    
+  var clients = [
+    for (key in Context.clients.keys())
+      {name: key, client: Context.clients.get(key)}
+  ];
+   
   public function new() {
-    describe('tink_http', {
-    
-      it('should respond', function (done) 
-        request({uri: '/'}, function (res)
-          return toData(res).map(function(data: Data) {
-            if (data == null) 
-              fail('No response data');
-            else
-              data.uri.should.be('/');
-            return Noise;
-          })
-        ).handle(done)
-      );
+    function test(target: Target) {
       
-      it('should return the http method', function (done) 
-        request({uri: '/', method: GET}, function (res)
-          return toData(res).map(function(data: Data) {
-            if (data == null) 
-              fail('No response data');
-            else
-              data.method.should.be('GET');
-            return Noise;
+      function request(data: ClientRequest)
+        return target.client.request(data).flatMap(response);
+      
+      describe('client ${target.name}', {
+        
+        it('server should set the http method', function(done)
+          request({url: '/'}).handle(function(res) {
+            res.data.should.not.be(null);
+            res.data.method.should.be(Method.GET);
+            done();
           })
-        ).handle(done)
-      );
+        );
+        
+        it('server should set the ip', function(done)
+          request({url: '/'}).handle(function(res) {
+            res.data.should.not.be(null);
+            res.data.ip.should.endWith('127.0.0.1');
+            done();
+          })
+        );
+        
+        it('server should set the url', function(done)
+          request({url: '/uri/path?query=a&param=b'}).handle(function(res) {
+            res.data.should.not.be(null);
+            res.data.uri.should.be('/uri/path?query=a&param=b');
+            done();
+          })
+        );
+        
+        it('server should set headers', function(done)
+          request({
+            url: '/uri/path?query=a&param=b', 
+            headers: [
+              'x-header-a' => 'a',
+              'x-header-b' => '123'
+            ]
+          }).handle(function(res) {
+            res.data.should.not.be(null);
+            var headers = res.data.headers.map(function (pair)
+              return '${pair.name}: ${pair.value}'
+            );
+            headers.should.contain('x-header-a: a');
+            headers.should.contain('x-header-b: 123');
+            done();
+          })
+        );
+      
+      });
+    }
     
-    });
+    describe('tink_http',
+      for (target in clients) test(target)
+    );
   }
   
-  function toData(res: IncomingResponse): Future<Data>
-    return res.body.all().map(function (o) {
-      var raw: String = o.sure().toString();
-      var data: Data = null;
-      try
-        data = Json.parse(raw)
-      catch (e: Dynamic)
-        throw 'Could not parse response as json:\n"$raw"\n\n$e';
-      return data;
-    });
-  
-  function request(req: Request, test: IncomingResponse -> Future<Noise>)
-    return Future.ofMany(clients.map(function(client) {
-      var fields = switch req.headers {
-        case null: [];
-        case v: v.copy();
+  function response(res: IncomingResponse): Future<{data: Data, res: IncomingResponse}>
+    return IncomingResponse.readAll(res).map(function (o) 
+      return switch o {
+        case Success(bytes):
+          var body = bytes.toString();
+          var data = null;
+          try 
+            data = Json.parse(body)
+          catch (e: Dynamic)
+            throw 'Could not parse response as json:\n"$body"';
+          {data: data, res: res}
+        default:
+          {data: null, res: res}
       }
-      if (req.body == null) 
-        req.body = '';
-      if (req.method == null) 
-        req.method = GET;
-      var outgoing = new OutgoingRequest(new OutgoingRequestHeader(req.method, new Host('127.0.0.1', Std.parseInt(Env.getDefine('port'))), req.uri, fields), req.body);
-      switch req.body.length {
-        case 0:
-        case v:
-          switch outgoing.header.get('content-length') {
-            case []:
-              fields.push(new HeaderField('content-length', Std.string(v)));
-            default:
-          }
-      }
-      return client.request(outgoing).flatMap(test);
-    }));
+    );
     
 }

@@ -17,6 +17,6 @@ class Ansi {
     return '\x1B[3${color}m${text}\x1B[39m';
     
   public static function fail(msg)
-    Sys.println(text(Red, '>> Failed: $msg'));
+    Sys.println(text(Red, '>> $msg'));
   
 }

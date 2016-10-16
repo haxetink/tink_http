@@ -23,12 +23,12 @@ class Context {
   static function mainArgs(port: Int, server: String)
     return ['-D port=$port', '-D server=$server', '-main DummyServer'];
   
-  static function tcpArgs(port: Int)
-    return mainArgs(port, 'tcp').concat(['-lib tink_tcp', '-lib tink_runloop', '-D concurrent']);
+  static function tcpArgs(port: Int, concurrent)
+    return mainArgs(port, 'tcp').concat(['-lib tink_tcp', '-lib tink_runloop']).concat(concurrent?['-D concurrent']:[]);
     
-  static function tcpContainer(target: String)
+  static function tcpContainer(target: String, concurrent: Bool = false)
     return function(port: Int)
-      return ProcessTools.travix(target, tcpArgs(port));
+      return ProcessTools.travix(target, tcpArgs(port, concurrent));
       
   static function setEnv()
    Sys.putEnv(RUN, 'true');
@@ -77,9 +77,12 @@ class Context {
       }
     },
     
-    'neko' => tcpContainer('neko'),
-    'java' => tcpContainer('java'),
-    'cpp' => tcpContainer('cpp'),
+    'neko' => tcpContainer('neko', true),
+    'java' => tcpContainer('java', true),
+    'cpp' => tcpContainer('cpp', true),
+    
+    'node-tcp' => function(port: Int)
+      return ProcessTools.travix('node', mainArgs(port, 'tcp').concat(['-lib tink_tcp'])),
     'node' => function(port: Int)
       return ProcessTools.travix('node', mainArgs(port, 'node'))
   ];
@@ -111,10 +114,10 @@ class Context {
     
     #if (tink_tcp && tink_runloop)
     'tcp' => function (port, handler)
-      @:privateAccess tink.RunLoop.create(function()
+      #if tink_runloop @:privateAccess tink.RunLoop.create(function() #end
         new tink.http.containers.TcpContainer(port)
         .run(handler)
-      ),
+      #if tink_runloop ) #end, 
     #end
   
   ];
@@ -130,8 +133,40 @@ class Context {
     #end
     
     #if nodejs
-    'node' => new tink.http.Client.NodeClient(),
+    'node' => new NodeClient(),
+    #end
+    
+    #if (neko || nodejs)
+    'curl' => new CurlClient()
+    #end
+    
+    #if (js && !nodejs)
+    'js' => new JsClient()
     #end
   
   ];
+  
+  #if neko
+  
+  static function targetArgs(port: Int)
+    return ['-lib buddy', '-D port=$port', '-main Runner'];
+    
+  static function travixTarget(name, port: Int)
+    return ProcessTools.travix(name, targetArgs(port));
+    
+  static function tcpTarget(name, port: Int)
+    return ProcessTools.travix(name, targetArgs(port).concat(['-lib tink_tcp']));
+  
+  public static var targets: Map<String, Int -> Process> = [
+    'neko' => travixTarget.bind('neko'),
+    'node' => travixTarget.bind('node'),
+    'php' => travixTarget.bind('php'),
+    'java' => travixTarget.bind('java'),
+    'cpp' => travixTarget.bind('cpp'),
+    'js' => travixTarget.bind('js'),
+    
+    'neko-tcp' => tcpTarget.bind('neko'),
+  ];
+  
+  #end
 }

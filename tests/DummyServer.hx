@@ -25,12 +25,17 @@ class DummyServer {
   
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
     if (req.header.uri == '/close') {
+      Sys.println('>> Closing server');
       Sys.exit(0);
       return null;
     }
     
     if (req.header.uri == '/active')
       return Future.sync(('ok': OutgoingResponse));
+      
+    #if (tink_runloop || nodejs)
+    Sys.print(Ansi.text(Cyan, '.'));
+    #end
 
     return switch req.body {
       case Plain(src):

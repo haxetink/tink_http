@@ -30,8 +30,12 @@ class RunTests {
         waitForConnection(port);
         
         for (target in targets.split(',')) {
+          if (!Context.targets.exists(target)) {
+            Ansi.fail('No such target: $target');
+            continue;
+          }
           Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
-          var runner = ProcessTools.travix(target, ['-lib buddy', '-D port=$port', '-main Runner']);
+          var runner = Context.targets.get(target)(port);
           var code = runner.exitCode();
           if (code != 0)
             Ansi.fail('$target failed');
@@ -66,13 +70,13 @@ class RunTests {
 	static function waitForConnection(port: Int) {
     var connected = false;
     Thread.create(function() {
-      var i = 120;
+      var i = 60*4;
 			while (i > 0) {
         i--;
         Sys.sleep(1);
       }
       if (!connected)
-        fail('Could not connect to server (timeout: 120s)');
+        fail('Could not connect to server (timeout: ${i}s)');
 		});
 		var i = 0;
 		while (i < 20) {
