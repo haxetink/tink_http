@@ -146,7 +146,7 @@ class PhpClient implements ClientObject {
             // protocol_version: // TODO: req does not define the version?
             header: req.header.fields.map(function(f) return f.toString()).join('\r\n') + '\r\n',
             method: req.header.method,
-            content: bytes.getData().toString(),
+            content: cast bytes.getData()
           }),
         });
         var context = untyped __call__('stream_context_create', options);

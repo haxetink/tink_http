@@ -1,4 +1,0 @@
--lib tink_http
--cp tests
--main RunPhp
--php testphp
