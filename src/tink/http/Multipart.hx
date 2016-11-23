@@ -12,6 +12,7 @@ import tink.streams.Stream;
 import tink.streams.StreamStep;
 using tink.CoreApi;
 using Lambda;
+using StringTools;
 
 class Multipart {
   
@@ -56,7 +57,7 @@ class Multipart {
       case [Plain(src), Success( { type: 'multipart', extension: _['boundary'] => boundary } )]:
         Some(
           if (boundary != null)
-            parseSource(src, boundary);
+            parseSource(src, boundary.startsWith('"') && boundary.endsWith('"') ? boundary.substr(1, boundary.length - 2) : boundary);
           else
             Stream.failure(new Error(UnprocessableEntity, 'No multipart boundary given'))
         );
