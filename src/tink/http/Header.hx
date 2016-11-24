@@ -24,24 +24,16 @@ class ContentType {
   static public function ofString(s:String) {
     var ret = new ContentType();
     
-    inline function setType(max) 
-      switch s.indexOf('/') {
-        case -1:
-          ret.type = s;
-        case pos:
-          ret.type = s.substring(0, pos);
-          ret.subtype = s.substring(pos + 1, max);
-      }
-    
-      
-    switch s.indexOf(';') {
-      case -1: 
-        setType(s.length);
-      case pos: 
-        setType(pos);
-        for (p in Query.parseString(s, ';', pos + 1))
-          ret.extension[p.name] = p.value;
+    var parsed = (s:HeaderValue).parse();
+    var value = parsed[0].value;
+    switch value.indexOf('/') {
+      case -1:
+        ret.type = value;
+      case pos:
+        ret.type = value.substring(0, pos);
+        ret.subtype = value.substring(pos + 1);
     }
+    for(ext in parsed[0].extensions) ret.extension.set(ext.name, ext.value);
     
     return ret;
   }
@@ -93,7 +85,7 @@ abstract HeaderValue(String) from String to String {
           {
             value: v.substr(0, i),
             extensions: [for (p in Query.parseString(v, ';', i + 1)) 
-              new Named(p.value, switch p.value.toString() {
+              new Named(p.name, switch p.value.toString() {
                 case quoted if (quoted.charCodeAt(0) == '"'.code): quoted.substr(1, quoted.length - 2);//TODO: find out how exactly escaping and what not works
                 case v: v;
               })

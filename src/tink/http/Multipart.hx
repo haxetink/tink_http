@@ -57,7 +57,7 @@ class Multipart {
       case [Plain(src), Success( { type: 'multipart', extension: _['boundary'] => boundary } )]:
         Some(
           if (boundary != null)
-            parseSource(src, boundary.startsWith('"') && boundary.endsWith('"') ? boundary.substr(1, boundary.length - 2) : boundary);
+            parseSource(src, boundary);
           else
             Stream.failure(new Error(UnprocessableEntity, 'No multipart boundary given'))
         );
