@@ -12,7 +12,6 @@ import tink.streams.Stream;
 import tink.streams.StreamStep;
 using tink.CoreApi;
 using Lambda;
-using StringTools;
 
 class Multipart {
   
