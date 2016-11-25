@@ -33,7 +33,7 @@ class ContentType {
         ret.type = value.substring(0, pos);
         ret.subtype = value.substring(pos + 1);
     }
-    for(ext in parsed[0].extensions) ret.extension.set(ext.name, ext.value);
+    ret.extension = parsed[0].extensions;
     
     return ret;
   }
@@ -70,27 +70,25 @@ class Header {
 abstract HeaderValue(String) from String to String {
         
   public function getExtension():Map<String, String>
-    return [for(e in parse()[0].extensions) e.name => e.value.toString()];
+    return parse()[0].extensions;
       
   public function parse()
+    return parseWith(function(_, params) return [for(p in params) p.name => switch p.value.toString() {
+      case quoted if (quoted.charCodeAt(0) == '"'.code): quoted.substr(1, quoted.length - 2);//TODO: find out how exactly escaping and what not works
+      case v: v;
+    }]);
+    
+  public function parseWith<T>(parseExtension:String->Iterator<QueryStringParam>->T)
     return [for(v in this.split(',')) {
       v = v.trim();
-      switch v.indexOf(';') {
-        case -1:
-          {
-            value: v,
-            extensions: [],
-          }
-        case i:
-          {
-            value: v.substr(0, i),
-            extensions: [for (p in Query.parseString(v, ';', i + 1)) 
-              new Named(p.name, switch p.value.toString() {
-                case quoted if (quoted.charCodeAt(0) == '"'.code): quoted.substr(1, quoted.length - 2);//TODO: find out how exactly escaping and what not works
-                case v: v;
-              })
-            ],
-          };
+      var i = switch v.indexOf(';') {
+        case -1: v.length;
+        case i: i;
+      }
+      var value = v.substr(0, i);
+      {
+        value: value,
+        extensions: parseExtension(value, Query.parseString(v, ';', i + 1)),
       }
     }];
   
