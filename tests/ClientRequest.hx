@@ -23,7 +23,7 @@ abstract ClientRequest(RequestData) {
     return new ClientRequest(data);
     
   function fields() {
-    #if nodejs // TODO: setting content-length fails for clients other than nodejs?
+    #if nodejs // TODO: setting content-length fails for certain combinations of clients/servers
     if (this.body.length > 0) {
       var length = Bytes.ofString(this.body).length;
       this.headers.set('content-length', '${length}');

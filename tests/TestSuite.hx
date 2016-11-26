@@ -33,7 +33,7 @@ class TestSuite extends buddy.BuddySuite {
             throw 'Could not parse response as json:\n"$body"';
           {data: data, res: res}
         default:
-          {data: null, res: res}
+          throw 'Could not read response body';
       }
     );
     

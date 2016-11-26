@@ -53,7 +53,11 @@ class DummyServer {
             case Plain(body): {type: 'plain', content: body};
             case Parsed(parts): {type: 'parsed', parts: [
               for (part in parts) {
-                name: part.name
+                name: part.name,
+                value: switch part.value {
+                  case Value(s): s;
+                  case File(u): u.fileName + '=' + u.mimeType;
+                }
               }
             ]};
             case None: {type: 'none'};

@@ -8,18 +8,18 @@ using buddy.Should;
 
 class TestBody extends TestSuite {
   
-  var utf8 = "काचं शक्नोम्यत्तुम् । नोपहिनस्ति माम् ॥";
-  
-  var multipart = [
-    '----tink_http',
+  static var utf8 = "काचं शक्नोम्यत्तुम् । नोपहिनस्ति माम् ॥";
+  static var boundary = '----tink_http';
+  static var multipart = [
+    '--'+boundary,
     'Content-Disposition: form-data; name="a"',
     '',
     'b',
-    '----tink_http',
+    '--'+boundary,
     'Content-Disposition: form-data; name="c"',
     '',
     'd',
-    '----tink_http',
+    '--'+boundary+'--'
   ].join('\n');
 
   public function new() {
@@ -32,6 +32,7 @@ class TestBody extends TestSuite {
         
         it('server should return body', function(done)
           request({url: '/', method: POST, body: 'hello'}).handle(function(res) {
+            res.data.should.not.be(null);
             res.data.body.content.should.be('hello');
             done();
           })
@@ -39,6 +40,7 @@ class TestBody extends TestSuite {
         
         it('server should return utf-8 body', function(done)
           request({url: '/', method: POST, body: utf8}).handle(function(res) {
+            res.data.should.not.be(null);
             res.data.body.content.should.be(utf8);
             done();
           })
@@ -52,6 +54,7 @@ class TestBody extends TestSuite {
             ],
             body: 'a=123&b='+utf8
           }).handle(function(res) {
+            res.data.should.not.be(null);
             res.data.body.content.should.be('a=123&b='+utf8);
             done();
           })
@@ -61,15 +64,23 @@ class TestBody extends TestSuite {
           request({
             url: '/', method: POST, 
             headers: [
-              'content-type' => 'multipart/form-data; boundary=----tink_http'
+              'content-type' => 'multipart/form-data; boundary='+boundary
             ],
             body: multipart
           }).handle(function(res) {
+            res.data.should.not.be(null);
             switch res.data.body.type {
               case 'plain':
                 res.data.body.content.should.be(multipart);
               case 'parsed':
-                res.data.body.parts.should.be([]);
+                var expected = [
+                  {name: 'a', value: 'b'},
+                  {name: 'c', value: 'd'}
+                ];
+                switch deepequal.DeepEqual.compare(expected, res.data.body.parts) {
+                  case Failure(f): fail(f.message);
+                  default:
+                }
               default: return fail();
             }
             done();

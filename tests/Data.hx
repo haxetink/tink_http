@@ -5,7 +5,7 @@ typedef Data = {
 	headers: Array<{name:String, value:String}>,
 	body: {
     type: String, //plain/parsed/none
-    ?parts: Array<{name: String}>,
+    ?parts: Array<{name: String, value: String}>,
     ?content: String
   }
 }

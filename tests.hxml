@@ -1,2 +1,3 @@
 -cp tests
 -lib buddy
+-lib deep_equal

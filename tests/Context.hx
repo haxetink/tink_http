@@ -155,7 +155,7 @@ class Context {
   #if neko
   
   static function targetArgs(port: Int)
-    return ['-lib buddy', '-D port=$port', '-main Runner'];
+    return ['-lib buddy', '-lib deep_equal', '-D port=$port', '-main Runner'];
     
   static function travixTarget(name, port: Int)
     return ProcessTools.travix(name, targetArgs(port));
