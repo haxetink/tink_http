@@ -3,5 +3,9 @@ typedef Data = {
 	ip: String,
 	method: String,
 	headers: Array<{name:String, value:String}>,
-	body: String
+	body: {
+    type: String, //plain/parsed/none
+    ?parts: Array<{name: String}>,
+    ?content: String
+  }
 }

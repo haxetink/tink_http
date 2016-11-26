@@ -6,8 +6,16 @@ import tink.io.Buffer;
 import tink.io.Sink;
 import haxe.io.BytesOutput;
 import tink.io.Worker;
+import tink.http.StructuredBody;
+import haxe.Json;
 
 using tink.CoreApi;
+
+enum ParsedRequestBody {
+  Plain(body: String);
+  Parsed(parts: StructuredBody);
+  None;
+}
 
 class DummyServer {
   
@@ -23,7 +31,7 @@ class DummyServer {
     main(port, handleRequest);
   }
   
-  static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
+  static public function handleRequest(req: IncomingRequest): Future<OutgoingResponse> {
     if (req.header.uri == '/close') {
       Sys.println('>> Closing server');
       Sys.exit(0);
@@ -33,47 +41,44 @@ class DummyServer {
     if (req.header.uri == '/active')
       return Future.sync(('ok': OutgoingResponse));
       
-    #if (tink_runloop || nodejs)
-    Sys.print(Ansi.text(Cyan, '.'));
-    #end
-
-    return switch req.body {
-      case Plain(src):
-        src.all().map(function (o) return switch o {
-          case Success(body):
-            var data:Data = {
-              uri: req.header.uri.toString(),
-              ip: req.clientIp,
-              method: req.header.method,
-              headers: [for (h in req.header.fields) { name: h.name, value: h.value } ], 
-              body: body.toString()
-            }
-            OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify(data)), 'application/json');
-          case Failure(e):
-            new OutgoingResponse(
-            new ResponseHeader(e.code, e.message, [new HeaderField('content-type', 'application/json')]),
-              haxe.Json.stringify({
-                error: true,
-                code: e.code, 
-                message: e.message
-              })
-            );
-        });
-      case Parsed(parts):
-        var data:Data = {
+    return parseBody(req)
+      .recover(function (e) return Future.sync(None))
+      .map(function (body) {
+        var data: Data = {
           uri: req.header.uri.toString(),
           ip: req.clientIp,
           method: req.header.method,
           headers: [for (h in req.header.fields) { name: h.name, value: h.value } ], 
-          body: haxe.Json.stringify([for (p in parts) {
-            name: p.name,
-            value: switch p.value {
-            case Value(s): s;
-            case File(u): u.fileName + '=' + u.mimeType;
-            }
-          }]),
-        };            
-        Future.sync(OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify(data)), 'application/json'));
+          body: switch body {
+            case Plain(body): {type: 'plain', content: body};
+            case Parsed(parts): {type: 'parsed', parts: [
+              for (part in parts) {
+                name: part.name
+              }
+            ]};
+            case None: {type: 'none'};
+          }
+        }
+        return 
+          OutgoingResponse.blob(
+            Bytes.ofString(Json.stringify(data)), 
+            'application/json'
+          );
+    });
+    
+  }
+  
+  static function parseBody(req: IncomingRequest): Promise<ParsedRequestBody> {
+    if (req.header.method == GET)
+      return None;
+    return switch req.body {
+      case Plain(src):
+        src.all().map(function (o) return switch o {
+          case Success(body): Success(Plain(body.toString()));
+          case Failure(e): Failure(e);
+        });
+      case Parsed(parts):
+        Parsed(parts);
     }
   }
   

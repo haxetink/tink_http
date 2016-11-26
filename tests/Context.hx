@@ -41,6 +41,9 @@ class Context {
     var code = ProcessTools.travix('neko', mainArgs(port, 'modneko')).exitCode();
     if (code != 0) 
       throw 'Unable to build mod neko server';
+    try
+      FileSystem.deleteFile('bin/neko/index.n')
+    catch(e: Dynamic) {}
     FileSystem.rename('bin/neko/tests.n', 'bin/neko/index.n');
     setEnv();
   }
@@ -51,6 +54,9 @@ class Context {
       var code = ProcessTools.travix('php', mainArgs(port, 'php')).exitCode();
       if (code != 0) 
         throw 'Unable to build php server';
+      try
+        FileSystem.deleteFile('bin/php/server.php')
+      catch(e: Dynamic) {}
       FileSystem.rename('bin/php/index.php', 'bin/php/server.php');
       setEnv();
       return ProcessTools.streamAll('php', ['-S', '127.0.0.1:'+port, 'bin/php/server.php']);
