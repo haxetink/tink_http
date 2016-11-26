@@ -16,7 +16,7 @@ class Context {
 		untyped __call__('ini_set', 'xdebug.max_nesting_level', 100000);
 	#end
   
-  static inline var RUN = 'RUN_SERVER';
+  static inline var RUN = 'RUN_TRAVIS';
   
   #if neko
   
@@ -31,10 +31,10 @@ class Context {
       return ProcessTools.travix(target, tcpArgs(port, concurrent));
       
   static function setEnv()
-   Sys.putEnv(RUN, 'true');
+   Sys.putEnv(RUN, '');
    
   static function clearEnv()
-   Sys.putEnv(RUN, '');
+   Sys.putEnv(RUN, 'true');
    
   static function buildModNeko(port: Int) {
     clearEnv();
@@ -101,14 +101,14 @@ class Context {
   
     #if php
     'php' => function (port, handler) {
-      if (Sys.getEnv(RUN) != 'true') return;
+      if (Sys.getEnv(RUN) == 'true') return;
       tink.http.containers.PhpContainer.inst.run(handler);
     },
     #end
     
     #if neko
     'modneko' => function (port, handler) {
-      if (Sys.getEnv(RUN) != 'true') return;
+      if (Sys.getEnv(RUN) == 'true') return;
       tink.http.containers.ModnekoContainer.inst.run(handler);
     },
     #end
