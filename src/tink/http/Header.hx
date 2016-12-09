@@ -92,6 +92,11 @@ abstract HeaderValue(String) from String to String {
       }
     }];
   
+  static var DAYS = 'Sun,Mon,Tue,Wen,Thu,Fri,Sat'.split(',');
+  static var MONTHS = 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
+  @:from static public function ofDate(d:Date):HeaderValue
+    return DateTools.format(d, DAYS[d.getDay()] + ", %d-" + MONTHS[d.getMonth()] + "-%Y %H:%M:%S GMT");
+  
   @:from static public function ofInt(i:Int):HeaderValue
     return Std.string(i);
 }
@@ -118,8 +123,6 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
       case v: 
         new HeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
     }
-  static var DAYS = 'Sun,Mon,Tue,Wen,Thu,Fri,Sat'.split(',');
-  static var MONTHS = 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
   
   /**
    * Constructs a Set-Cookie header. Please note that cookies are HttpOnly by default. 
@@ -142,7 +145,7 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
     buf.add(key.urlEncode() + '=' + value.urlEncode());
     
     if (options.expires != null) 
-      addPair("expires=", DateTools.format(options.expires, DAYS[options.expires.getDay()] + ", %d-"+MONTHS[options.expires.getMonth()]+"-%Y %H:%M:%S GMT"));
+      addPair("expires=", (options.expires:HeaderValue));
     
     addPair("domain=", options.domain);
     addPair("path=", options.path);
