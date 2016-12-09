@@ -10,8 +10,10 @@ typedef HandlerFunction = IncomingRequest->Future<OutgoingResponse>;
 @:forward
 abstract Handler(HandlerObject) from HandlerObject to HandlerObject {
   
+  #if tink_http_middleware
   public inline function applyMiddleware(m:Middleware)
     return m.apply(this);
+  #end
   
   @:from
   public static inline function ofFunc(f:HandlerFunction):Handler
