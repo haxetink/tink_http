@@ -95,7 +95,7 @@ abstract HeaderValue(String) from String to String {
   static var DAYS = 'Sun,Mon,Tue,Wen,Thu,Fri,Sat'.split(',');
   static var MONTHS = 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
   @:from static public function ofDate(d:Date):HeaderValue
-    return DateTools.format(d, DAYS[d.getDay()] + ", %d-" + MONTHS[d.getMonth()] + "-%Y %H:%M:%S GMT");
+    return DateTools.format(d, DAYS[d.getDay()] + ", %d " + MONTHS[d.getMonth()] + " %Y %H:%M:%S GMT");
   
   @:from static public function ofInt(i:Int):HeaderValue
     return Std.string(i);
