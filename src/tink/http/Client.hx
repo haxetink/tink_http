@@ -46,7 +46,10 @@ class StdClient implements ClientObject {
   public function request(req:OutgoingRequest):Future<IncomingResponse> 
     return Future.async(function (cb) {
             
-      var r = new haxe.Http('http:'+req.header.fullUri());
+      var r = new haxe.Http(
+        'http'+(req.header.host.port == 443 ? 's' : '')+
+        ':'+req.header.fullUri()
+      );
       
       function send(post) {
         var code = 200;
