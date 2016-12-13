@@ -59,7 +59,7 @@ class StdClient implements ClientObject {
                 case null: [];
                 case v:
                   [for (name in v.keys()) 
-                    new HeaderField(name, v[name])
+                    new HeaderField(name, v.get(name))
                   ];
               }
             #else
