@@ -7,9 +7,29 @@ using tink.CoreApi;
 
 typedef HandlerFunction = IncomingRequest->Future<OutgoingResponse>;
 
-abstract Handler(HandlerFunction) from HandlerFunction to HandlerFunction {
+@:forward
+abstract Handler(HandlerObject) from HandlerObject to HandlerObject {
   
-  public inline function process(req) 
-    return this(req);
+  #if tink_http_middleware
+  public inline function applyMiddleware(m:Middleware)
+    return m.apply(this);
+  #end
+  
+  @:from
+  public static inline function ofFunc(f:HandlerFunction):Handler
+    return new SimpleHandler(f);
+}
+
+class SimpleHandler implements HandlerObject {
+  var f:HandlerFunction;
+  
+  public function new(f)
+    this.f = f;
     
+  public function process(req:IncomingRequest):Future<OutgoingResponse>
+    return f(req);
+}
+
+interface HandlerObject {
+  function process(req:IncomingRequest):Future<OutgoingResponse>;
 }
