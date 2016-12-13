@@ -36,7 +36,7 @@ using tink.CoreApi;
 		}
 		```
 	
-	2. Compile with `haxe Main -java bin/java`.
+	2. Compile with `haxe Main -java bin/java -java-lib path/to/servlet-api.jar -lib tink_http`.
 	   Don't put `-main` otherwise the compiler will complain for a missing entry point,
 	   Move the everything under `bin/java/obj` to where your Servlet Container serves.
 	   For Tomcat it will be `<tomcat installation path>/webapps/ROOT/WEB-INF/classes`
