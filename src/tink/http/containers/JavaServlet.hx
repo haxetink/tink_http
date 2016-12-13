@@ -27,7 +27,7 @@ using tink.CoreApi;
 		using tink.CoreApi;
 
 		class Main extends JavaServlet {
-			override function handle(req:IncomingRequest):Future<OutgoingResponse>
+			override function process(req:IncomingRequest):Future<OutgoingResponse>
 				return Future.sync(('Hello, World!':OutgoingResponse));
 		}
 		```
