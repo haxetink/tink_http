@@ -38,15 +38,23 @@ interface ClientObject {
   function request(req:OutgoingRequest):Future<IncomingResponse>;
 }
 
+class SecureStdClient extends StdClient {
+  public function new() {
+    super();
+    protocol = 'https';
+  }
+}
+
 class StdClient implements ClientObject {
   var worker:Worker;
+  var protocol:String = 'http';
   public function new(?worker:Worker) {
     this.worker = worker.ensure();
   }
   public function request(req:OutgoingRequest):Future<IncomingResponse> 
     return Future.async(function (cb) {
             
-      var r = new haxe.Http('http:'+req.header.fullUri());
+      var r = new haxe.Http(protocol+':'+req.header.fullUri());
       
       function send(post) {
         var code = 200;
@@ -99,11 +107,23 @@ class StdClient implements ClientObject {
 }
 
 #if tink_tcp
+class SecureTcpClient extends TcpClient {
+  public function new() {
+    super();
+    secure = true;
+  }
+}
+
 class TcpClient implements ClientObject { 
+  var secure = false;
   public function new() {}
   public function request(req:OutgoingRequest):Future<IncomingResponse> {
     
-    var cnx = Connection.establish({ host: req.header.host.name, port: req.header.host.port });
+    var cnx = Connection.establish({
+      host: req.header.host.name, 
+      port: req.header.host.port,
+      secure: secure
+    });
     
     req.body.prepend(req.header.toString()).pipeTo(cnx.sink).handle(function (x) {
       cnx.sink.close();//TODO: implement connection reuse
