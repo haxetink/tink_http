@@ -6,6 +6,7 @@ import tink.http.Container;
 import tink.http.Request;
 import tink.http.Response;
 import tink.http.Header;
+import tink.http.Handler;
 import tink.io.Source;
 import tink.io.Sink;
 import tink.io.java.*;
@@ -59,11 +60,11 @@ using tink.CoreApi;
 	
 **/
 
-class JavaServlet extends HttpServlet {
+class JavaServlet extends HttpServlet implements HandlerObject {
 	
 	@:overload
 	override function service(req:HttpServletRequest, res:HttpServletResponse) {
-		handle(
+		process(
 			new IncomingRequest(
 				req.getRemoteAddr(),
 				new IncomingRequestHeader(
@@ -95,7 +96,7 @@ class JavaServlet extends HttpServlet {
 		});
 	}
 	
-	function handle(req:IncomingRequest):Future<OutgoingResponse> {
+	public function process(req:IncomingRequest):Future<OutgoingResponse> {
 		return Future.sync(('Done':OutgoingResponse));
 	}
 }
