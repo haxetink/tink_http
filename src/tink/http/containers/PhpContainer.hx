@@ -44,30 +44,35 @@ class PhpContainer implements Container {
       getServerVar('REQUEST_URI'),
       '1.1', //TODO: do something meaningful here,
       {
-        var h = php.Lib.hashOfAssociativeArray(untyped __php__("$_SERVER"));
-        var headers = [];
-        inline function add(name, value) headers.push(new HeaderField(name, value));
-        for(k in h.keys()) {
-          var key = switch k {
-            case 'CONTENT_TYPE' if(!h.exists('HTTP_CONTENT_TYPE')): 'Content-Type';
-            case 'CONTENT_LENGTH' if(!h.exists('HTTP_CONTENT_LENGTH')): 'Content-Length';
-            case 'CONTENT_MD5' if(!h.exists('HTTP_CONTENT_MD5')): 'Content-Md5';
-            case _ if(k.substr(0,5) == "HTTP_"): k.substr(5).replace('_', '-');
-            case _: continue;
+        if (untyped __call__('function_exists', 'getallheaders')) {
+          var raw = php.Lib.hashOfAssociativeArray(untyped __call__('getallheaders'));
+          [for (name in raw.keys()) new HeaderField(name, raw[name])];
+        } else {
+          var h = php.Lib.hashOfAssociativeArray(untyped __php__("$_SERVER"));
+          var headers = [];
+          inline function add(name, value) headers.push(new HeaderField(name, value));
+          for(k in h.keys()) {
+            var key = switch k {
+              case 'CONTENT_TYPE' if(!h.exists('HTTP_CONTENT_TYPE')): 'Content-Type';
+              case 'CONTENT_LENGTH' if(!h.exists('HTTP_CONTENT_LENGTH')): 'Content-Length';
+              case 'CONTENT_MD5' if(!h.exists('HTTP_CONTENT_MD5')): 'Content-Md5';
+              case _ if(k.substr(0,5) == "HTTP_"): k.substr(5).replace('_', '-');
+              case _: continue;
+            }
+            add(key, h.get(k));
           }
-          add(key, h.get(k));
-        }
-        if(!h.exists('HTTP_AUTHORIZATION')) {
-          if(h.exists('REDIRECT_HTTP_AUTHORIZATION')) {
-              add('Authorization', h.get('REDIRECT_HTTP_AUTHORIZATION'));
-          } else if(h.exists('PHP_AUTH_USER')) {
-              var basic = h.exists('PHP_AUTH_PW') ? h.get('PHP_AUTH_PW') : '';
-              add('Authorization', 'Basic ' + haxe.crypto.Base64.encode(haxe.io.Bytes.ofString(h.get('PHP_AUTH_USER'))).toString() + ':$basic');
-          } else if(h.exists('PHP_AUTH_DIGEST')) {
-              add('Authorization', h.get('PHP_AUTH_DIGEST'));
+          if(!h.exists('HTTP_AUTHORIZATION')) {
+            if(h.exists('REDIRECT_HTTP_AUTHORIZATION')) {
+                add('Authorization', h.get('REDIRECT_HTTP_AUTHORIZATION'));
+            } else if(h.exists('PHP_AUTH_USER')) {
+                var basic = h.exists('PHP_AUTH_PW') ? h.get('PHP_AUTH_PW') : '';
+                add('Authorization', 'Basic ' + haxe.crypto.Base64.encode(haxe.io.Bytes.ofString(h.get('PHP_AUTH_USER'))).toString() + ':$basic');
+            } else if(h.exists('PHP_AUTH_DIGEST')) {
+                add('Authorization', h.get('PHP_AUTH_DIGEST'));
+            }
           }
+          headers;
         }
-        headers;
       }
     );
     
