@@ -17,13 +17,15 @@ class ContentType {
   public var subtype(default, null):String = '*';
   public var extension(default, null):Map<String, String>;
   
+  public var str:String; // FIXME: weird compiler bug forces me to put `public`
+  
   function new() { 
     extension = new Map();
   }
   
   static public function ofString(s:String) {
     var ret = new ContentType();
-    
+    ret.str = s;
     var parsed = (s:HeaderValue).parse();
     var value = parsed[0].value;
     switch value.indexOf('/') {
@@ -36,6 +38,13 @@ class ContentType {
     ret.extension = parsed[0].extensions;
     
     return ret;
+  }
+  
+  public function toString() {
+    if(str == null) {
+      // unreachable because the only way to construct a ContentType is through `ofString`
+    }
+    return str;
   }
 }
 
