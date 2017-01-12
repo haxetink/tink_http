@@ -8,7 +8,7 @@ import tink.url.Query;
 using tink.CoreApi;
 using StringTools;
 
-class ContentType {
+class MimeType {
   public var fullType(get, never):String;
     inline function get_fullType()
       return '$type/$subtype';
@@ -22,7 +22,7 @@ class ContentType {
   }
   
   static public function ofString(s:String) {
-    var ret = new ContentType();
+    var ret = new MimeType();
     
     var parsed = (s:HeaderValue).parse();
     var value = parsed[0].value;
@@ -61,14 +61,14 @@ class Header {
     }
     
   public function contentType() 
-    return byName('content-type').map(ContentType.ofString);
+    return byName(ContentType).map(MimeType.ofString);
     
   public inline function iterator()
     return fields.iterator();
 }
 
 abstract HeaderValue(String) from String to String {
-        
+  
   public function getExtension():Map<String, String>
     return parse()[0].extensions;
       
@@ -101,7 +101,22 @@ abstract HeaderValue(String) from String to String {
     return Std.string(i);
 }
 
-abstract HeaderName(String) to String {
+@:enum abstract HeaderName(String) to String {
+  
+  public var Referer            = 'referer';
+  public var Host               = 'host';
+  
+  public var SetCookie          = 'set-cookie';
+  public var Cookie             = 'cookie';
+  
+  public var ContentType        = 'content-type';
+  public var ContentLength      = 'content-length';
+  public var ContentDisposition = 'content-disposition';
+  
+  public var Accept             = 'accept';
+  public var AcceptEncoding     = 'accept-encoding';
+  
+  public var Location           = 'location';
   
   inline function new(s) this = s;
   
@@ -153,7 +168,7 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
     if (options.secure) addPair("secure", "");
     if (options.scriptable != true) addPair("HttpOnly", "");
     
-    return new HeaderField('Set-Cookie', buf.toString());
+    return new HeaderField(SetCookie, buf.toString());
   }
 }
 
