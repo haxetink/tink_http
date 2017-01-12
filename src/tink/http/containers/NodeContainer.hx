@@ -98,7 +98,7 @@ private enum ServerKindBase {
 
 abstract ServerKind(ServerKindBase) from ServerKindBase to ServerKindBase {
   @:from
-  public static function fromInstance(server:Server):ServerKind
+  public static inline function fromInstance(server:Server):ServerKind
     return Instance(server);
     
   @:from
@@ -106,14 +106,14 @@ abstract ServerKind(ServerKindBase) from ServerKindBase to ServerKindBase {
     return Port(port);
   
   @:from
-  public static function fromHost(host:tink.url.Host):ServerKind
+  public static inline function fromHost(host:tink.url.Host):ServerKind
     return Host(host);
   
   @:from
-  public static function fromPath(path:String):ServerKind
+  public static inline function fromPath(path:String):ServerKind
     return Path(path);
   
   @:from
-  public static function fromFd(fd:{fd:Int}):ServerKind
+  public static inline function fromFd(fd:{fd:Int}):ServerKind
     return Fd(fd);
 }
