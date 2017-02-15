@@ -94,12 +94,12 @@ abstract OutgoingResponse(OutgoingResponseData) {
 class IncomingResponse extends Message<ResponseHeader, RealSource> {
   
   static public function readAll(res:IncomingResponse) 
-    return res.body.all() 
-      >> function (b:Bytes) 
-        return 
-          if (res.header.statusCode >= 400) 
-            Failure(Error.withData(res.header.statusCode, res.header.reason, b.toString()))
-          else
-            Success(b);
+    return res.body.all().next(function (b)
+      return 
+        if (res.header.statusCode >= 400) 
+          Failure(Error.withData(res.header.statusCode, res.header.reason, b.toString()))
+        else
+          Success(b)   
+    );
         
 }

@@ -36,8 +36,8 @@ abstract UploadedFile(UploadedFileBase) from UploadedFileBase to UploadedFileBas
         ;
         return (data : IdealSource).pipeTo(dest, { end: true } ).map(function (r) return switch r {
           case AllWritten: Success(Noise);
-          case SinkEnded: Failure(new Error("File $path closed unexpectedly"));
-          case SinkFailed(e): Failure(e);
+          case SinkEnded(_, _): Failure(new Error("File $path closed unexpectedly"));
+          case SinkFailed(e, _): Failure(e);
         });
       }
     }
