@@ -1,0 +1,5 @@
+# @install: echo local
+-D tink_tcp=0.0.0
+-cp ../tink_tcp/src
+
+-lib tink_io

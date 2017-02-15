@@ -1,6 +1,6 @@
 -lib tink_http
+-lib tink_tcp
 -lib hxnodejs
 -cp tests
 -main Test
 -js test.js
---no-output
