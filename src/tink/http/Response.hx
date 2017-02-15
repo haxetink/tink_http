@@ -34,15 +34,15 @@ class ResponseHeader extends Header {
     return ret.join('\r\n');
   }
   
-  static public function parser():StreamParser<ResponseHeader>
-    return new HeaderParser<ResponseHeader>(function (line, headers) 
-      return switch line.split(' ') {//TODO: we should probably not split here in the first place.
-        case v if(v.length >= 3):
-          Success(new ResponseHeader(Std.parseInt(v[1]), v.slice(2).join(' '), headers, v[0]));
-        default: 
-          Failure(new Error(UnprocessableEntity, 'Invalid HTTP response header'));
-      }
-    );    
+  // static public function parser():StreamParser<ResponseHeader>
+  //   return new HeaderParser<ResponseHeader>(function (line, headers) 
+  //     return switch line.split(' ') {//TODO: we should probably not split here in the first place.
+  //       case v if(v.length >= 3):
+  //         Success(new ResponseHeader(Std.parseInt(v[1]), v.slice(2).join(' '), headers, v[0]));
+  //       default: 
+  //         Failure(new Error(UnprocessableEntity, 'Invalid HTTP response header'));
+  //     }
+  //   );    
 }
 
 private class OutgoingResponseData extends Message<ResponseHeader, IdealSource> {}
@@ -91,7 +91,7 @@ abstract OutgoingResponse(OutgoingResponseData) {
   }
 }
 
-class IncomingResponse extends Message<ResponseHeader, Source> {
+class IncomingResponse extends Message<ResponseHeader, RealSource> {
   
   static public function readAll(res:IncomingResponse) 
     return res.body.all() 

@@ -2,7 +2,7 @@ package tink.http;
 
 import haxe.io.Bytes;
 import tink.io.IdealSource;
-import tink.io.Source;
+import tink.io.*;
 import tink.io.Sink;
 import tink.core.Named;
 using tink.CoreApi;
@@ -21,18 +21,17 @@ abstract UploadedFile(UploadedFileBase) from UploadedFileBase to UploadedFileBas
       fileName: name,
       mimeType: type,
       size: data.length,
-      read: function():Source return data,
+      read: function():RealSource return data,
       saveTo: function(path:String) {
         var name = 'File sink $path';
         
-        var dest:Sink = 
+        var dest:RealSink = 
           #if (nodejs && !macro)
             Sink.ofNodeStream(name, js.node.Fs.createWriteStream(path))
           #elseif sys
             Sink.ofOutput(name, sys.io.File.write(path))
           #else
-            null
-            //#error
+            #error
           #end
         ;
         return (data : IdealSource).pipeTo(dest, { end: true } ).map(function (r) return switch r {
@@ -50,6 +49,6 @@ typedef UploadedFileBase = {
   var mimeType(default, null):String;
   var size(default, null):Int;
   
-  function read():Source;
+  function read():RealSource;
   function saveTo(path:String):Surprise<Noise, Error>;
 }

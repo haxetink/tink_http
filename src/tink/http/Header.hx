@@ -170,86 +170,86 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
   }
 }
 
-class HeaderParser<T> extends ByteWiseParser<T> {
-  var header:T;
-  var fields:Array<HeaderField>;
-  var buf:StringBuf;
-  var last:Int = -1;
+// class HeaderParser<T> extends ByteWiseParser<T> {
+//   var header:T;
+//   var fields:Array<HeaderField>;
+//   var buf:StringBuf;
+//   var last:Int = -1;
   
-  var makeHeader:String->Array<HeaderField>->Outcome<T, Error>;
+//   var makeHeader:String->Array<HeaderField>->Outcome<T, Error>;
   
-  public function new(makeHeader) {
-    super();
-    this.buf = new StringBuf();
-    this.makeHeader = makeHeader;
-  }
+//   public function new(makeHeader) {
+//     super();
+//     this.buf = new StringBuf();
+//     this.makeHeader = makeHeader;
+//   }
   
-  static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
+//   static var INVALID = Failed(new Error(UnprocessableEntity, 'Invalid HTTP header'));  
         
-  override function read(c:Int):ParseStep<T> 
-    return
-      switch [last, c] {
-        case [_, -1]:
+//   override function read(c:Int):ParseStep<T> 
+//     return
+//       switch [last, c] {
+//         case [_, -1]:
           
-          nextLine();
+//           nextLine();
 
-        case ['\r'.code, '\n'.code]:
+//         case ['\r'.code, '\n'.code]:
           
-          nextLine();
+//           nextLine();
             
-        case ['\r'.code, '\r'.code]:
+//         case ['\r'.code, '\r'.code]:
           
-          buf.addChar(last);
-          Progressed;
+//           buf.addChar(last);
+//           Progressed;
           
-        case ['\r'.code, other]:
+//         case ['\r'.code, other]:
           
-          buf.addChar(last);
-          buf.addChar(other);
-          last = -1;
-          Progressed;
+//           buf.addChar(last);
+//           buf.addChar(other);
+//           last = -1;
+//           Progressed;
           
-        case [_, '\r'.code]:
+//         case [_, '\r'.code]:
           
-          last = '\r'.code;
-          Progressed;
+//           last = '\r'.code;
+//           Progressed;
           
-        case [_, other]:
+//         case [_, other]:
           
-          last = other;
-          buf.addChar(other);
-          Progressed;
-      }
+//           last = other;
+//           buf.addChar(other);
+//           Progressed;
+//       }
       
-  function nextLine() {
-    var line = buf.toString();
+//   function nextLine() {
+//     var line = buf.toString();
     
-    buf = new StringBuf();
-    last = -1;
+//     buf = new StringBuf();
+//     last = -1;
     
-    return
-      switch line {
-        case '':
-          if (header == null)
-            Progressed;
-          else
-            Done(header);
-        default:
-          if (header == null)
-            switch makeHeader(line, fields = []) {
-              case Success(null):
-                Done(this.header = null);
-              case Success(v): 
-                this.header = v;
-                Progressed;
-              case Failure(e):
-                Failed(e);
-            }
-          else {
-            fields.push(HeaderField.ofString(line));
-            Progressed;
-          }
-      }      
-    }
+//     return
+//       switch line {
+//         case '':
+//           if (header == null)
+//             Progressed;
+//           else
+//             Done(header);
+//         default:
+//           if (header == null)
+//             switch makeHeader(line, fields = []) {
+//               case Success(null):
+//                 Done(this.header = null);
+//               case Success(v): 
+//                 this.header = v;
+//                 Progressed;
+//               case Failure(e):
+//                 Failed(e);
+//             }
+//           else {
+//             fields.push(HeaderField.ofString(line));
+//             Progressed;
+//           }
+//       }      
+//     }
   
-}
+// }

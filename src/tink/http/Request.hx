@@ -119,13 +119,13 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
     super(header, body);
   }
   
-  static public function parse(clientIp, source:Source) 
-    return
-      source.parse(IncomingRequestHeader.parser()) >> function (parts) return new IncomingRequest(clientIp, parts.data, Plain(parts.rest));
+  // static public function parse(clientIp, source:Source) 
+  //   return
+  //     source.parse(IncomingRequestHeader.parser()) >> function (parts) return new IncomingRequest(clientIp, parts.data, Plain(parts.rest));
   
 }
 
 enum IncomingRequestBody {
-  Plain(source:Source);
+  Plain(source:RealSource);
   Parsed(parts:StructuredBody);
 }
