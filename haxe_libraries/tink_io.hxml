@@ -1,4 +1,4 @@
-# @install: lix download https://github.com/haxetink/tink_io/archive/9d58555fd81c1b7194e4285660249809b1d308b1.tar.gz as tink_io#0.0.0/9d58555fd81c1b7194e4285660249809b1d308b1
+# @install: echo local
 -D tink_io=0.0.0
 -cp ../tink_io/src
 

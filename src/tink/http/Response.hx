@@ -5,8 +5,8 @@ import haxe.io.BytesBuffer;
 import tink.core.Error;
 import tink.http.Message;
 import tink.http.Header;
-import tink.io.*;
 
+using tink.io.Source;
 using tink.CoreApi;
 
 class ResponseHeader extends Header {

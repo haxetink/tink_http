@@ -1,7 +1,6 @@
 package tink.http;
 
 import haxe.io.Bytes;
-import tink.io.*;
 import tink.http.Message;
 import tink.http.Header;
 import tink.url.Auth;
@@ -11,6 +10,7 @@ import tink.Url;
 
 
 using tink.CoreApi;
+using tink.io.Source;
 using StringTools;
 
 class IncomingRequestHeader extends Header {
