@@ -1,0 +1,6 @@
+# @install: lix download https://github.com/haxetink/tink_io/archive/9d58555fd81c1b7194e4285660249809b1d308b1.tar.gz as tink_io#0.0.0/9d58555fd81c1b7194e4285660249809b1d308b1
+-D pureio=0.0.0
+-cp ${HAXESHIM_LIBCACHE}/pureio/0.0.0/9d58555fd81c1b7194e4285660249809b1d308b1/src
+
+-lib tink_chunk
+-lib tink_streams
