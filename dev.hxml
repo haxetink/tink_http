@@ -1,1 +1,4 @@
 -lib tink_http
+-lib hxnodejs
+-cp tests
+-main Test

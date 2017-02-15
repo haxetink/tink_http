@@ -1,8 +1,6 @@
 package tink.http;
 
-import tink.core.Named.NamedWith;
 import tink.http.Header.HeaderField;
-import tink.io.StreamParser;
 import tink.url.Query;
 
 using tink.CoreApi;

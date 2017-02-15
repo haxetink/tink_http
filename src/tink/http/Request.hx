@@ -1,11 +1,9 @@
 package tink.http;
 
 import haxe.io.Bytes;
-import tink.http.Request.IncomingRequest;
 import tink.io.*;
 import tink.http.Message;
 import tink.http.Header;
-import tink.io.StreamParser;
 import tink.url.Auth;
 import tink.url.Host;
 import tink.url.Query;
@@ -44,15 +42,15 @@ class IncomingRequestHeader extends Header {
     return getCookies()[name];
   }
   
-  static public function parser():StreamParser<IncomingRequestHeader>
-    return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
-      return switch line.split(' ') {
-        case [method, url, protocol]:
-          Success(new IncomingRequestHeader(cast method, url, protocol, headers));
-        default: 
-          Failure(new Error(UnprocessableEntity, 'Invalid HTTP header'));
-      }
-    );
+  // static public function parser():StreamParser<IncomingRequestHeader>
+  //   return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
+  //     return switch line.split(' ') {
+  //       case [method, url, protocol]:
+  //         Success(new IncomingRequestHeader(cast method, url, protocol, headers));
+  //       default: 
+  //         Failure(new Error(UnprocessableEntity, 'Invalid HTTP header'));
+  //     }
+  //   );
 }
 
 class OutgoingRequestHeader extends Header {

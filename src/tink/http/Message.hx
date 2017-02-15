@@ -1,7 +1,5 @@
 package tink.http;
 
-import tink.io.Source;
-
 class Message<H:Header, B> {
   
   public var header(default, null):H;
