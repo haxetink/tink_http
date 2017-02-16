@@ -65,7 +65,7 @@ class TcpContainer implements Container {
                     });
                   
                   res.body.prepend(res.header.toString()).pipeTo(cnx.sink, { end: true }).handle(function (r) {
-                    
+
                     if (next != null)
                       next(); 
 
