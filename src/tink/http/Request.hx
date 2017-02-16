@@ -10,6 +10,7 @@ import tink.Url;
 
 
 using tink.CoreApi;
+using tink.io.StreamParser;
 using tink.io.Source;
 using StringTools;
 
@@ -42,15 +43,15 @@ class IncomingRequestHeader extends Header {
     return getCookies()[name];
   }
   
-  // static public function parser():StreamParser<IncomingRequestHeader>
-  //   return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
-  //     return switch line.split(' ') {
-  //       case [method, url, protocol]:
-  //         Success(new IncomingRequestHeader(cast method, url, protocol, headers));
-  //       default: 
-  //         Failure(new Error(UnprocessableEntity, 'Invalid HTTP header'));
-  //     }
-  //   );
+  static public function parser():StreamParser<IncomingRequestHeader>
+    return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
+      return switch line.split(' ') {
+        case [method, url, protocol]:
+          Success(new IncomingRequestHeader(cast method, url, protocol, headers));
+        default: 
+          Failure(new Error(UnprocessableEntity, 'Invalid HTTP header'));
+      }
+    );
 }
 
 class OutgoingRequestHeader extends Header {

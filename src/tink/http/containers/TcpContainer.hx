@@ -6,6 +6,7 @@ import tink.http.Request;
 import tink.http.Response;
 import tink.tcp.Connection;
 
+using tink.io.StreamParser;
 using tink.CoreApi;
 
 class TcpContainer implements Container {
@@ -44,13 +45,13 @@ class TcpContainer implements Container {
           
           function serve(cnx:Connection, ?next:Void->Void)
             cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
-              case Success({ data: header, rest: body }):
+              case Parsed(header, body):
                 
-                switch header.byName('content-length') {
-                  case Success(v):
-                    body = body.limit(Std.parseInt(v));
-                  default:
-                }
+                // switch header.byName('content-length') {
+                //   case Success(v):
+                //     body = body.limit(Std.parseInt(v));
+                //   default:
+                // }
                 
                 var req = new IncomingRequest(cnx.peer.host, header, Plain(body));
                 
@@ -64,17 +65,19 @@ class TcpContainer implements Container {
                     });
                   
                   res.body.prepend(res.header.toString()).pipeTo(cnx.sink, { end: true }).handle(function (r) {
+                    
                     if (next != null)
                       next(); 
+
                     switch r {
-                      case SinkFailed(e): fail(e);
-                      case SinkEnded: fail(new Error('${cnx.peer} hung up before the whole body was written'));
+                      case SinkFailed(e, _): fail(e);
+                      case SinkEnded(_, _): fail(new Error('${cnx.peer} hung up before the whole body was written'));
                       default:
                     }
                   });
                   
                 });
-              case Failure(e):  
+              case Invalid(e, _) | Broke(e):  
                 
                 switch onInvalidRequest {
                   case null:
