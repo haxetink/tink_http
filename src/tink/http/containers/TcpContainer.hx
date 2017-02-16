@@ -4,10 +4,23 @@ import tink.http.Container;
 import tink.http.Handler;
 import tink.http.Request;
 import tink.http.Response;
-import tink.tcp.Connection;
+//import tink.tcp.Connection;
 
-using tink.io.StreamParser;
+//using tink.io.StreamParser;
+using tink.io.Source;
+using tink.io.Sink;
 using tink.CoreApi;
+
+typedef Connection = {
+  var local(default, never):tink.tcp.Endpoint;
+  var remote(default, never):tink.tcp.Endpoint;
+  var stream(default, never):RealSource;
+}
+typedef TcpHandler = Connection->Future<IdealSource>;
+
+typedef TcpPort = {
+  function setHandler(handler:TcpHandler):Void;
+}
 
 class TcpContainer implements Container {
   
@@ -24,7 +37,28 @@ class TcpContainer implements Container {
   
   public function run(handler:Handler):Future<ContainerResult> {
     return Future.async(function (cb) {
-      #if tink_tcp
+      var handler:TcpHandler = function (incoming:Connection) {
+        return incoming.stream.parse(IncomingRequestHeader.parser())
+          .next(function (r) {
+            trace(r);
+            var req = new IncomingRequest(incoming.remote.host, r.a, Plain(r.b));
+            return handler.process(req);
+          })
+          .recover(OutgoingResponse.reportError)
+          .map(function (res) return res.body.prepend(res.header.toString()));
+      }
+      js.node.Net.createServer(function (cnx) {
+        handler({
+          remote: { host: 'localhost', port: 123 },
+          local: { host: 'localhost', port: port },
+          stream: Source.ofNodeStream('', cnx),
+        }).handle(function (res) {
+          res.pipeTo(Sink.ofNodeStream('', cnx), { end: true }).handle(function (o) {
+            cnx.destroy();
+          });
+        });
+      }).listen(port);
+      #if tink_tcp_
       tink.tcp.Server.bind(port).handle(function (o) switch o {
         case Success(server):
           
@@ -46,7 +80,6 @@ class TcpContainer implements Container {
           function serve(cnx:Connection, ?next:Void->Void)
             cnx.source.parse(IncomingRequestHeader.parser()).handle(function (o) switch o {
               case Parsed(header, body):
-                
                 // switch header.byName('content-length') {
                 //   case Success(v):
                 //     body = body.limit(Std.parseInt(v));
