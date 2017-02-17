@@ -23,7 +23,21 @@ typedef TcpPort = {
 }
 
 class TcpContainer implements Container {
-  
+  static public function wrap(handler:Handler):tink.tcp.Handler {
+    return function (i:tink.tcp.Incoming):Future<tink.tcp.Outgoing> {
+      return i.stream.parse(IncomingRequestHeader.parser())
+        .next(function (r) {
+          trace(r);
+          var req = new IncomingRequest(i.from.host, r.a, Plain(r.b));
+          return handler.process(req);
+        })
+        .recover(OutgoingResponse.reportError)
+        .map(function (res) return {
+          stream: res.body.prepend(res.header.toString()),
+          allowHalfOpen: true,
+        });
+    }
+  }
   var port:Int;
   var maxConcurrent:Int;
   var onInvalidRequest:Null<Error->Connection->Void>;
