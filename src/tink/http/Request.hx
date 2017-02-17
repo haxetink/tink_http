@@ -3,7 +3,6 @@ package tink.http;
 import haxe.io.Bytes;
 import tink.http.Message;
 import tink.http.Header;
-import tink.url.Auth;
 import tink.url.Host;
 import tink.url.Query;
 import tink.Url;
@@ -12,19 +11,27 @@ import tink.Url;
 using tink.CoreApi;
 using tink.io.StreamParser;
 using tink.io.Source;
-using StringTools;
 
-class IncomingRequestHeader extends Header {
-  public var method(default, null):Method;
-  public var uri(default, null):Url;
-  public var version(default, null):String;
+class RequestHeader extends Header {
   
-  public function new(method, uri, version, fields) {
+  public var method(default, null):Method;
+  public var url(default, null):Url;
+  public var version(default, null):String;
+
+  public function new(method:Method, url:Url, version = '1.1', fields) {
     this.method = method;
-    this.uri = uri;
+    this.url = url;
     this.version = version;
     super(fields);
-  }
+  }  
+
+
+  override public function toString()
+    return '$method $url HTTP/$version$LINEBREAK'+super.toString();
+
+}
+
+class IncomingRequestHeader extends RequestHeader {
   
   var cookies:Map<String, String>;
   
@@ -35,13 +42,11 @@ class IncomingRequestHeader extends Header {
     return cookies;
   }
   
-  public function cookieNames() {
+  public function cookieNames()
     return cookies.keys();
-  }
   
-  public function getCookie(name:String) {
+  public function getCookie(name:String)
     return getCookies()[name];
-  }
   
   static public function parser():StreamParser<IncomingRequestHeader>
     return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
@@ -54,60 +59,7 @@ class IncomingRequestHeader extends Header {
     );
 }
 
-class OutgoingRequestHeader extends Header {
-  
-  public var method(default, null):Method;
-  public var host(default, null):Host;//TODO: do something about validating host names
-  public var uri(default, null):Url;
-  
-  public function new(method, host:Host, ?uri:Url, ?fields) {
-    this.method = method;
-    this.host = host;
-    
-    if (uri == null) 
-      uri = '/';
-      
-    @:privateAccess {
-      uri = new Url({
-        path: switch (uri.path:String) {
-          case null | '': '/';
-          case _.charAt(0) => '/': uri.path;
-          case v: '/$v';
-        },
-        query: uri.query,
-        payload: null,
-      });
-      Url.makePayload(cast uri);
-    };
-    
-    this.uri = uri;
-    
-    super(fields);
-  }
-  
-  public function fullUri() {
-    return '//$host$uri';//TODO: this should somehow be provided by tink_url
-  }
-  
-  public function toString() {
-    var ret = ['$method $uri HTTP/1.1'],
-        hasHost = false;
-        
-    for (f in fields) 
-      ret.push(f.toString());
-    
-    switch get('Host') {
-      case []:
-        ret.push(new HeaderField('Host', (host:String)).toString());  
-      default:
-    } 
-    
-    ret.push('');
-    ret.push('');
-    
-    return ret.join('\r\n');
-  }
-}
+class OutgoingRequestHeader extends RequestHeader {}
 
 class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}
 
@@ -120,10 +72,11 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
     super(header, body);
   }
   
-  // static public function parse(clientIp, source:Source) 
-  //   return
-  //     source.parse(IncomingRequestHeader.parser()) >> function (parts) return new IncomingRequest(clientIp, parts.data, Plain(parts.rest));
-  
+  static public function parse(clientIp, source:RealSource) 
+    return
+      source.parse(IncomingRequestHeader.parser()).next(
+        function (parts) return new IncomingRequest(clientIp, parts.a, Plain(parts.b))
+      );
 }
 
 enum IncomingRequestBody {

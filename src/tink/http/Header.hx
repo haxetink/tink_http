@@ -1,27 +1,44 @@
 package tink.http;
 
-import tink.http.Header.HeaderField;
 import tink.io.StreamParser;
 import tink.url.Query;
 
 using tink.CoreApi;
 using StringTools;
 
-class MimeType {
+abstract ReadonlyMap<K, V>(Map<K, V>) from Map<K, V> {
+
+  @:arrayAccess public inline function get(key:K):V
+    return this.get(key);
+
+  @:arrayAccess public inline function exists(key:K):Bool
+    return this.exists(key);
+
+  public inline function iterator():Iterator<V>
+    return this.iterator();
+
+  public inline function keys():Iterator<K>
+    return this.keys();
+
+}
+
+typedef Extensions = ReadonlyMap<String, String>;
+
+class ContentType {
   public var fullType(get, never):String;
     inline function get_fullType()
       return '$type/$subtype';
       
   public var type(default, null):String = '*';
   public var subtype(default, null):String = '*';
-  public var extension(default, null):Map<String, String>;
+  public var extensions(default, null):Extensions;
   
   function new() { 
-    extension = new Map();
+    extensions = new Map();
   }
   
-  static public function ofString(s:String) {
-    var ret = new MimeType();
+  static public function ofString(s:String):ContentType {
+    var ret = new ContentType();
     
     var parsed = (s:HeaderValue).parse();
     var value = parsed[0].value;
@@ -32,14 +49,16 @@ class MimeType {
         ret.type = value.substring(0, pos);
         ret.subtype = value.substring(pos + 1);
     }
-    ret.extension = parsed[0].extensions;
+    ret.extensions = parsed[0].extensions;
     
     return ret;
   }
 }
 
 class Header {
-  public var fields(default, null):Array<HeaderField>;
+
+  var fields:Array<HeaderField>;
+  
   public function new(?fields)
     this.fields = switch fields {
       case null: [];
@@ -60,10 +79,21 @@ class Header {
     }
     
   public function contentType() 
-    return byName(ContentType).map(MimeType.ofString);
+    return byName(CONTENT_TYPE).map(ContentType.ofString);
     
   public inline function iterator()
     return fields.iterator();
+
+  private var LINEBREAK(get, never):String; 
+    inline function get_LINEBREAK() return '\r\n';
+
+  public function toString() 
+    return [for (f in fields) f.toString()].join(LINEBREAK) + LINEBREAK + LINEBREAK;
+}
+
+typedef HeaderValueComponent = {
+  var value(default, never):String;
+  var extension(default, null):Extensions;
 }
 
 abstract HeaderValue(String) from String to String {
@@ -98,24 +128,26 @@ abstract HeaderValue(String) from String to String {
   
   @:from static public function ofInt(i:Int):HeaderValue
     return Std.string(i);
+
+  
 }
 
 @:enum abstract HeaderName(String) to String {
   
-  public var Referer            = 'referer';
-  public var Host               = 'host';
+  public var REFERER             = 'referer';
+  public var HOST                = 'host';
   
-  public var SetCookie          = 'set-cookie';
-  public var Cookie             = 'cookie';
+  public var SET_COOKIE          = 'set-cookie';
+  public var COOKIE              = 'cookie';
   
-  public var ContentType        = 'content-type';
-  public var ContentLength      = 'content-length';
-  public var ContentDisposition = 'content-disposition';
+  public var CONTENT_TYPE        = 'content-type';
+  public var CONTENT_LENGTH      = 'content-length';
+  public var CONTENT_DISPOSITION = 'content-disposition';
   
-  public var Accept             = 'accept';
-  public var AcceptEncoding     = 'accept-encoding';
+  public var ACCEPT              = 'accept';
+  public var ACCEPT_ENCODING     = 'accept-encoding';
   
-  public var Location           = 'location';
+  public var LOCATION            = 'location';
   
   inline function new(s) this = s;
   
@@ -167,7 +199,7 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
     if (options.secure) addPair("secure", "");
     if (options.scriptable != true) addPair("HttpOnly", "");
     
-    return new HeaderField(SetCookie, buf.toString());
+    return new HeaderField(SET_COOKIE, buf.toString());
   }
 }
 

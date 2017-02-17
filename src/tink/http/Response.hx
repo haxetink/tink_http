@@ -22,17 +22,8 @@ class ResponseHeader extends Header {
     super(fields);
   }
   
-  public function toString() {    
-    var ret = ['$protocol $statusCode $reason'];
-    
-    for (h in fields)
-      ret.push(h.toString());
-    
-    ret.push('');
-    ret.push('');
-    
-    return ret.join('\r\n');
-  }
+  override public function toString():String
+    return '$protocol $statusCode $reason$LINEBREAK' + super.toString();
   
   // static public function parser():StreamParser<ResponseHeader>
   //   return new HeaderParser<ResponseHeader>(function (line, headers) 
