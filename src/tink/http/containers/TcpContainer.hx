@@ -1,16 +1,57 @@
 package tink.http.containers;
 
+import tink.streams.Stream;
+import tink.chunk.*;
+
 import tink.http.Container;
-import tink.http.Handler;
 import tink.http.Request;
 import tink.http.Response;
 
 using tink.io.Source;
 using tink.CoreApi;
 
+class Chunked {
+  static public function encode(s:IdealSource):IdealSource 
+    return s.chunked().map(function (c:Chunk) return '${StringTools.hex(c.length)}\r\n' & c & '\r\n');
+
+  static public function decode(s:RealSource):Split<Error> {
+    return new Split(s, null);
+  }
+
+}
+
+// enum SplitResult<T> {
+//   Continue(consume:Chunk);
+//   Done(consume:Chunk, next:T);
+// }
+
+// typedef Step<T> = ChunkCursor->SplitResult<T>;
+
+// typedef ReadingFirst = Step<ReadingSecond>;
+// typedef ReadingSecond = Step<ReadingThird>;
+// typedef ReadingThird = Step<Noise>;
+
+class Split<E> {
+  
+  var cursor = Chunk.EMPTY.cursor();
+
+  public var first(default, null):Stream<Chunk, E>;
+  public var second(default, null):Stream<Chunk, E>;
+  
+  public function new(source:Stream<Chunk, E>, sep) {
+
+    // source.forEach(function (chunk) {
+    //   cursor.shift(chunk);
+    //   return switch cursor.seek(sep) {
+    //     case None: Resume;
+    //     case Some(v):
+    //   }
+    // });
+  }
+}
 
 class TcpContainer implements Container {
-  static public function wrap(handler:Handler):tink.tcp.Handler {
+  static public function wrap(handler:tink.http.Handler):tink.tcp.Handler {
     return function (i:tink.tcp.Incoming):Future<tink.tcp.Outgoing> {
       return i.stream.parse(IncomingRequestHeader.parser())
         .next(function (r) {
@@ -34,7 +75,7 @@ class TcpContainer implements Container {
     }, true);
   }
   
-  public function run(handler:Handler):Future<ContainerResult> 
+  public function run(handler):Future<ContainerResult> 
     return port.next(function (p) 
       return 
         if (p.setHandler(wrap(handler))) Running({ 
