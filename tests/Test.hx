@@ -11,7 +11,8 @@ class Test {
     haxe.Log.trace = function (v:Dynamic, ?pos:haxe.PosInfos) {
       js.Node.console.log(pos.fileName + ':' + pos.lineNumber, v);
     }
-    var c = new TcpContainer(12345);
+    var port = tink.tcp.nodejs.NodejsAcceptor.inst.bind.bind(12345);
+    var c = new TcpContainer(port);
     c.run(function (req) {
       return Future.sync(('hello, world' : OutgoingResponse));
     });

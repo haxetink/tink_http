@@ -13,12 +13,12 @@ interface Container {
 enum ContainerResult {
   Running(running:RunningState);
   Failed(e:Error);
-  Done;
+  Shutdown;
 }
 
 typedef RunningState = {
   var failures(default, null):Signal<ContainerFailure>;
-  function shutdown(hard:Bool):Future<Noise>;
+  function shutdown(hard:Bool):Promise<Bool>;
 }
 
 typedef ContainerFailure = { 

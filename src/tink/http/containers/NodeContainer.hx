@@ -50,7 +50,7 @@ class NodeContainer implements Container {
               trace('Warning: hard shutdown not implemented');
               
             return Future.async(function (cb) {
-              server.close(function () cb(Noise));
+              server.close(function () cb(true));
             });
           },
           failures: failures,//TODO: these need to be triggered
