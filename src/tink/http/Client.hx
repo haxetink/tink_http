@@ -77,7 +77,7 @@ class StdClient implements ClientObject {
         r.onError = function (msg) {
           if (code == 200) code = 500;
           worker.work(true).handle(function () {
-            cb(new IncomingResponse(new ResponseHeader(code, 'error', headers()), msg));        
+            cb(new IncomingResponse(new ResponseHeader(code, 'error', headers()), msg + r.responseData));        
           });//TODO: this hack makes sure things arrive on the right thread. Great, huh?
         }
         
