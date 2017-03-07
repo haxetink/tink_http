@@ -177,7 +177,7 @@ class PhpClient implements ClientObject {
           case Success(parsed):
             cb(new IncomingResponse(
               parsed.data,
-              result.readAll()
+              Source.ofInput('Response from ${req.header.fullUri()}', result)
             ));
           case Failure(e):
             cb(new IncomingResponse(
