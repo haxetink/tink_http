@@ -23,6 +23,17 @@ class SocketClient implements ClientObject {
     
     return Future.async(function(cb) {
       
+      switch req.header.byName('connection') {
+        case Success((_:String).toLowerCase() => 'close'): // ok
+        case Success(v):
+          cb(new IncomingResponse(
+            new ResponseHeader(500, 'Unsupported Connection Type', []),
+            'Only "Connection: Close" is supported. But specified as "$v"'
+          ));
+          return;
+        case Failure(_): req.header.fields.push(new HeaderField('connection', 'close'));
+      }
+      
       var socket = 
         if(secure)
           #if php new php.net.SslSocket();
@@ -42,16 +53,6 @@ class SocketClient implements ClientObject {
         var sink = Sink.ofOutput('Request to ${req.header.fullUri()}', socket.output, worker);
         var source = Source.ofInput('Response from ${req.header.fullUri()}', socket.input, worker);
         
-        switch req.header.byName('connection') {
-          case Success((_:String).toLowerCase() => 'close'): // ok
-          case Success(v):
-            cb(new IncomingResponse(
-              new ResponseHeader(500, 'Unsupported Connection Type', []),
-              'Only "Connection: Close" is supported. But specified as "$v"'
-            ));
-            return;
-          case Failure(_): req.header.fields.push(new HeaderField('connection', 'close'));
-        }
         
         var data:Source = req.header.toString();
         data = data.append(req.body);
