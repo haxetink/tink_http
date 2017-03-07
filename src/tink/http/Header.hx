@@ -124,7 +124,7 @@ abstract HeaderValue(String) from String to String {
     return new HeaderName(s.toLowerCase());
 }
 
-@:structInit
+#if (!java && !cs) @:structInit #end // it is buggy in java/cs...
 class HeaderField extends NamedWith<HeaderName, HeaderValue> {
   
   public function toString() 
