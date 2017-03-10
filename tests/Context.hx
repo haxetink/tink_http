@@ -128,26 +128,26 @@ class Context {
   
   ];
   
-  public static var clients: Map<String, Client> = [
+  public static var clients: Array<ClientType> = [
     
     #if (!nodejs)
     // 'std' => new StdClient(),
     #end
     
     #if (tink_tcp)
-    'tcp' => new TcpClient(),
+    Tcp,
     #end
     
     #if nodejs
-    'node' => new NodeClient(),
+    Node,
     #end
     
     #if (neko || nodejs)
-    // 'curl' => new CurlClient()
+    Curl,
     #end
     
     #if (js && !nodejs)
-    'js' => new JsClient()
+    Js,
     #end
   
   ];

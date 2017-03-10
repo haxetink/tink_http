@@ -43,10 +43,11 @@ import sys.io.File;
 class Master {
 	
 	public static var port = 8000;
+	static var originalHxml:String;
 	
 	public static function main() {
 		checkPort(port);
-		var originalHxml = File.getContent('tests.hxml');
+		originalHxml = File.getContent('tests.hxml');
 		
 		var containers: String = Env.getDefine('containers');
 		if (containers == null)
@@ -88,13 +89,18 @@ class Master {
 			}
 		}
 		
-		File.saveContent('tests.hxml', originalHxml);
+		restoreHxml();
 		Sys.sleep(.01);
 		Sys.exit(result ? 0 : 1);
+	}
+	
+	static function restoreHxml() {
+		if(originalHxml != null) File.saveContent('tests.hxml', originalHxml);
 	}
 
 	static function fail(msg) {
 		Ansi.fail(msg);
+		restoreHxml();
 		Sys.exit(1);
 	}
 

@@ -92,5 +92,16 @@ class IncomingResponse extends Message<ResponseHeader, RealSource> {
         else
           Success(b)   
     );
+            
+  static public function reportError(e:Error) {
+    return new IncomingResponse(
+      new ResponseHeader(e.code, e.message, [new HeaderField('Content-Type', 'application/json')]),
+      haxe.Json.stringify({//TODO: reconsider the wisdom of json encoding this way, since it relies on reflection
+        error: e.message,
+        details: e.data,
+        //TODO: add stack trace when it becomes available
+      })
+    );
+  }
         
 }

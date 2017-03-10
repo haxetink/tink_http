@@ -12,15 +12,20 @@ class RunTests {
       case v: Std.parseInt(v);
     }
     
-    var tests = [
-      TestSuite.make(new TestHttp(Node, Httpbin, false), 'Httpbin'),
-      TestSuite.make(new TestHttp(Node, Httpbin, true), 'Httpbin (secure)'),
-    ];
+    var tests = [];
     
-    if(port != null) tests = tests.concat([
-      TestSuite.make(new TestHttp(Node, Local(port), false), 'Local(port = $port)'),
-    ]);
+    for(client in Context.clients) {
+        tests = tests.concat([
+          TestSuite.make(new TestHttp(client, Httpbin, false), '$client -> Httpbin'),
+          TestSuite.make(new TestHttp(client, Httpbin, true), '$client -> Httpbin (secure)'),
+        ]);
+        
+        if(port != null) tests = tests.concat([
+          TestSuite.make(new TestHttp(client, Local(port), false), '$client -> Local(port = $port)'),
+        ]);
+    }
     
     Runner.run(tests).handle(Runner.exit);
+    
   }
 }

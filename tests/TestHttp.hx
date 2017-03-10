@@ -20,9 +20,10 @@ class TestHttp {
   var url:Url;
   var converter:Converter;
   
-  public function new(client, target, secure) {
+  public function new(client:ClientType, target, secure) {
     this.client = switch client {
       case Node: secure ? new SecureNodeClient() : new NodeClient();
+      case Curl: secure ? new SecureCurlClient() : new CurlClient();
     }
     
     var schema = secure ? 'https' : 'http';
@@ -102,9 +103,6 @@ class TestHttp {
   }
 }
 
-enum ClientType {
-  Node;
-}
 
 enum Target {
   Httpbin;

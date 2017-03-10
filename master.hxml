@@ -1,4 +1,3 @@
 -cp tests
 -main Master
 -x bin/master/run
--D master

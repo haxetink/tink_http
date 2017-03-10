@@ -1,10 +1,19 @@
 package tink.http.clients;
 
+import tink.http.Client;
+import tink.http.Response;
+import tink.http.Request;
+import tink.http.Header;
+
+using tink.io.Sink;
+using tink.io.Source;
+using tink.CoreApi;
+
 // Does not restrict to any platform as long as they can run the curl command somehow
 class CurlClient implements ClientObject {
-  var curl:Array<String>->Source->Source;
+  var curl:Array<String>->IdealSource->RealSource;
   var protocol:String = 'http';
-  public function new(?curl:Array<String>->Source->Source) {
+  public function new(?curl:Array<String>->IdealSource->RealSource) {
     this.curl = 
       if(curl != null) curl;
       else {
@@ -14,7 +23,7 @@ class CurlClient implements ClientObject {
             args.push('@-');
             var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
             var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
-            body.pipeTo(sink).handle(function(_) sink.close());
+            body.pipeTo(sink, {end: true}).eager();
             return #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
           }
         #else
@@ -32,18 +41,16 @@ class CurlClient implements ClientObject {
     
     // TODO: http version
     
-    for(header in req.header.fields) {
+    for(header in req.header) {
       args.push('-H');
       args.push('${header.name}: ${header.value}');
     }
     
-    args.push('$protocol:' + req.header.fullUri());
+    args.push(req.header.url);
     
-    return curl(args, req.body).parse(ResponseHeader.parser()).map(function (o) return switch o {
-      case Success({ data: header, rest: body }):
-        new IncomingResponse(header, body);
-      case Failure(e):
-        new IncomingResponse(new ResponseHeader(e.code, e.message, []), (e.message : Source).append(e));
-    });
+    return curl(args, req.body)
+      .parse(ResponseHeader.parser())
+      .next(function (p) return new IncomingResponse(p.a, p.b))
+      .recover(IncomingResponse.reportError);
   }
 }
