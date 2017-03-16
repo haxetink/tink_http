@@ -29,6 +29,11 @@ import js.html.Int8Array;
 using tink.CoreApi;
 using StringTools;
 
+#if sys
+typedef SocketClient = tink.http.clients.SocketClient;
+typedef SecureSocketClient = tink.http.clients.SecureSocketClient;
+#end
+
 @:forward
 abstract Client(ClientObject) from ClientObject to ClientObject {
   
