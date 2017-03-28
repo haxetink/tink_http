@@ -11,8 +11,8 @@
 	"contributors": [
 		"back2dos"
 	],
-	"releasenote": "Moved out multipart handling. Typesafe headers. Various other changes.",
-	"version": "0.6.0",
+	"releasenote": "Various additions.",
+	"version": "0.7.0",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_url": "",
