@@ -22,7 +22,13 @@ class PhpContainer implements Container {
   }
   static public var inst(default, null):PhpContainer = new PhpContainer();
   
-  function new() { }
+  function new() {
+    inline function defined(s:String):Bool return untyped __call__('defined', s);
+    inline function define(s:String, v:Dynamic) untyped __call__('define', s, v);
+    inline function fopen(p:String, m:String) return untyped __call__('fopen', 'php://' + p, m);
+		if(!defined('STDOUT')) define('STDOUT', try fopen('stdout', 'w') catch(e:Dynamic) fopen('temp', 'w'));
+		if(!defined('STDIN')) define('STDIN', fopen('stdin', 'r'));
+  }
  
   static function getParts<In>(a:NativeArray, process:In->BodyPart):StructuredBody {
     var map = php.Lib.hashOfAssociativeArray(a);
