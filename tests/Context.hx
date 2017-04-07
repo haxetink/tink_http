@@ -1,6 +1,10 @@
+package;
+
+#if tink_http
 import tink.http.Handler;
 import tink.http.Client;
 import tink.http.clients.*;
+#end
 
 #if neko
 import sys.FileSystem;
@@ -90,6 +94,7 @@ class Context {
   
   #end
   
+  #if tink_http
   public static var servers: Map<String, Int -> Handler -> Void> = [
   
     '' => null,
@@ -102,10 +107,10 @@ class Context {
     #end
     
     #if neko
-    'modneko' => function (port, handler) {
-      if (Sys.getEnv(RUN) != 'true') return;
-      tink.http.containers.ModnekoContainer.inst.run(handler);
-    },
+    // 'modneko' => function (port, handler) {
+    //   if (Sys.getEnv(RUN) != 'true') return;
+    //   tink.http.containers.ModnekoContainer.inst.run(handler);
+    // },
     #end
     
     #if nodejs
@@ -126,7 +131,7 @@ class Context {
   public static var clients: Map<String, Client> = [
     
     #if (!nodejs)
-    'std' => new StdClient(),
+    // 'std' => new StdClient(),
     #end
     
     #if (tink_tcp)
@@ -146,11 +151,12 @@ class Context {
     #end
   
   ];
+  #end
   
   #if neko
   
   static function targetArgs(port: Int)
-    return ['-lib buddy', '-D port=$port', '-main Runner'];
+    return ['-lib tink_unittest', '-D port=$port', '-main RunTests'];
     
   static function travixTarget(name, port: Int)
     return ProcessTools.travix(name, targetArgs(port));

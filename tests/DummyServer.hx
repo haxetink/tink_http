@@ -25,7 +25,7 @@ class DummyServer {
   
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
     if (req.header.url.path == '/close') {
-      Sys.println('>> Closing server');
+      Sys.println('\n>> Closing server');
       Sys.exit(0);
       return null;
     }

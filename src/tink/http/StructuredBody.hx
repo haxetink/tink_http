@@ -31,7 +31,7 @@ abstract UploadedFile(UploadedFileBase) from UploadedFileBase to UploadedFileBas
           #if (nodejs && !macro)
             Sink.ofNodeStream(name, js.node.Fs.createWriteStream(path))
           #elseif sys
-            Sink.ofOutput(name, sys.io.File.write(path))
+            null //Sink.ofOutput(name, sys.io.File.write(path))
           #else
             #error
           #end
