@@ -16,12 +16,12 @@ class RunTests {
     
     for(client in Context.clients) {
         tests = tests.concat([
-          TestSuite.make(new TestHttp(client, Httpbin, false), '$client -> Httpbin'),
-          TestSuite.make(new TestHttp(client, Httpbin, true), '$client -> Httpbin (secure)'),
+          TestSuite.make(new TestHttp(client, Httpbin, false), '$client -> http://httpbin.org'),
+          TestSuite.make(new TestHttp(client, Httpbin, true), '$client -> https://httpbin.org'),
         ]);
         
         if(port != null) tests = tests.concat([
-          TestSuite.make(new TestHttp(client, Local(port), false), '$client -> Local(port = $port)'),
+          TestSuite.make(new TestHttp(client, Local(port), false), '$client -> http://localhost:$port'),
         ]);
     }
     

@@ -1,39 +1,5 @@
 package;
 
-// import sys.io.Process;
-
-// using tink.CoreApi;
-
-// class Master {
-	
-// 	static var server:Process;
-	
-// 	static function main() {
-// 		createServer()
-// 			.next(function(_) return runTests())
-// 			.next(function(code) return shutdownServer().next(function(_) return code))
-// 			.handle(function(code) Sys.exit(code.orUse(1)));
-// 	}
-	
-// 	static function createServer():Promise<Noise> {
-// 		return Future.async(function(cb) {
-// 			Sys.command('haxe -cp tests -main DummyServer -D server=node -D port=8192 -lib tink_http -lib hxnodejs -js bin/node/server.js');
-// 			server = ProcessTools.streamAll('node bin/node/server.js');
-			
-// 			// wait a bit...
-// 			haxe.Timer.delay(cb.bind(Success(Noise)), 1000);
-// 		});
-// 	}
-// 	static function shutdownServer():Promise<Noise> {
-// 		if(server != null) server.close();
-// 		return Noise;
-// 	}
-		
-// 	static function runTests():Promise<Int>
-// 		return Sys.command('haxelib run travix node');
-// }
-
-
 import haxe.CallStack;
 import neko.vm.Thread;
 import sys.net.Host;
