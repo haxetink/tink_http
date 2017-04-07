@@ -37,11 +37,34 @@ class TestHttp {
     }
   }
   
-  public function get() return testMethod(GET);
-  public function post() return testMethod(POST);
-  public function patch() return testMethod(PATCH);
-  public function delete() return testMethod(DELETE);
-  public function put() return testMethod(PUT);
+  @:variant(GET)
+  @:variant(POST)
+  @:variant(PATCH)
+  @:variant(DELETE)
+  @:variant(PUT)
+  public function method(method:Method) {
+    var body:String = null;
+    var headers = null;
+    switch method {
+      case GET: // do nothing
+      default: 
+        body = 'tink_http $method';
+        headers = [
+          new HeaderField('content-type', 'text/plain'),
+          new HeaderField('content-length', Std.string(body.length)),
+        ];
+    }
+    return request(method, url + '/${(method:String).toLowerCase()}?a=1&b=2', headers, body == null ? null : body)
+      .map(function(o) return switch o {
+        case Success(echo):
+          asserts.assert(echo.query.get('a') == '1');
+          asserts.assert(echo.query.get('b') == '2');
+          if(body != null) asserts.assert(echo.body == body);
+          Success(asserts.done());
+        case Failure(e):
+          Success(asserts.fail(e));
+      });
+  }
   
   // @:include
   public function headers() {
@@ -77,30 +100,6 @@ class TestHttp {
     )).next(converter.convert);
   }
   
-  function testMethod(method:Method) {
-    var asserts = new AssertionBuffer();
-    var body:String = null;
-    var headers = null;
-    switch method {
-      case GET: // do nothing
-      default: 
-        body = 'tink_http $method';
-        headers = [
-          new HeaderField('content-type', 'text/plain'),
-          new HeaderField('content-length', Std.string(body.length)),
-        ];
-    }
-    return request(method, url + '/${(method:String).toLowerCase()}?a=1&b=2', headers, body == null ? null : body)
-      .map(function(o) return switch o {
-        case Success(echo):
-          asserts.assert(echo.query.get('a') == '1');
-          asserts.assert(echo.query.get('b') == '2');
-          if(body != null) asserts.assert(echo.body == body);
-          Success(asserts.done());
-        case Failure(e):
-          Success(asserts.fail(e));
-      });
-  }
 }
 
 
