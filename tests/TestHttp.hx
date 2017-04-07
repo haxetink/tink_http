@@ -74,7 +74,7 @@ class TestHttp {
     return client.request(new OutgoingRequest(
       new OutgoingRequestHeader(method, url, headers),
       body == null ? Source.EMPTY : body
-    )).flatMap(converter.convert);
+    )).next(converter.convert);
   }
   
   function testMethod(method:Method) {

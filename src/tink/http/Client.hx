@@ -10,5 +10,5 @@ abstract Client(ClientObject) from ClientObject to ClientObject {
 }
 
 interface ClientObject {
-  function request(req:OutgoingRequest):Future<IncomingResponse>;
+  function request(req:OutgoingRequest):Promise<IncomingResponse>;
 }

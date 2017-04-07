@@ -7,7 +7,7 @@ import tink.http.Response;
 using tink.CoreApi;
 
 class SecureNodeClient extends NodeClient {
-  override function request(req:OutgoingRequest):Future<IncomingResponse> {
+  override function request(req:OutgoingRequest):Promise<IncomingResponse> {
     var options:js.node.Https.HttpsRequestOptions = {
       method: cast req.header.method,
       path: req.header.url.pathWithQuery,

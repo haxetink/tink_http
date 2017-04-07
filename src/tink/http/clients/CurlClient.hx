@@ -31,7 +31,7 @@ class CurlClient implements ClientObject {
         #end
       }
   }
-  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     var args = [];
     
     args.push('-is');
@@ -50,7 +50,6 @@ class CurlClient implements ClientObject {
     
     return curl(args, req.body)
       .parse(ResponseHeader.parser())
-      .next(function (p) return new IncomingResponse(p.a, p.b))
-      .recover(IncomingResponse.reportError);
+      .next(function (p) return new IncomingResponse(p.a, p.b));
   }
 }

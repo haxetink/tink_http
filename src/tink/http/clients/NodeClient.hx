@@ -19,7 +19,7 @@ class NodeClient implements ClientObject {
   
   public function new() { }
   
-  public function request(req:OutgoingRequest):Future<IncomingResponse> {
+  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     var options:js.node.Http.HttpRequestOptions = {
       method: cast req.header.method,
       path: req.header.url.pathWithQuery,
@@ -37,28 +37,25 @@ class NodeClient implements ClientObject {
   }
     
     
-  function nodeRequest<A:NodeAgent<T>, T>(agent:A, options:T, req:OutgoingRequest):Future<IncomingResponse> 
+  function nodeRequest<A:NodeAgent<T>, T>(agent:A, options:T, req:OutgoingRequest):Promise<IncomingResponse> 
     return 
       Future.async(function (cb) {
         var fwd = agent.request(
           options,
-          function (msg:IncomingMessage) cb(new IncomingResponse(
+          function (msg:IncomingMessage) cb(Success(new IncomingResponse(
             new ResponseHeader(
               msg.statusCode,
               msg.statusMessage,
               [for (i in 0...msg.rawHeaders.length >> 1) new HeaderField(msg.rawHeaders[2*i], msg.rawHeaders[2*i+1])]
             ),
             Source.ofNodeStream('Response from ${req.header.url}', msg)
-          ))
+          )))
         );
         
         function fail(e:Error)
-          cb(new IncomingResponse(
-            new ResponseHeader(e.code, e.message, []),
-            e.message
-          ));
+          cb(Failure(e));
           
-        fwd.on('error', function () fail(new Error(502, 'Gateway Error')));
+        fwd.on('error', function (e:js.Error) fail(Error.withData(e.message, e)));
         
         req.body.pipeTo(
           Sink.ofNodeStream('Request to ${req.header.url}', fwd)
@@ -68,7 +65,7 @@ class NodeClient implements ClientObject {
           switch res {
             case AllWritten:
             case SinkEnded(_): fail(new Error(502, 'Gateway Error'));
-            case SinkFailed(e, _): fail(new Error(502, 'Gateway Error'));
+            case SinkFailed(e, _): fail(e);
           }
         });
       });
