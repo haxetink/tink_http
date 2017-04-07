@@ -51,7 +51,7 @@ class RunTests {
       }
     }
     
-    File.saveContent('tests.hxml', '-cp tests\n-lib buddy');
+    File.saveContent('tests.hxml', '-cp tests\n-lib buddy\n-lib deep_equal');
 		Sys.sleep(.01);
 		Sys.exit(result ? 0 : 1);
 	}

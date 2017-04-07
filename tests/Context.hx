@@ -16,7 +16,7 @@ class Context {
 		untyped __call__('ini_set', 'xdebug.max_nesting_level', 100000);
 	#end
   
-  static inline var RUN = 'RUN_SERVER';
+  static inline var RUN = 'RUN_TRAVIS';
   
   #if neko
   
@@ -31,16 +31,19 @@ class Context {
       return ProcessTools.travix(target, tcpArgs(port, concurrent));
       
   static function setEnv()
-   Sys.putEnv(RUN, 'true');
+   Sys.putEnv(RUN, '');
    
   static function clearEnv()
-   Sys.putEnv(RUN, '');
+   Sys.putEnv(RUN, 'true');
    
   static function buildModNeko(port: Int) {
     clearEnv();
     var code = ProcessTools.travix('neko', mainArgs(port, 'modneko')).exitCode();
     if (code != 0) 
       throw 'Unable to build mod neko server';
+    try
+      FileSystem.deleteFile('bin/neko/index.n')
+    catch(e: Dynamic) {}
     FileSystem.rename('bin/neko/tests.n', 'bin/neko/index.n');
     setEnv();
   }
@@ -51,6 +54,9 @@ class Context {
       var code = ProcessTools.travix('php', mainArgs(port, 'php')).exitCode();
       if (code != 0) 
         throw 'Unable to build php server';
+      try
+        FileSystem.deleteFile('bin/php/server.php')
+      catch(e: Dynamic) {}
       FileSystem.rename('bin/php/index.php', 'bin/php/server.php');
       setEnv();
       return ProcessTools.streamAll('php', ['-S', '127.0.0.1:'+port, 'bin/php/server.php']);
@@ -95,14 +101,14 @@ class Context {
   
     #if php
     'php' => function (port, handler) {
-      if (Sys.getEnv(RUN) != 'true') return;
+      if (Sys.getEnv(RUN) == 'true') return;
       tink.http.containers.PhpContainer.inst.run(handler);
     },
     #end
     
     #if neko
     'modneko' => function (port, handler) {
-      if (Sys.getEnv(RUN) != 'true') return;
+      if (Sys.getEnv(RUN) == 'true') return;
       tink.http.containers.ModnekoContainer.inst.run(handler);
     },
     #end
@@ -149,7 +155,7 @@ class Context {
   #if neko
   
   static function targetArgs(port: Int)
-    return ['-lib buddy', '-D port=$port', '-main Runner'];
+    return ['-lib buddy', '-lib deep_equal', '-D port=$port', '-main Runner'];
     
   static function travixTarget(name, port: Int)
     return ProcessTools.travix(name, targetArgs(port));
