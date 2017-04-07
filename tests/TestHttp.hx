@@ -9,14 +9,13 @@ import tink.http.Request;
 import tink.http.Header;
 import tink.Chunk;
 import tink.Url;
-import tink.url.*;
 import tink.unit.*;
 
 using tink.io.Source;
 using tink.CoreApi;
 
 @:asserts
-class TestHttpBase {
+class TestHttp {
   var client:Client;
   var url:Url;
   var converter:Converter;

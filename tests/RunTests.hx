@@ -3,7 +3,6 @@ package;
 import tink.testrunner.*;
 import tink.unit.*;
 import tink.http.clients.*;
-import TestHttp;
 
 class RunTests {
   static function main() {
@@ -15,22 +14,22 @@ class RunTests {
   }
 }
 
-class TestHttpbin extends TestHttpBase {
+class TestHttpbin extends TestHttp {
   public function new(client)
     super(client, Httpbin, false);
 }
 
-class TestSecureHttpbin extends TestHttpBase {
+class TestSecureHttpbin extends TestHttp {
   public function new(client)
     super(client, Httpbin, true);
 }
 
-class TestLocal extends TestHttpBase {
+class TestLocal extends TestHttp {
   public function new(client, port)
     super(client, Local(port), false);
 }
 
-class TestSecureLocal extends TestHttpBase {
+class TestSecureLocal extends TestHttp {
   public function new(client, port)
     super(client, Local(port), true);
 }
