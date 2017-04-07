@@ -15,16 +15,6 @@ import tink.unit.*;
 using tink.io.Source;
 using tink.CoreApi;
 
-class TestSecureHttp extends TestHttpBase {
-  public function new(client, target)
-    super(client, target, true);
-}
-
-class TestHttp extends TestHttpBase {
-  public function new(client, target)
-    super(client, target, false);
-}
-
 @:asserts
 class TestHttpBase {
   var client:Client;
