@@ -18,7 +18,7 @@ using tink.CoreApi;
 class TestHttp {
   var client:Client;
   var url:Url;
-  var converter:IncomingResponse->Promise<EchoedRequest>;
+  var converter:Converter;
   
   public function new(client, target, secure) {
     this.client = client;
@@ -26,7 +26,7 @@ class TestHttp {
     switch target {
       case Httpbin:
         url = '$schema://httpbin.org';
-        converter = Converters.httpbin;
+        converter = new HttpbinConverter();
     }
   }
     
@@ -36,7 +36,7 @@ class TestHttp {
   public function delete() return testMethod(DELETE);
   public function put() return testMethod(PUT);
   
-  public function header() {
+  public function headers() {
     request(GET, url + '/headers', [new HeaderField('x-custom-tink', 'tink_http')])
       .handle(function(o) switch o {
         case Success(echo):
@@ -48,6 +48,17 @@ class TestHttp {
     return asserts;
   }
   
+  public function origin() {
+    request(GET, url + '/ip')
+      .handle(function(o) switch o {
+        case Success(echo):
+          asserts.assert(echo.origin != null && echo.origin.length > 0);
+          asserts.done();
+        case Failure(e):
+          asserts.fail(e);
+      });
+    return asserts;
+  }
   
   
   function request(method:Method, url:Url, ?headers:Array<HeaderField>, ?body:IdealSource) {
@@ -55,7 +66,7 @@ class TestHttp {
     return client.request(new OutgoingRequest(
       new OutgoingRequestHeader(method, url, headers),
       body == null ? Source.EMPTY : body
-    )).flatMap(converter);
+    )).flatMap(converter.convert);
   }
   
   function testMethod(method:Method) {
@@ -88,14 +99,20 @@ enum Target {
   Httpbin;
 }
 
-class Converters {
-  public static function httpbin(res:IncomingResponse):Promise<EchoedRequest> {
+interface Converter {
+  function convert(res:IncomingResponse):Promise<EchoedRequest>;
+}
+
+class HttpbinConverter implements Converter {
+  public function new() {}
+  public function convert(res:IncomingResponse):Promise<EchoedRequest> {
     return res.body.all().next(function(chunk):EchoedRequest {
       // trace(chunk);
       var parsed: {
         headers:DynamicAccess<String>,
         args:DynamicAccess<String>,
         data:String,
+        origin:String,
       } = haxe.Json.parse(chunk);
       return {
         headers: new Header(
@@ -110,6 +127,7 @@ class Converters {
           map;
         },
         body: parsed.data == null ? Chunk.EMPTY : parsed.data,
+        origin: parsed.origin,
       }
     });
   }
@@ -119,4 +137,5 @@ typedef EchoedRequest = {
   headers:Header,
   query:Map<String, String>,
   body:Chunk,
+  origin:String,
 }
