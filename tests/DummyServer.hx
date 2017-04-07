@@ -2,12 +2,12 @@ import haxe.io.Bytes;
 import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
-import tink.io.Buffer;
 import tink.io.Sink;
 import haxe.io.BytesOutput;
 import tink.io.Worker;
 
 using tink.CoreApi;
+using tink.io.Source;
 
 class DummyServer {
   
@@ -24,28 +24,32 @@ class DummyServer {
   }
   
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
-    if (req.header.uri == '/close') {
+    if (req.header.url.path == '/close') {
       Sys.println('>> Closing server');
       Sys.exit(0);
       return null;
     }
     
-    if (req.header.uri == '/active')
+    if (req.header.url.path == '/active')
       return Future.sync(('ok': OutgoingResponse));
       
     #if (tink_runloop || nodejs)
     Sys.print(Ansi.text(Cyan, '.'));
     #end
 
+    var query:haxe.DynamicAccess<String> = {};
+    if(req.header.url.query != null) for(p in req.header.url.query) query.set(p.name, p.value);
+    
     return switch req.body {
       case Plain(src):
         src.all().map(function (o) return switch o {
           case Success(body):
             var data:Data = {
-              uri: req.header.uri.toString(),
+              uri: req.header.url.path,
+              query: query,
               ip: req.clientIp,
               method: req.header.method,
-              headers: [for (h in req.header.fields) { name: h.name, value: h.value } ], 
+              headers: [for (h in req.header) { name: h.name, value: h.value } ], 
               body: body.toString()
             }
             OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify(data)), 'application/json');
@@ -61,10 +65,11 @@ class DummyServer {
         });
       case Parsed(parts):
         var data:Data = {
-          uri: req.header.uri.toString(),
+          uri: req.header.url.path,
+          query: query,
           ip: req.clientIp,
           method: req.header.method,
-          headers: [for (h in req.header.fields) { name: h.name, value: h.value } ], 
+          headers: [for (h in req.header) { name: h.name, value: h.value } ], 
           body: haxe.Json.stringify([for (p in parts) {
             name: p.name,
             value: switch p.value {

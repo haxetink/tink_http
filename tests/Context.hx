@@ -1,5 +1,6 @@
 import tink.http.Handler;
 import tink.http.Client;
+import tink.http.clients.*;
 
 #if neko
 import sys.FileSystem;
@@ -137,7 +138,7 @@ class Context {
     #end
     
     #if (neko || nodejs)
-    'curl' => new CurlClient()
+    // 'curl' => new CurlClient()
     #end
     
     #if (js && !nodejs)

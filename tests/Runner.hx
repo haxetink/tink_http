@@ -95,5 +95,4 @@ class Runner extends buddy.SingleSuite {
           {data: null, res: res}
       }
     );
-    
 }

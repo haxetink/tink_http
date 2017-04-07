@@ -3,6 +3,7 @@ package;
 import haxe.DynamicAccess;
 import tink.http.Method;
 import tink.http.Client;
+import tink.http.clients.*;
 import tink.http.Response;
 import tink.http.Request;
 import tink.http.Header;
@@ -14,28 +15,45 @@ import tink.unit.*;
 using tink.io.Source;
 using tink.CoreApi;
 
+class TestSecureHttp extends TestHttpBase {
+  public function new(client, target)
+    super(client, target, true);
+}
+
+class TestHttp extends TestHttpBase {
+  public function new(client, target)
+    super(client, target, false);
+}
+
 @:asserts
-class TestHttp {
+class TestHttpBase {
   var client:Client;
   var url:Url;
   var converter:Converter;
   
   public function new(client, target, secure) {
-    this.client = client;
+    this.client = switch client {
+      case Node: secure ? new SecureNodeClient() : new NodeClient();
+    }
+    
     var schema = secure ? 'https' : 'http';
     switch target {
       case Httpbin:
         url = '$schema://httpbin.org';
         converter = new HttpbinConverter();
+      case Local(port):
+        url = '$schema://localhost:$port';
+        converter = new LocalConverter();
     }
   }
-    
+  
   public function get() return testMethod(GET);
   public function post() return testMethod(POST);
   public function patch() return testMethod(PATCH);
   public function delete() return testMethod(DELETE);
   public function put() return testMethod(PUT);
   
+  // @:include
   public function headers() {
     request(GET, url + '/headers', [new HeaderField('x-custom-tink', 'tink_http')])
       .handle(function(o) switch o {
@@ -95,12 +113,43 @@ class TestHttp {
   }
 }
 
+enum ClientType {
+  Node;
+}
+
 enum Target {
   Httpbin;
+  Local(port:Int);
 }
 
 interface Converter {
   function convert(res:IncomingResponse):Promise<EchoedRequest>;
+}
+
+class LocalConverter implements Converter {
+  public function new() {}
+  public function convert(res:IncomingResponse):Promise<EchoedRequest> {
+    return res.body.all().next(function(chunk):EchoedRequest {
+      // trace(chunk);
+      var parsed:Data = haxe.Json.parse(chunk);
+      
+      return {
+        headers: new Header(
+          if(parsed.headers == null)
+            []
+          else
+            [for(h in parsed.headers) new HeaderField(h.name, h.value)]
+        ),
+        query: {
+          var map = new Map();
+          if(parsed.query != null) for(name in parsed.query.keys()) map.set(name, parsed.query.get(name));
+          map;
+        },
+        body: parsed.body == null ? Chunk.EMPTY : parsed.body,
+        origin: parsed.ip,
+      }
+    });
+  }
 }
 
 class HttpbinConverter implements Converter {
@@ -114,6 +163,7 @@ class HttpbinConverter implements Converter {
         data:String,
         origin:String,
       } = haxe.Json.parse(chunk);
+      
       return {
         headers: new Header(
           if(parsed.headers == null)
