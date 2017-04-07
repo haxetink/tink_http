@@ -39,7 +39,12 @@ class CurlClient implements ClientObject {
     args.push('-X');
     args.push(req.header.method);
     
-    // TODO: http version
+    switch req.header.version {
+      case '1.0': args.push('--http1.0');
+      case '1.1': args.push('--http1.1');
+      case '2': args.push('--http2');
+      default:
+    }
     
     for(header in req.header) {
       args.push('-H');
