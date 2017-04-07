@@ -14,11 +14,11 @@ class RunTests {
     
     var tests = [
       TestSuite.make(new TestHttp(Node, Httpbin, false), 'Httpbin'),
-      // TestSuite.make(new TestHttp(Node, Httpbin, true), 'Httpbin (secure)'),
+      TestSuite.make(new TestHttp(Node, Httpbin, true), 'Httpbin (secure)'),
     ];
     
     if(port != null) tests = tests.concat([
-      TestSuite.make(new TestHttp(Node, Local(port), false), 'Local'),
+      TestSuite.make(new TestHttp(Node, Local(port), false), 'Local(port = $port)'),
     ]);
     
     Runner.run(tests).handle(Runner.exit);
