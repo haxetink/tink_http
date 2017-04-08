@@ -12,7 +12,9 @@ class RunTests {
       case v: Std.parseInt(v);
     }
     
-    var tests = [];
+    var tests = TestBatch.make([
+      new TestHeader(),
+    ]);
     
     for(client in Context.clients) {
         tests = tests.concat([
