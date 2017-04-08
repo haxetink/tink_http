@@ -32,14 +32,19 @@ class ContentType {
   public var type(default, null):String = '*';
   public var subtype(default, null):String = '*';
   public var extensions(default, null):Extensions;
+  var raw:String;
   
   function new() { 
     extensions = new Map();
   }
   
+  public function toString()
+    return raw;
+  
   static public function ofString(s:String):ContentType {
     var ret = new ContentType();
     
+    ret.raw = s;
     var parsed = (s:HeaderValue).parse();
     var value = parsed[0].value;
     switch value.indexOf('/') {
