@@ -55,50 +55,35 @@ class TestHttp {
         ];
     }
     return request(method, url + '/${(method:String).toLowerCase()}?a=1&b=2', headers, body == null ? null : body)
-      .map(function(o) return switch o {
-        case Success(echo):
+      .next(function(echo) {
           asserts.assert(echo.query.get('a') == '1');
           asserts.assert(echo.query.get('b') == '2');
           if(body != null) asserts.assert(echo.body == body);
-          Success(asserts.done());
-        case Failure(e):
-          Success(asserts.fail(e));
+          return asserts.done();
       });
   }
   
   // @:include
-  public function headers() {
-    request(GET, url + '/headers', [new HeaderField('x-custom-tink', 'tink_http')])
-      .handle(function(o) switch o {
-        case Success(echo):
+  public function headers()
+    return request(GET, url + '/headers', [new HeaderField('x-custom-tink', 'tink_http')])
+      .next(function(echo) {
           asserts.assert(Type.enumEq(echo.headers.byName('x-custom-tink'), Success('tink_http')));
-          asserts.done();
-        case Failure(e):
-          asserts.fail(e);
+          return asserts.done();
       });
-    return asserts;
-  }
   
-  public function origin() {
-    request(GET, url + '/ip')
-      .handle(function(o) switch o {
-        case Success(echo):
+  public function origin()
+    return request(GET, url + '/ip')
+      .next(function(echo) {
           asserts.assert(echo.origin != null && echo.origin.length > 0);
-          asserts.done();
-        case Failure(e):
-          asserts.fail(e);
+          return asserts.done();
       });
-    return asserts;
-  }
   
   
-  function request(method:Method, url:Url, ?headers:Array<HeaderField>, ?body:IdealSource) {
-    // trace(url);
+  function request(method:Method, url:Url, ?headers:Array<HeaderField>, ?body:IdealSource)
     return client.request(new OutgoingRequest(
       new OutgoingRequestHeader(method, url, headers),
       body == null ? Source.EMPTY : body
     )).next(converter.convert);
-  }
   
 }
 
