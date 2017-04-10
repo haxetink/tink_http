@@ -3,6 +3,7 @@ package tink.http;
 import haxe.io.Bytes;
 import tink.http.Message;
 import tink.http.Header;
+import tink.http.Version;
 import tink.url.Host;
 import tink.url.Query;
 import tink.Url;
@@ -16,9 +17,9 @@ class RequestHeader extends Header {
   
   public var method(default, null):Method;
   public var url(default, null):Url;
-  public var version(default, null):String;
+  public var version(default, null):Version;
 
-  public function new(method:Method, url:Url, version = '1.1', fields) {
+  public function new(method:Method, url:Url, version:Version = 'HTTP/1.1', fields) {
     this.method = method;
     this.url = url;
     this.version = version;
@@ -27,7 +28,7 @@ class RequestHeader extends Header {
 
 
   override public function toString()
-    return '$method $url HTTP/$version$LINEBREAK'+super.toString();
+    return '$method $url $version$LINEBREAK'+super.toString();
 
 }
 
