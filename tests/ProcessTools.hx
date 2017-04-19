@@ -15,7 +15,7 @@ class ProcessTools {
   
   public static function travix(target: String, args: Array<String>): Process {
     File.saveContent('tests.hxml', ['-cp tests'].concat(args).join('\n'));
-    return streamAll('npm', ['run', 'travix', target]);
+    return streamAll('npm', ['run', 'travix', target, "."]);
   }
   
   static function stream(input: Input) {
