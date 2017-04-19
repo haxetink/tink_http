@@ -1,26 +1,14 @@
 sudo: required
 dist: trusty
 
-language: haxe
+language: node_js
+node_js: 6
 
-#os:
-#  - linux
-#  - osx
-  
-haxe:
-  - "3.2.1"
-  - development
-#  
-#matrix:
-#  allow_failures:
-#    - haxe: development
-    
+os:
+  - linux
+      
 install:
-  - haxelib install tink_runloop --always
-  - haxelib install tink_tcp --always
-  - haxelib install travix --always
-  - haxelib run travix install
+  - npm install
 
 script:
-  # Test servers
   - haxe master.hxml -D containers=node -D targets=node
