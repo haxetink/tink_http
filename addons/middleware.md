@@ -7,3 +7,5 @@ In Haxe code:
 ```haxe
 typedef Middleware = Handler->Handler;
 ```
+
+!> This section is incomplete, contribute using the button at the bottom of the page
