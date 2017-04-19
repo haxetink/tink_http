@@ -1,10 +1,10 @@
 - **Getting started**
-  - [Install](getting-started/install.md)
+  - [Quick Start](getting-started/quick-start.md)
 	
-- **Basic**
-  - [Request, Response and Header](basic/request-response-header.md)
-  - [Client](basic/client.md)
-  - [Server](basic/server.md)
+- **Basics**
+  - [Request, Response and Header](basics/request-response-header.md)
+  - [Client](basics/client.md)
+  - [Server](basics/server.md)
 
-- **Addon**
-  - [Middleware](addon/middleware.md)
+- **Addons**
+  - [Middleware](addons/middleware.md)
