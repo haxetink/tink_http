@@ -22,8 +22,13 @@ class TestHttp {
   
   public function new(client:ClientType, target, secure) {
     this.client = switch client {
+      #if (js && !nodejs)
+      case Js: secure ? new SecureJsClient() : new JsClient();
+      #end
+      #if nodejs
       case Node: secure ? new SecureNodeClient() : new NodeClient();
       case Curl: secure ? new SecureCurlClient() : new CurlClient();
+      #end
     }
     
     var schema = secure ? 'https' : 'http';

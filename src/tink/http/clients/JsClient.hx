@@ -1,21 +1,29 @@
 package tink.http.clients;
 
+import haxe.io.Bytes;
+import tink.http.Client;
+import tink.http.Header;
+import tink.http.Request;
+import tink.http.Response;
+import js.html.XMLHttpRequest;
+import js.html.Int8Array;
+
+using tink.io.Source;
+using tink.CoreApi;
+
 class JsClient implements ClientObject {
   public function new() {}
   
-  public function request(req:OutgoingRequest):Future<IncomingResponse> {
-    return jsRequest(req, switch req.header.host {
-        case null: ''; // TODO: js.Browser.window.location?
-        case v: 'http://$v';
-    });
+  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
+    return jsRequest(req);
   }
   
-  function jsRequest(req:OutgoingRequest, host:String) {
+  function jsRequest(req:OutgoingRequest) {
     return Future.async(function(cb) {
       var http = getHttp();
-      http.open(req.header.method, host + req.header.uri);
+      http.open(req.header.method, req.header.url);
       http.responseType = ARRAYBUFFER;
-      for(header in req.header.fields) http.setRequestHeader(header.name, header.value);
+      for(header in req.header) http.setRequestHeader(header.name, header.value);
       http.onreadystatechange = function() if(http.readyState == 4) { // this is equivalent to onload...
         if(http.status != 0) {
           var headers = switch http.getAllResponseHeaders() {
@@ -28,27 +36,21 @@ class JsClient implements ClientObject {
             }];
           }
           var header = new ResponseHeader(http.status, http.statusText, headers);
-          cb(new IncomingResponse(
+          cb(Success(new IncomingResponse(
             new ResponseHeader(http.status, http.statusText, headers),
             switch http.response {
-              case null: Empty.instance;
+              case null: cast Source.EMPTY;
               case v: Bytes.ofData(v);
             }
-          ));
+          )));
         } else {
-          cb(new IncomingResponse(
-            new ResponseHeader(502, 'XMLHttpRequest Error', []),
-            Empty.instance
-          ));
+          cb(Failure(new Error(502, 'XMLHttpRequest Error')));
         }
       }
-      http.onerror = function() {
-        cb(new IncomingResponse(
-          new ResponseHeader(502, 'XMLHttpRequest Error', []),
-          Empty.instance
-        ));
+      http.onerror = function(e) {
+        cb(Failure(Error.withData(502, 'XMLHttpRequest Error', e)));
       }
-      req.body.all().handle(function(bytes) http.send(new Int8Array(bytes.getData())));
+      req.body.all().handle(function(chunk) http.send(new Int8Array(chunk.toBytes().getData())));
     });
   }
   

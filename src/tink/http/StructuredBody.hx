@@ -26,14 +26,13 @@ abstract UploadedFile(UploadedFileBase) from UploadedFileBase to UploadedFileBas
       read: function():RealSource return data,
       saveTo: function(path:String) {
         var name = 'File sink $path';
-        
         var dest:RealSink = 
           #if (nodejs && !macro)
             Sink.ofNodeStream(name, js.node.Fs.createWriteStream(path))
           #elseif sys
             null //Sink.ofOutput(name, sys.io.File.write(path))
           #else
-            #error
+            throw 'not implemented'
           #end
         ;
         return (data : IdealSource).pipeTo(dest, { end: true } ).map(function (r) return switch r {

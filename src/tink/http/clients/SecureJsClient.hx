@@ -1,10 +1,11 @@
 package tink.http.clients;
 
+import tink.http.Request;
+import tink.http.Response;
+using tink.CoreApi;
+
 class SecureJsClient extends JsClient {
-  override function request(req:OutgoingRequest):Future<IncomingResponse> {
-    return jsRequest(req, switch req.header.host {
-        case null: ''; // TODO: js.Browser.window.location?
-        case v: 'https://$v';
-    });
+  override function request(req:OutgoingRequest):Promise<IncomingResponse> {
+    return jsRequest(req);
   }
 }
