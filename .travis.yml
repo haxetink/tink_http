@@ -11,4 +11,4 @@ install:
   - npm install
 
 script:
-  - npm run haxe -- master.hxml -D containers=node -D targets=node
+  - npm run haxe -- master.hxml -D containers=node -D targets=node,js
