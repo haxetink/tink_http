@@ -22,6 +22,7 @@ class JsClient implements ClientObject {
     return Future.async(function(cb) {
       var http = getHttp();
       http.open(req.header.method, req.header.url);
+      http.withCredentials = true;
       http.responseType = ARRAYBUFFER;
       for(header in req.header) http.setRequestHeader(header.name, header.value);
       http.onreadystatechange = function() if(http.readyState == 4) { // this is equivalent to onload...
