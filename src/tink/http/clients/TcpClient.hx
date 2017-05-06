@@ -1,5 +1,12 @@
 package tink.http.clients;
 
+import tink.http.Client;
+import tink.http.Header;
+import tink.http.Response;
+import tink.http.Request;
+
+using tink.CoreApi;
+
 class TcpClient implements ClientObject { 
   var secure = false;
   public function new() {}

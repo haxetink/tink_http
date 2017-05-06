@@ -29,6 +29,19 @@ class NodeContainer implements Container {
             res.end();
           });
         });
+        
+  static public function toUpgradeHandler(handler:Handler)
+    return 
+      function (req:js.node.http.IncomingMessage, socket:js.node.net.Socket, head:js.node.Buffer) {
+        handler.process(
+          new IncomingRequest(
+            req.socket.remoteAddress, 
+            new IncomingRequestHeader(cast req.method, req.url, req.httpVersion, [for (i in 0...Std.int(req.rawHeaders.length / 2)) new HeaderField(req.rawHeaders[2 * i], req.rawHeaders[2 * i +1])]), 
+            Plain(Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', socket)))
+        ).handle(function (out) {
+          out.body.prepend(out.header.toString()).pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', socket)).handle(function (_) {});
+        });
+      }
   
   
   public function run(handler:Handler) 
@@ -42,6 +55,8 @@ class NodeContainer implements Container {
       server.on('error', function (e) {
         cb(Failed(e));
       });
+      
+      server.on('upgrade', toUpgradeHandler(handler));
       
       server.listen(port, function () {
         cb(Running({ 
