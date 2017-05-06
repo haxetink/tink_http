@@ -78,7 +78,7 @@ class TcpContainer implements Container {
   public function run(handler):Future<ContainerResult> 
     return port.next(function (p) 
       return 
-        if (p.setHandler(wrap(handler))) Running({ 
+        if (!p.setHandler(wrap(handler))) Running({ 
           shutdown: p.shutdown, 
           failures: Signal.trigger()
         })
