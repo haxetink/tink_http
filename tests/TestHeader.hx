@@ -23,13 +23,12 @@ class TestHeader {
 		return assert(header.toString() == str);
 	}
 	
-	// @:include
-	// @:variant(GET, 'https://www.example.com', '1.1', [], 'GET https://www.example.com HTTP/1.1\r\n\r\n\r\n')
-	// @:variant(GET, 'https://www.example.com', '2', [new tink.http.Header.HeaderField('host', 'v')], 'GET https://www.example.com HTTP/2\r\nhost: v\r\n\r\n')
-	// public function buildOutgoingResponseHeader(method:Method, url:Url, version:String, fields:Array<HeaderField>, str:String) {
-	// 	var header = new OutgoingResponseHeader()
-	// 	return assert(header.toString() == str);
-	// }
+	@:variant(200, 'OK', HTTP1_1, [], 'HTTP/1.1 200 OK\r\n\r\n\r\n')
+	@:variant(403, 'Forbidden', HTTP2, [new tink.http.Header.HeaderField('content-length', '0')], 'HTTP/2 403 Forbidden\r\ncontent-length: 0\r\n\r\n')
+	public function buildResponseHeader(code:Int, reason:String, version:Version, fields:Array<HeaderField>, str:String) {
+		var header = new ResponseHeader(code, reason, fields, version);
+		return assert(header.toString() == str);
+	}
 	
 	@:describe('Parse Incoming Request Header')
 	public function parseIncomingRequestHeader() {

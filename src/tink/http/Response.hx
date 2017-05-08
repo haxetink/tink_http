@@ -15,7 +15,7 @@ class ResponseHeader extends Header {
   public var reason(default, null):String;
   public var protocol(default, null):String;
   
-  public function new(statusCode, reason, fields, ?protocol = 'HTTP/1.1') {
+  public function new(statusCode, reason, fields, ?protocol:Version = 'HTTP/1.1') {
     this.statusCode = statusCode;
     this.reason = reason;
     this.protocol = protocol;
