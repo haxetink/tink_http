@@ -14,6 +14,12 @@ import tink.Chunk;
 using tink.io.Source;
 using tink.CoreApi;
 
+/**
+ *  Note: 
+ *    - need to compile with `-D network-sandbox` for local-with-network sandbox
+ *    - need a socket server (not http server) serving at port 843 to serve the policy file,
+ *      a sample policy server can be found in sample/swf
+ */
 class FlashClient implements ClientObject {
   
   var secure = false;
@@ -78,10 +84,6 @@ class FlashClient implements ClientObject {
         case null: secure ? 443 : 80;
         case v: v;
       }
-      
-      // flash.system.Security.allowDomain('*');
-      // flash.system.Security.allowInsecureDomain('*');
-      // flash.system.Security.loadPolicyFile('http://localhost:8000/crossdomain.xml');
       
       try {
         socket.connect(req.header.url.host.name, port);
