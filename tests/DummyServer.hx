@@ -32,6 +32,12 @@ class DummyServer {
     
     if (req.header.url.path == '/active')
       return Future.sync(('ok': OutgoingResponse));
+    
+    if (req.header.url.path == '/crossdomain.xml')
+      return Future.sync(OutgoingResponse.blob(Bytes.ofString('<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" /></cross-domain-policy>'), 'text/xml'));
+    
+    if (req.header.url.path == '/swf')
+      return Future.sync(OutgoingResponse.blob(sys.io.File.getBytes('/Users/kevin/Codes/tink_http/bin/swf/tests.swf'), 'application/x-shockwave-flash'));
       
     #if (tink_runloop || nodejs)
     Sys.print(Ansi.text(Cyan, '.'));
