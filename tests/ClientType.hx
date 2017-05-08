@@ -1,6 +1,11 @@
 package;
 
 enum ClientType {
+  
+  #if sys
+  Socket;
+  #end
+  
   #if (js && !nodejs)
   Js;
   #end

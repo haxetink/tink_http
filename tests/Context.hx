@@ -128,29 +128,7 @@ class Context {
   
   ];
   
-  public static var clients: Array<ClientType> = [
-    
-    #if (!nodejs)
-    // 'std' => new StdClient(),
-    #end
-    
-    #if (tink_tcp)
-    Tcp,
-    #end
-    
-    #if nodejs
-    Node,
-    #end
-    
-    #if (neko || nodejs)
-    Curl,
-    #end
-    
-    #if (js && !nodejs)
-    Js,
-    #end
-  
-  ];
+  public static var clients: Array<ClientType> = ClientType.createAll();
   #end
   
   #if neko

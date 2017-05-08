@@ -28,7 +28,7 @@ class RequestHeader extends Header {
 
 
   override public function toString()
-    return '$method $url $version$LINEBREAK'+super.toString();
+    return '$method ${url.pathWithQuery} $version$LINEBREAK'+super.toString();
 
 }
 

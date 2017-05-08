@@ -16,8 +16,8 @@ class TestHeader {
 	public function new() {}
 	
 	@:describe('Build Outgoing Request Header')
-	@:variant(GET, 'https://www.example.com', HTTP1_1, [], 'GET https://www.example.com HTTP/1.1\r\n\r\n\r\n')
-	@:variant(GET, 'https://www.example.com', HTTP2, [new tink.http.Header.HeaderField('host', 'v')], 'GET https://www.example.com HTTP/2\r\nhost: v\r\n\r\n')
+	@:variant(GET, 'https://www.example.com', HTTP1_1, [], 'GET / HTTP/1.1\r\n\r\n\r\n')
+	@:variant(GET, 'https://www.example.com', HTTP2, [new tink.http.Header.HeaderField('host', 'v')], 'GET / HTTP/2\r\nhost: v\r\n\r\n')
 	public function buildOutgoingRequestHeader(method:Method, url:Url, version:Version, fields:Array<HeaderField>, str:String) {
 		var header = new OutgoingRequestHeader(method, url, version, fields);
 		return assert(header.toString() == str);

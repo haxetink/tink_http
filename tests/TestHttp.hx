@@ -14,6 +14,7 @@ import tink.unit.*;
 using tink.io.Source;
 using tink.CoreApi;
 
+@:timeout(20000)
 @:asserts
 class TestHttp {
   var client:Client;
@@ -22,6 +23,9 @@ class TestHttp {
   
   public function new(client:ClientType, target, secure) {
     this.client = switch client {
+      #if sys
+      case Socket: secure ? new SecureSocketClient() : new SocketClient();
+      #end
       #if (js && !nodejs)
       case Js: secure ? new SecureJsClient() : new JsClient();
       #end
@@ -92,11 +96,15 @@ class TestHttp {
       });
   
   
-  function request(method:Method, url:Url, ?headers:Array<HeaderField>, ?body:IdealSource)
+  function request(method:Method, url:Url, ?headers:Array<HeaderField>, ?body:IdealSource) {
+    if(headers == null) headers = [];
+    var header = new OutgoingRequestHeader(method, url, headers);
+    if(!header.byName(HOST).isSuccess()) headers.push(new HeaderField(HOST, url.host.toString()));
     return client.request(new OutgoingRequest(
-      new OutgoingRequestHeader(method, url, headers),
+      header,
       body == null ? Source.EMPTY : body
     )).next(converter.convert);
+  }
   
 }
 

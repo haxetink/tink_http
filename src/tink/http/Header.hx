@@ -32,7 +32,7 @@ class ContentType {
   public var type(default, null):String = '*';
   public var subtype(default, null):String = '*';
   public var extensions(default, null):Extensions;
-  var raw:String;
+  public var raw(default, null):String; // TODO: figure out why can't make this private (php)
   
   function new() { 
     extensions = new Map();
