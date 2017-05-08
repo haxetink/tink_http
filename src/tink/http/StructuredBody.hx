@@ -51,5 +51,5 @@ typedef UploadedFileBase = {
   var size(default, null):Int;
   
   function read():RealSource;
-  function saveTo(path:String):Surprise<Noise, Error>;
+  function saveTo(path:String):Promise<Noise>;
 }
