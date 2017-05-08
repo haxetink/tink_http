@@ -40,7 +40,7 @@ class TestHeader {
 				var header = o.a;
 				var body = o.b;
 				asserts.assert(header.method == GET);
-				asserts.assert(header.url == '/path');
+				asserts.assert(header.url.toString() == '/path');
 				asserts.assert(header.version == 'HTTP/1.1');
 				
 				function checkHeader(name:String, value:String, ?pos:haxe.PosInfos) {
