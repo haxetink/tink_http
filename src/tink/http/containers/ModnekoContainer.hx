@@ -3,14 +3,14 @@ package tink.http.containers;
 import haxe.io.Bytes;
 import neko.Web;
 import tink.http.Container;
-import tink.http.Header.HeaderField;
-import tink.http.Request.IncomingRequest;
-import tink.http.Request.IncomingRequestHeader;
-import tink.io.Buffer;
-import tink.io.IdealSource.Empty;
-import tink.io.Progress;
-import tink.io.Sink.SinkBase;
+import tink.http.Header;
+import tink.http.Request;
+import tink.streams.Stream;
+import tink.io.Sink;
+import tink.io.PipeResult;
+import tink.io.PipeOptions;
 
+using tink.io.Source;
 using tink.CoreApi;
 
 class ModnekoContainer implements Container {
@@ -25,7 +25,7 @@ class ModnekoContainer implements Container {
           case null | '': '';
           case v: '?' + v;
         },
-        '1.1', //TODO: do something meaningful here,
+        HTTP1_1, //TODO: do something meaningful here,
         {
           var v = @:privateAccess Web._get_client_headers();
           var a = [];
@@ -37,7 +37,7 @@ class ModnekoContainer implements Container {
         }
       );
       
-  public function run(handler:Handler):Future<ContainerResult> {
+  public function run(handler:tink.http.Handler):Future<ContainerResult> {
     return Future.async(function (cb) 
       handler.process({
         var header = getHeader();
@@ -46,34 +46,34 @@ class ModnekoContainer implements Container {
           header,
           //TODO: use Web.parseMultiPart when appropriate
           Plain(switch Web.getPostData() {
-            case null: Empty.instance;
+            case null: Empty.make();
             case v: v;
           })
         );
       }).handle(function (res) {
-        
         Web.setReturnCode(res.header.statusCode);
         
-        for (h in res.header.fields)
+        for (h in res.header)
           Web.setHeader(h.name, h.value);
           
         res.body.pipeTo(Outstream.INST, { end: true }).handle(function (o) {
-          cb(Done);
+          cb(Shutdown);
         });
       })
     );
   }
 }
 
-private class Outstream extends SinkBase {
+private class Outstream extends SinkBase<Noise, Noise> {
   static public var INST(default, null) = new Outstream();
   function new() {}
-  function writeBytes(from:Bytes, pos:Int, len:Int):Int {
-    Sys.print(from.getString(pos, len));
-    return len;
-  }
-  
-  override public function write(from:Buffer):Surprise<Progress, Error> {
-    return Future.sync(from.tryWritingTo('server output', this));
-  }
+  override function consume<EIn>(source:Stream<Chunk, EIn>, options:PipeOptions):Future<PipeResult<EIn, Noise, Noise>>
+    return source.forEach(function(chunk) {
+      Sys.print(chunk);
+      return Resume;
+    }).map(function(o):PipeResult<EIn, Noise, Noise> return switch o {
+      case Depleted: AllWritten;
+      case Halted(_): throw 'unreachable';
+      case Failed(e): SourceFailed(e);
+    });
 }

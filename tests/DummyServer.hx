@@ -50,7 +50,7 @@ class DummyServer {
               ip: req.clientIp,
               method: req.header.method,
               headers: [for (h in req.header) { name: h.name, value: h.value } ], 
-              body: body.toString()
+              body: body
             }
             OutgoingResponse.blob(Bytes.ofString(haxe.Json.stringify(data)), 'application/json');
           case Failure(e):

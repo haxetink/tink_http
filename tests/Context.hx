@@ -65,7 +65,7 @@ class Context {
       buildModNeko(port);
       var cwd = Sys.getCwd();
       Sys.setCwd('bin/neko');
-      var server = ProcessTools.streamAll('nekotools', ['server', '-p', '$port', '-rewrite']);
+      var server = ProcessTools.streamAll('nekotools', ['server', '-p', '$port', '-rewrite', '-log', 'log.txt']);
       Sys.setCwd(cwd);
       return server;
     },
@@ -107,10 +107,10 @@ class Context {
     #end
     
     #if neko
-    // 'modneko' => function (port, handler) {
-    //   if (Sys.getEnv(RUN) != 'true') return;
-    //   tink.http.containers.ModnekoContainer.inst.run(handler);
-    // },
+    'modneko' => function (port, handler) {
+      if (Sys.getEnv(RUN) != 'true') return;
+      tink.http.containers.ModnekoContainer.inst.run(handler);
+    },
     #end
     
     #if nodejs
