@@ -26,6 +26,9 @@ class FlashClient implements ClientObject {
   
   public function new() {}
   
+  function getSocket():Socket
+    return new Socket();
+  
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       
@@ -37,7 +40,7 @@ class FlashClient implements ClientObject {
         case Failure(_): @:privateAccess req.header.fields.push(new HeaderField('connection', 'close'));
       }
       
-      var socket = new Socket();
+      var socket = getSocket();
       
       var accumulator = new Accumulator<Chunk, Error>();
       socket.addEventListener(ProgressEvent.SOCKET_DATA, function(e:ProgressEvent) {
