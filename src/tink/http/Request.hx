@@ -26,6 +26,8 @@ class RequestHeader extends Header {
     super(fields);
   }  
 
+  override function concat(fields:Array<HeaderField>):RequestHeader
+    return new RequestHeader(method, url, version, this.fields.concat(fields));
 
   override public function toString()
     return '$method ${url.pathWithQuery} $version$LINEBREAK'+super.toString();
@@ -42,6 +44,9 @@ class IncomingRequestHeader extends RequestHeader {
       
     return cookies;
   }
+  
+  override function concat(fields:Array<HeaderField>):IncomingRequestHeader
+    return new IncomingRequestHeader(method, url, version, this.fields.concat(fields));
   
   public function cookieNames()
     return cookies.keys();
@@ -60,7 +65,10 @@ class IncomingRequestHeader extends RequestHeader {
     );
 }
 
-class OutgoingRequestHeader extends RequestHeader {}
+class OutgoingRequestHeader extends RequestHeader {
+  override function concat(fields:Array<HeaderField>):OutgoingRequestHeader
+    return new OutgoingRequestHeader(method, url, version, this.fields.concat(fields));
+}
 
 class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}
 

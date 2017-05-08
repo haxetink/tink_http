@@ -88,6 +88,9 @@ class Header {
     
   public inline function iterator()
     return fields.iterator();
+    
+  public function concat(fields:Array<HeaderField>):Header
+    return new Header(this.fields.concat(fields));
 
   private var LINEBREAK(get, never):String; 
     inline function get_LINEBREAK() return '\r\n';

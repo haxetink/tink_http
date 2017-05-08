@@ -22,6 +22,9 @@ class ResponseHeader extends Header {
     super(fields);
   }
   
+  override function concat(fields:Array<HeaderField>):ResponseHeader
+    return new ResponseHeader(statusCode, reason, this.fields.concat(fields), protocol);
+  
   override public function toString():String
     return '$protocol $statusCode $reason$LINEBREAK' + super.toString();
   
