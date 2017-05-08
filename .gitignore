@@ -1,4 +1,3 @@
-bin/*
-!bin/swf
+bin
 node_modules
 *.hxproj
