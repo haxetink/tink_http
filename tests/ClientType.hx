@@ -25,4 +25,8 @@ enum ClientType {
   #if (nodejs || sys)
   Curl;
   #end
+  
+  #if flash
+  Flash;
+  #end
 }

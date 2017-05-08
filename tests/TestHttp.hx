@@ -41,6 +41,9 @@ class TestHttp {
       #if (nodejs || sys)
       case Curl: secure ? new SecureCurlClient() : new CurlClient();
       #end
+      #if flash
+      case Flash: secure ? new SecureFlashClient() : new FlashClient();
+      #end
     }
     
     var schema = secure ? 'https' : 'http';
