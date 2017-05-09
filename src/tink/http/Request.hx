@@ -54,8 +54,10 @@ class IncomingRequestHeader extends RequestHeader {
     return getAuthWith(function(s, p) return switch s {
       case 'Basic':
         var decoded = Base64.decode(p).toString();
-        var i = decoded.indexOf(':');
-        Success(Basic(decoded.substr(0, i), decoded.substr(i + 1)));
+        switch decoded.indexOf(':') {
+          case -1: Failure(new Error('Cannot parse username and password because ":" is missing'));
+          case i: Success(Basic(decoded.substr(0, i), decoded.substr(i + 1)));
+        }
       case 'Bearer':
         Success(Bearer(p));
       case s:
@@ -65,7 +67,7 @@ class IncomingRequestHeader extends RequestHeader {
   public function getAuthWith<T>(parser:String->String->Outcome<T, Error>):Outcome<T, Error>
     return byName(AUTHORIZATION).flatMap(function(v:String) return switch v.indexOf(' ') {
         case -1:
-          Failure(new Error(401, 'Invalid Authorization Header'));
+          Failure(new Error(UnprocessableEntity, 'Invalid Authorization Header'));
         case i:
           parser(v.substr(0, i), v.substr(i + 1));
     });
