@@ -1,6 +1,7 @@
 package tink.http;
 
 import haxe.io.Bytes;
+import haxe.crypto.Base64;
 import tink.http.Message;
 import tink.http.Header;
 import tink.http.Version;
@@ -8,7 +9,7 @@ import tink.url.Host;
 import tink.url.Query;
 import tink.Url;
 
-
+using StringTools;
 using tink.CoreApi;
 using tink.io.StreamParser;
 using tink.io.Source;
@@ -53,6 +54,28 @@ class IncomingRequestHeader extends RequestHeader {
   
   public function getCookie(name:String)
     return getCookies()[name];
+    
+  public function getAuth()
+    return getAuthWith(function(s, p) return switch s {
+      case 'Basic':
+        var decoded = Base64.decode(p).toString();
+        switch decoded.indexOf(':') {
+          case -1: Failure(new Error('Cannot parse username and password because ":" is missing'));
+          case i: Success(Basic(decoded.substr(0, i), decoded.substr(i + 1)));
+        }
+      case 'Bearer':
+        Success(Bearer(p));
+      case s:
+        Success(Others(s, p));
+    });
+  
+  public function getAuthWith<T>(parser:String->String->Outcome<T, Error>):Outcome<T, Error>
+    return byName(AUTHORIZATION).flatMap(function(v:String) return switch v.indexOf(' ') {
+        case -1:
+          Failure(new Error(UnprocessableEntity, 'Invalid Authorization Header'));
+        case i:
+          parser(v.substr(0, i), v.substr(i + 1));
+    });
   
   static public function parser():StreamParser<IncomingRequestHeader>
     return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
@@ -91,4 +114,10 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
 enum IncomingRequestBody {
   Plain(source:RealSource);
   Parsed(parts:StructuredBody);
+}
+
+enum Authorization {
+  Basic(user:String, pass:String);
+  Bearer(token:String);
+  Others(scheme:String, param:String);
 }

@@ -156,6 +156,7 @@ abstract HeaderValue(String) from String to String {
   public var ACCEPT_ENCODING     = 'accept-encoding';
   
   public var LOCATION            = 'location';
+  public var AUTHORIZATION       = 'authorization';
   
   inline function new(s) this = s;
   
