@@ -14,15 +14,11 @@ enum ClientType {
   Node;
   #end
   
-  #if sys
-  // Socket;
-  #end
-  
   #if tink_tcp
   Tcp;
   #end
   
-  #if (nodejs || sys)
+  #if ((nodejs || sys) && !php) // TODO: php fails to read from stdout of curl process
   Curl;
   #end
   

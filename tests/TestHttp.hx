@@ -32,13 +32,10 @@ class TestHttp {
       #if nodejs
       case Node: secure ? new SecureNodeClient() : new NodeClient();
       #end
-      #if sys
-      // case Socket: secure ? new SecureSocketClient() : new SocketClient();
-      #end
       #if tink_tcp
       case Tcp: secure ? new SecureTcpClient() : new TcpClient();
       #end
-      #if (nodejs || sys)
+      #if ((nodejs || sys) && !php)
       case Curl: secure ? new SecureCurlClient() : new CurlClient();
       #end
       #if flash
