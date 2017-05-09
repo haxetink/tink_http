@@ -78,4 +78,15 @@ class TestHeader {
 		asserts.assert(Lambda.count(header) == 1);
 		return asserts.done();
 	}
+	
+	@:variant([new tink.http.Header.HeaderField(AUTHORIZATION, 'Basic aGF4ZTp0aW5r')], Basic('haxe', 'tink'))
+	@:variant([new tink.http.Header.HeaderField(AUTHORIZATION, 'Bearer my_token')], Bearer('my_token'))
+	@:variant([new tink.http.Header.HeaderField(AUTHORIZATION, 'Haxe haxe_token')], Others('Haxe', 'haxe_token'))
+	public function getAuth(fields:Array<HeaderField>, expected:Authorization)
+		return assert(Type.enumEq(new IncomingRequestHeader(GET, '/', fields).getAuth(), Success(expected)));
+		
+	@:variant([new tink.http.Header.HeaderField(AUTHORIZATION, 'Basic abc')])
+	@:variant([new tink.http.Header.HeaderField(AUTHORIZATION, 'Basic')])
+	public function getAuthError(fields:Array<HeaderField>)
+		return assert(!new IncomingRequestHeader(GET, '/', fields).getAuth().isSuccess());
 }
