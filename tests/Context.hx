@@ -73,7 +73,7 @@ class Context {
     'neko-mod' => function(port) {
       buildModNeko(port);
       File.saveContent('bin/neko/.htaccess', ['RewriteEngine On','RewriteBase /','RewriteRule ^(.*)$ index.n [QSA,L]'].join('\n'));
-      ProcessTools.streamAll('docker', ['run', '-d', '-v', FileSystem.fullPath(Sys.getCwd() + '/bin/neko') + ':/var/www/html', '-p', port + ':80', '--name', 'tink_http_mod_neko', 'codeurs/mod-neko']);
+      ProcessTools.streamAll('docker', ['run', '-d', '-e', '$RUN=true', '-v', FileSystem.fullPath(Sys.getCwd() + '/bin/neko') + ':/var/www/html', '-p', port + ':80', '--name', 'tink_http_mod_neko', 'codeurs/mod-neko']);
       return {
         kill: function() {
           new Process('docker', ['kill', 'tink_http_mod_neko']).exitCode();
