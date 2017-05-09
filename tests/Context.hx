@@ -118,11 +118,17 @@ class Context {
       new tink.http.containers.NodeContainer(port).run(handler),
     #end
     
-    #if (tink_tcp && tink_runloop)
+    #if (tink_tcp && (nodejs || tink_runloop))
     'tcp' => function (port, handler)
       #if tink_runloop @:privateAccess tink.RunLoop.create(function() #end
-        new tink.http.containers.TcpContainer(port)
-        .run(handler)
+        new tink.http.containers.TcpContainer(
+          #if nodejs
+            tink.tcp.nodejs.NodejsAcceptor.inst.bind.bind(port)
+          #else
+            #error "not implemented"
+          #end
+        )
+        .run(handler).eager()
       #if tink_runloop ) #end, 
     #end
   

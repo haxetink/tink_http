@@ -12,7 +12,7 @@ install:
 
 script:
   - npm run --silent haxe -- master.hxml -D containers=node -D targets=js,node,neko
-  - npm run --silent haxe -- master.hxml -D containers=php,neko-mod -D targets=node -D container_only
+  - npm run --silent haxe -- master.hxml -D containers=php,neko-mod,node-tcp -D targets=node -D container_only
   # - npm run --silent haxe -- master.hxml -D containers=neko-tools -D targets=node # does not support PATCH/PUT/DELETE
   # - npm run --silent haxe -- master.hxml -D containers=node -D targets=cpp # haxeshim not working with cpp yet
   # - npm run --silent haxe -- master.hxml -D containers=node -D targets=js # why DELETE on travix does not send the body?
