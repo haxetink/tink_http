@@ -92,4 +92,19 @@ class TestHeader {
 	@:variant('Basic')
 	public function getAuthError(auth:String)
 		return assert(!createAuthHeader(auth).getAuth().isSuccess());
+		
+	function createContentLengthHeader(v)
+		return new Header([new HeaderField(CONTENT_LENGTH, v)]);
+			
+	@:variant('1', 1)
+	@:variant('2', 2)
+	public function getContentLength(v:String, expected:Int)
+		return assert(Type.enumEq(createContentLengthHeader(v).getContentLength(), Success(expected)));
+		
+	@:variant('v')
+	public function getContentLengthError(v:String)
+		return assert(!createContentLengthHeader(v).getContentLength().isSuccess());
+		
+	public function getMissingContentLength()
+		return assert(Type.enumEq(new Header().getContentLength(), Success(0)));
 }

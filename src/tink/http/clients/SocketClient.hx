@@ -58,15 +58,10 @@ class SocketClient implements ClientObject {
             case AllWritten:
               source.parse(ResponseHeader.parser()).handle(function(o) switch o {
                 case Success(parsed): 
-                  var len = switch parsed.a.byName(CONTENT_LENGTH) {
-                    case Success(v):
-                      switch Std.parseInt(v) {
-                        case null: cb(Failure(new Error('Invalid Content-Length Header "$v"'))); return;
-                        case len: len;
-                      }
-                    case Failure(_): 0; // assume 0 is ok?
+                  switch parsed.a.getContentLength() {
+                    case Success(len): cb(Success(new IncomingResponse(parsed.a, parsed.b.limit(len))));
+                    case Failure(e): cb(Failure(e));
                   }
-                  cb(Success(new IncomingResponse(parsed.a, parsed.b.limit(len))));
                 case Failure(e): cb(Failure(e));
               });
               
