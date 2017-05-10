@@ -53,11 +53,8 @@ class Split<E> {
 class TcpContainer implements Container {
   static public function wrap(handler:tink.http.Handler):tink.tcp.Handler {
     return function (i:tink.tcp.Incoming):Future<tink.tcp.Outgoing> {
-      return i.stream.parse(IncomingRequestHeader.parser())
-        .next(function (r) return switch r.a.getContentLength() {
-          case Success(len): handler.process(new IncomingRequest(i.from.host, r.a, Plain(r.b.limit(len))));
-          case Failure(e): e;
-        })
+      return IncomingRequest.parse(i.from.host, i.stream)
+        .next(handler.process)
         .recover(OutgoingResponse.reportError)
         .map(function (res) return {
           stream: res.body.prepend(res.header.toString()),

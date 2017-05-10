@@ -10,5 +10,10 @@ abstract Client(ClientObject) from ClientObject to ClientObject {
 }
 
 interface ClientObject {
+  /**
+   *  Performs an HTTP(s) request
+   *  @param req - The HTTP request
+   *  @return The HTTP response
+   */
   function request(req:OutgoingRequest):Promise<IncomingResponse>;
 }

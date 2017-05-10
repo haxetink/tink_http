@@ -70,9 +70,19 @@ class Header {
       case v: v;
     }
     
+  /**
+   *  Get all headers of the given name
+   *  @param name - Header name to retrieve
+   *  @return Array of headers of the given name
+   */
   public function get(name:HeaderName)
     return [for (f in fields) if (f.name == name) f.value];
   
+  /**
+   *  Get a header
+   *  @param name - Header name to retrieve
+   *  @return `Success(header)` if there is exactly one entry of the given header name, `Failure(err)` otherwise
+   */
   public function byName(name:HeaderName)
     return switch get(name) {
       case []:
@@ -83,15 +93,26 @@ class Header {
         Failure(new Error(UnprocessableEntity, 'Multiple entries for $name header'));
     }
     
+  /**
+   *  Get the content type header
+   */
   public function contentType() 
     return byName(CONTENT_TYPE).map(ContentType.ofString);
     
   public inline function iterator()
     return fields.iterator();
     
+  /**
+   *  Clone this header with additional header fields
+   *  @param fields - Header fields to be added
+   *  @return Header with additional fields
+   */
   public function concat(fields:Array<HeaderField>):Header
     return new Header(this.fields.concat(fields));
-    
+  
+  /**
+   *  Get content length. Assumes zero if content-length header is missing
+   */
   public function getContentLength()
     return switch byName(CONTENT_LENGTH) {
       case Success(Std.parseInt(_) => null): Failure(new Error(UnprocessableEntity, 'Invalid Content-Length Header'));
@@ -119,13 +140,20 @@ abstract HeaderValue(String) from String to String {
   
   public function getExtension():Map<String, String>
     return parse()[0].extensions;
-      
+  
+  /**
+   *  Parse the value of this header in to `{value:String, extensions:Map<String, String>}` form
+   */
   public function parse()
     return parseWith(function(_, params) return [for(p in params) p.name => switch p.value.toString() {
       case quoted if (quoted.charCodeAt(0) == '"'.code): quoted.substr(1, quoted.length - 2);//TODO: find out how exactly escaping and what not works
       case v: v;
     }]);
     
+  /**
+   *  Parse the value of this header, using the given function to parse the extensions
+   *  @param parseExtension - function to parse the extension
+   */
   public function parseWith<T>(parseExtension:String->Iterator<QueryStringParam>->T)
     return [for(v in this.split(',')) {
       v = v.trim();

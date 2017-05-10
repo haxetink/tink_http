@@ -49,12 +49,21 @@ class IncomingRequestHeader extends RequestHeader {
   override function concat(fields:Array<HeaderField>):IncomingRequestHeader
     return new IncomingRequestHeader(method, url, version, this.fields.concat(fields));
   
+  /**
+   *  List all cookie names
+   */
   public function cookieNames()
     return cookies.keys();
   
+  /**
+   *  Get a single cookie
+   */
   public function getCookie(name:String)
     return getCookies()[name];
     
+  /**
+   *  Get the Authorization header as an Enum
+   */
   public function getAuth()
     return getAuthWith(function(s, p) return switch s {
       case 'Basic':
@@ -77,6 +86,9 @@ class IncomingRequestHeader extends RequestHeader {
           parser(v.substr(0, i), v.substr(i + 1));
     });
   
+  /**
+   *  Get a StreamParser which can parse a Source into an IncomingRequestHeader
+   */
   static public function parser():StreamParser<IncomingRequestHeader>
     return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
       return switch line.split(' ') {
@@ -106,9 +118,11 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
   
   static public function parse(clientIp, source:RealSource) 
     return
-      source.parse(IncomingRequestHeader.parser()).next(
-        function (parts) return new IncomingRequest(clientIp, parts.a, Plain(parts.b))
-      );
+      source.parse(IncomingRequestHeader.parser())
+        .next(function (parts) return switch parts.a.getContentLength() {
+          case Success(len): new IncomingRequest(clientIp, parts.a, Plain(parts.b.limit(len)));
+          case Failure(e): e;
+        });
 }
 
 enum IncomingRequestBody {
