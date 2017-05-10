@@ -1,8 +1,6 @@
 package tink.http.containers;
 
 import tink.streams.Stream;
-import tink.chunk.*;
-
 import tink.http.Container;
 import tink.http.Request;
 import tink.http.Response;

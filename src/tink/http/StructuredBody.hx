@@ -1,10 +1,7 @@
 package tink.http;
 
 import haxe.io.Bytes;
-
-import tink.io.*;
 import tink.io.Sink;
-import tink.core.Named;
 
 using tink.io.Source;
 using tink.CoreApi;

@@ -1,6 +1,5 @@
 package tink.http;
 
-import haxe.io.Bytes;
 import tink.http.Request;
 import tink.http.Response;
 

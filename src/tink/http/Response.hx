@@ -1,10 +1,8 @@
 package tink.http;
 
-import haxe.io.Bytes;
-import haxe.io.BytesBuffer;
-import tink.core.Error;
 import tink.http.Message;
 import tink.http.Header;
+import tink.Chunk;
 
 using tink.io.Source;
 using tink.CoreApi;
@@ -46,7 +44,7 @@ abstract OutgoingResponse(OutgoingResponseData) {
   public inline function new(header, body) 
     this = new OutgoingResponseData(header, body);
     
-  static public function blob(?code = 200, bytes:Bytes, contentType:String, ?headers)
+  static public function blob(?code = 200, chunk:Chunk, contentType:String, ?headers)
     return 
         new OutgoingResponse(
           new ResponseHeader(
@@ -54,12 +52,12 @@ abstract OutgoingResponse(OutgoingResponseData) {
             'OK', 
             [
               new HeaderField('Content-Type', contentType), 
-              new HeaderField('Content-Length', Std.string(bytes.length))
+              new HeaderField('Content-Length', Std.string(chunk.length))
             ].concat(switch headers {
               case null: [];
               case v: v;
             })), 
-          bytes
+          chunk
         );
   
   static public function chunked(contentType:String, ?headers, source:IdealSource) {
@@ -68,10 +66,10 @@ abstract OutgoingResponse(OutgoingResponseData) {
   }
         
   @:from static function ofString(s:String) 
-    return blob(Bytes.ofString(s), 'text/plain');
+    return blob(s, 'text/plain');
     
-  @:from static function ofBytes(b:Bytes) 
-    return blob(b, 'application/octet-stream');
+  @:from static function ofChunk(c:Chunk) 
+    return blob(c, 'application/octet-stream');
     
   static public function reportError(e:Error) {
     return new OutgoingResponse(

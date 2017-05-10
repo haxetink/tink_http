@@ -1,6 +1,5 @@
 package tink.http.containers;
 
-import haxe.io.Bytes;
 import neko.Web;
 import tink.http.Container;
 import tink.http.Header;
@@ -10,7 +9,6 @@ import tink.io.Sink;
 import tink.io.PipeResult;
 import tink.io.PipeOptions;
 
-using tink.io.Source;
 using tink.CoreApi;
 
 class ModnekoContainer implements Container {

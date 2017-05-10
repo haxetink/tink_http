@@ -1,15 +1,12 @@
 package tink.http;
 
-import haxe.io.Bytes;
 import haxe.crypto.Base64;
 import tink.http.Message;
 import tink.http.Header;
 import tink.http.Version;
-import tink.url.Host;
 import tink.url.Query;
 import tink.Url;
 
-using StringTools;
 using tink.CoreApi;
 using tink.io.StreamParser;
 using tink.io.Source;

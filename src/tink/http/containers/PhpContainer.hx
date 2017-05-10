@@ -2,12 +2,9 @@ package tink.http.containers;
 
 import php.NativeArray;
 import sys.io.File;
-import tink.core.Future;
-import tink.core.Named;
 import tink.http.Container;
 import tink.http.Handler;
 import tink.http.Header;
-import tink.http.Method;
 import tink.http.StructuredBody;
 import tink.http.Request;
 import tink.io.Sink;
