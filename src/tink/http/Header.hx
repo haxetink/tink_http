@@ -76,7 +76,7 @@ class Header {
   public function byName(name:HeaderName)
     return switch get(name) {
       case []:
-        Failure(new Error(UnprocessableEntity, 'No $name header found'));
+        Failure(new Error(UnprocessableEntity, headerNotFound(name)));
       case [v]:
         Success(v);
       case v: 
@@ -91,12 +91,23 @@ class Header {
     
   public function concat(fields:Array<HeaderField>):Header
     return new Header(this.fields.concat(fields));
+    
+  public function getContentLength()
+    return switch byName(CONTENT_LENGTH) {
+      case Success(Std.parseInt(_) => null): Failure(new Error(UnprocessableEntity, 'Invalid Content-Length Header'));
+      case Success(Std.parseInt(_) => v): Success(v);
+      case Failure(e) if(e.message == headerNotFound(CONTENT_LENGTH)): Success(0); // this should be ok
+      case Failure(e): Failure(e);
+    }
 
   private var LINEBREAK(get, never):String; 
     inline function get_LINEBREAK() return '\r\n';
 
   public function toString() 
     return [for (f in fields) f.toString()].join(LINEBREAK) + LINEBREAK + LINEBREAK;
+    
+  inline function headerNotFound(name)
+    return 'No $name header found';
 }
 
 typedef HeaderValueComponent = {

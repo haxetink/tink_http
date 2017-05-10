@@ -54,17 +54,9 @@ class TcpContainer implements Container {
   static public function wrap(handler:tink.http.Handler):tink.tcp.Handler {
     return function (i:tink.tcp.Incoming):Future<tink.tcp.Outgoing> {
       return i.stream.parse(IncomingRequestHeader.parser())
-        .next(function (r) {
-          var len = switch r.a.byName(CONTENT_LENGTH) {
-            case Success(v):
-              switch Std.parseInt(v) {
-                case null: return new Error('Invalid Content-Length Header "$v"');
-                case len: len;
-              }
-            case Failure(_): 0; // assume 0 is ok?
-          }
-          var req = new IncomingRequest(i.from.host, r.a, Plain(r.b.limit(len)));
-          return handler.process(req);
+        .next(function (r) return switch r.a.getContentLength() {
+          case Success(len): handler.process(new IncomingRequest(i.from.host, r.a, Plain(r.b.limit(len))));
+          case Failure(e): e;
         })
         .recover(OutgoingResponse.reportError)
         .map(function (res) return {
