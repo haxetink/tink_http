@@ -30,7 +30,7 @@ abstract UploadedFile(UploadedFileBase) from UploadedFileBase to UploadedFileBas
           #if (nodejs && !macro)
             Sink.ofNodeStream(name, js.node.Fs.createWriteStream(path))
           #elseif sys
-            null //Sink.ofOutput(name, sys.io.File.write(path))
+            Sink.ofOutput(name, sys.io.File.write(path))
           #else
             throw 'not implemented'
           #end
@@ -50,6 +50,14 @@ typedef UploadedFileBase = {
   var mimeType(default, null):String;
   var size(default, null):Int;
   
+  /**
+   *  Read the uploaded file as Source
+   *  @return RealSource
+   */
   function read():RealSource;
+  
+  /**
+   *  Save the uploaded file to the specified location
+   */
   function saveTo(path:String):Promise<Noise>;
 }
