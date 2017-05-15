@@ -3,3 +3,4 @@
 -cp src
 -lib tink_io
 -lib tink_url
+-lib http-status

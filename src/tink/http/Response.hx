@@ -7,13 +7,16 @@ import tink.Chunk;
 using tink.io.Source;
 using tink.CoreApi;
 
+typedef StatusCode = httpstatus.HttpStatusCode;
+typedef Reason = httpstatus.HttpStatusMessage;
+
 class ResponseHeader extends Header {
   
-  public var statusCode(default, null):Int;
-  public var reason(default, null):String;
+  public var statusCode(default, null):StatusCode;
+  public var reason(default, null):Reason;
   public var protocol(default, null):String;
   
-  public function new(statusCode, reason, fields, ?protocol:Version = 'HTTP/1.1') {
+  public function new(statusCode:StatusCode, reason:Reason, fields, ?protocol:Version = 'HTTP/1.1') {
     this.statusCode = statusCode;
     this.reason = reason;
     this.protocol = protocol;
@@ -73,7 +76,7 @@ abstract OutgoingResponse(OutgoingResponseData) {
     
   static public function reportError(e:Error) {
     return new OutgoingResponse(
-      new ResponseHeader(e.code, e.message, [new HeaderField('Content-Type', 'application/json')]),
+      new ResponseHeader(e.code, e.code, [new HeaderField('Content-Type', 'application/json')]),
       haxe.Json.stringify({//TODO: reconsider the wisdom of json encoding this way, since it relies on reflection
         error: e.message,
         details: e.data,
@@ -88,7 +91,7 @@ class IncomingResponse extends Message<ResponseHeader, RealSource> {
   static public function readAll(res:IncomingResponse):Promise<Chunk> 
     return res.body.all().next(function (b)
       return 
-        if (res.header.statusCode >= 400) 
+        if (res.header.statusCode.toInt() >= 400) 
           Failure(Error.withData(res.header.statusCode, res.header.reason, b.toString()))
         else
           Success(b)   
@@ -96,7 +99,7 @@ class IncomingResponse extends Message<ResponseHeader, RealSource> {
             
   static public function reportError(e:Error) {
     return new IncomingResponse(
-      new ResponseHeader(e.code, e.message, [new HeaderField('Content-Type', 'application/json')]),
+      new ResponseHeader(e.code, e.code, [new HeaderField('Content-Type', 'application/json')]),
       haxe.Json.stringify({//TODO: reconsider the wisdom of json encoding this way, since it relies on reflection
         error: e.message,
         details: e.data,

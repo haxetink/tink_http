@@ -15,6 +15,7 @@
 	"version": "0.6.0",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
+		"http-status": "",
 		"tink_url": "",
 		"tink_io": ""
 	}
