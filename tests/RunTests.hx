@@ -18,6 +18,7 @@ class RunTests {
     #end
     ]);
     
+    #if !no_client
     for(client in Context.clients) {
       #if !container_only
       tests = tests.concat([
@@ -30,6 +31,7 @@ class RunTests {
         TestSuite.make(new TestHttp(client, Local(port), false), '$client -> http://localhost:$port'),
       ]);
     }
+    #end
     
     Runner.run(tests).handle(Runner.exit);
     

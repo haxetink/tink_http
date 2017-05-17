@@ -67,6 +67,48 @@ class TestHeader {
 			});
 	}
 	
+	@:describe('Parse Incoming Response Header')
+	public function parseIncomingResponseHeader() {
+		var req:IdealSource = 'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nDate: Sat, 28 Nov 2009 04:36:25 GMT\r\nServer: LiteSpeed\r\nConnection: close\r\nX-Powered-By: W3 Total Cache/0.8\r\nPragma: public\r\nExpires: Sat, 28 Nov 2009 05:36:25 GMT\r\nEtag: "pub1259380237;gz"\r\nCache-Control: max-age=3600, public\r\nContent-Type: text/html; charset=UTF-8\r\nLast-Modified: Sat, 28 Nov 2009 03:50:37 GMT\r\nX-Pingback: http://net.tutsplus.com/xmlrpc.php\r\nContent-Encoding: gzip\r\nVary: Accept-Encoding, Cookie, User-Agent\r\n\r\nabc';
+		
+		return req.parse(ResponseHeader.parser())
+			.next(function(o) {
+				var header = o.a;
+				var body = o.b;
+				asserts.assert(header.protocol == HTTP1_1);
+				asserts.assert(header.statusCode == StatusCode.OK);
+				asserts.assert(header.reason == StatusCode.OK);
+				
+				function checkHeader(name:String, value:String, ?pos:haxe.PosInfos) {
+					switch header.byName(name) {
+						case Success(v): asserts.assert(v == value, '$name: $value', pos);
+						case Failure(e): asserts.fail(e, pos);
+					}
+				}
+				checkHeader('Transfer-Encoding', 'chunked');
+				checkHeader('Date', 'Sat, 28 Nov 2009 04:36:25 GMT');
+				checkHeader('Server', 'LiteSpeed');
+				checkHeader('Connection', 'close');
+				checkHeader('X-Powered-By', 'W3 Total Cache/0.8');
+				checkHeader('Pragma', 'public');
+				checkHeader('Expires', 'Sat, 28 Nov 2009 05:36:25 GMT');
+				checkHeader('Etag', '"pub1259380237;gz"');
+				checkHeader('Cache-Control', 'max-age=3600, public');
+				checkHeader('Content-Type', 'text/html; charset=UTF-8');
+				checkHeader('Last-Modified', 'Sat, 28 Nov 2009 03:50:37 GMT');
+				checkHeader('X-Pingback', 'http://net.tutsplus.com/xmlrpc.php');
+				checkHeader('Content-Encoding', 'gzip');
+				checkHeader('Vary', 'Accept-Encoding, Cookie, User-Agent');
+				
+				asserts.assert(!header.byName('content-length').isSuccess());
+				
+				return body.all().next(function(c) {
+					asserts.assert(c.toString() == 'abc');
+					return asserts.done();
+				});
+			});
+	}
+	
 	@:variant(new tink.http.Header([]), tink.http.Header)
 	@:variant(new tink.http.Request.RequestHeader(GET, '', []), tink.http.Request.RequestHeader)
 	@:variant(new tink.http.Request.IncomingRequestHeader(GET, '', []), tink.http.Request.IncomingRequestHeader)
