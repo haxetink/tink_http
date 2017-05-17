@@ -3,7 +3,7 @@ package tink.http;
 import haxe.crypto.Base64;
 import tink.http.Message;
 import tink.http.Header;
-import tink.http.Version;
+import tink.http.Protocol;
 import tink.url.Query;
 import tink.Url;
 
@@ -15,20 +15,20 @@ class RequestHeader extends Header {
   
   public var method(default, null):Method;
   public var url(default, null):Url;
-  public var version(default, null):Version;
+  public var protocol(default, null):Protocol;
 
-  public function new(method:Method, url:Url, version:Version = 'HTTP/1.1', fields) {
+  public function new(method:Method, url:Url, protocol:Protocol = 'HTTP/1.1', fields) {
     this.method = method;
     this.url = url;
-    this.version = version;
+    this.protocol = protocol;
     super(fields);
   }  
 
   override function concat(fields:Array<HeaderField>):RequestHeader
-    return new RequestHeader(method, url, version, this.fields.concat(fields));
+    return new RequestHeader(method, url, protocol, this.fields.concat(fields));
 
   override public function toString()
-    return '$method ${url.pathWithQuery} $version$LINEBREAK'+super.toString();
+    return '$method ${url.pathWithQuery} $protocol$LINEBREAK'+super.toString();
 
 }
 
@@ -44,7 +44,7 @@ class IncomingRequestHeader extends RequestHeader {
   }
   
   override function concat(fields:Array<HeaderField>):IncomingRequestHeader
-    return new IncomingRequestHeader(method, url, version, this.fields.concat(fields));
+    return new IncomingRequestHeader(method, url, protocol, this.fields.concat(fields));
   
   /**
    *  List all cookie names
@@ -99,7 +99,7 @@ class IncomingRequestHeader extends RequestHeader {
 
 class OutgoingRequestHeader extends RequestHeader {
   override function concat(fields:Array<HeaderField>):OutgoingRequestHeader
-    return new OutgoingRequestHeader(method, url, version, this.fields.concat(fields));
+    return new OutgoingRequestHeader(method, url, protocol, this.fields.concat(fields));
 }
 
 class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}

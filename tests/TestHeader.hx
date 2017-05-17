@@ -1,6 +1,6 @@
 package;
 
-import tink.http.Version;
+import tink.http.Protocol;
 import tink.http.Method;
 import tink.http.Request;
 import tink.http.Response;
@@ -18,14 +18,14 @@ class TestHeader {
 	@:describe('Build Outgoing Request Header')
 	@:variant(GET, 'https://www.example.com', HTTP1_1, [], 'GET / HTTP/1.1\r\n\r\n\r\n')
 	@:variant(GET, 'https://www.example.com', HTTP2, [new tink.http.Header.HeaderField('host', 'v')], 'GET / HTTP/2\r\nhost: v\r\n\r\n')
-	public function buildOutgoingRequestHeader(method:Method, url:Url, version:Version, fields:Array<HeaderField>, str:String) {
+	public function buildOutgoingRequestHeader(method:Method, url:Url, version:Protocol, fields:Array<HeaderField>, str:String) {
 		var header = new OutgoingRequestHeader(method, url, version, fields);
 		return assert(header.toString() == str);
 	}
 	
 	@:variant(200, 'OK', HTTP1_1, [], 'HTTP/1.1 200 OK\r\n\r\n\r\n')
 	@:variant(403, 'Forbidden', HTTP2, [new tink.http.Header.HeaderField('content-length', '0')], 'HTTP/2 403 Forbidden\r\ncontent-length: 0\r\n\r\n')
-	public function buildResponseHeader(code:Int, reason:String, version:Version, fields:Array<HeaderField>, str:String) {
+	public function buildResponseHeader(code:Int, reason:String, version:Protocol, fields:Array<HeaderField>, str:String) {
 		var header = new ResponseHeader(code, reason, fields, version);
 		return assert(header.toString() == str);
 	}
@@ -40,7 +40,7 @@ class TestHeader {
 				var body = o.b;
 				asserts.assert(header.method == GET);
 				asserts.assert(header.url.toString() == '/path');
-				asserts.assert(header.version == 'HTTP/1.1');
+				asserts.assert(header.protocol == 'HTTP/1.1');
 				
 				function checkHeader(name:String, value:String, ?pos:haxe.PosInfos) {
 					switch header.byName(name) {

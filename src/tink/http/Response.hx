@@ -16,7 +16,7 @@ class ResponseHeader extends Header {
   public var reason(default, null):Reason;
   public var protocol(default, null):String;
   
-  public function new(statusCode:StatusCode, reason:Reason, fields, ?protocol:Version = 'HTTP/1.1') {
+  public function new(statusCode:StatusCode, reason:Reason, fields, ?protocol:Protocol = 'HTTP/1.1') {
     this.statusCode = statusCode;
     this.reason = reason;
     this.protocol = protocol;
@@ -27,7 +27,7 @@ class ResponseHeader extends Header {
     return new ResponseHeader(statusCode, reason, this.fields.concat(fields), protocol);
   
   override public function toString():String
-    return '$protocol $statusCode $reason$LINEBREAK' + super.toString();
+    return '$protocol ${statusCode.toInt()} $reason$LINEBREAK' + super.toString();
   
   static public function parser():tink.io.StreamParser<ResponseHeader>
     return new HeaderParser<ResponseHeader>(function (line, headers) 
