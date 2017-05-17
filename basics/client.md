@@ -21,6 +21,8 @@ class IncomingResponse extends Message<ResponseHeader, RealSource> {}
 
 Please note that if you're performing an HTTP request, failure can occur on two layers:
 
-1. The communication to the server is not possible, because the network is down, the server is down, DNS fails, cross origin policies prevent it etc. In this case, the error is expressed by the returned promis producing an actual `Error`.
+1. The communication to the server is not possible, because the network is down, the server is down, DNS fails, cross origin policies prevent it etc. In this case, the error is expressed by the returned [`Promise`][promise] producing an actual [`Error`][error].
 2. The server itself generates an HTTP response with an error code, either because of problems in your request (status code 4xx) or problems on the server (status code 5xx). In this case you will have an incoming response with the error code set.
 
+[promise]: https://haxetink.github.io/tink_core/#/types/promise
+[error]: https://haxetink.github.io/tink_core/#/types/error
