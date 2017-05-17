@@ -17,7 +17,7 @@ class RequestHeader extends Header {
   public var url(default, null):Url;
   public var protocol(default, null):Protocol;
 
-  public function new(method:Method, url:Url, protocol:Protocol = 'HTTP/1.1', fields) {
+  public function new(method:Method, url:Url, protocol:Protocol = HTTP1_1, fields) {
     this.method = method;
     this.url = url;
     this.protocol = protocol;

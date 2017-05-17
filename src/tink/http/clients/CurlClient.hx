@@ -40,9 +40,9 @@ class CurlClient implements ClientObject {
     args.push(req.header.method);
     
     switch req.header.protocol {
-      case '1.0': args.push('--http1.0');
-      case '1.1': args.push('--http1.1');
-      case '2': args.push('--http2');
+      case HTTP1_0: args.push('--http1.0');
+      case HTTP1_1: args.push('--http1.1');
+      case HTTP2: args.push('--http2');
       default:
     }
     
