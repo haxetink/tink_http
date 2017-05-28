@@ -3,6 +3,7 @@ package tink.http;
 import tink.http.Message;
 import tink.http.Header;
 import tink.Chunk;
+import httpstatus.HttpStatusCode;
 
 using tink.io.Source;
 using tink.CoreApi;
@@ -47,12 +48,12 @@ abstract OutgoingResponse(OutgoingResponseData) {
   public inline function new(header, body) 
     this = new OutgoingResponseData(header, body);
     
-  static public function blob(?code = 200, chunk:Chunk, contentType:String, ?headers)
+  static public function blob(?code = OK, chunk:Chunk, contentType:String, ?headers)
     return 
         new OutgoingResponse(
           new ResponseHeader(
             code, 
-            'OK', 
+            code, 
             [
               new HeaderField('Content-Type', contentType), 
               new HeaderField('Content-Length', Std.string(chunk.length))
