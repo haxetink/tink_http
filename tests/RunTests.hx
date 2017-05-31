@@ -15,6 +15,7 @@ class RunTests {
     var tests = TestBatch.make([
     #if !container_only
       new TestHeader(),
+      new TestChunked(),
     #end
     ]);
     
