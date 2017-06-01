@@ -123,8 +123,11 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
             case Success(len):
               parts.b.limit(len);
             case Failure(_):
-              // TODO: emit 411 error in some scenarios?
-              parts.b;
+              switch [parts.a.method, parts.a.byName(TRANSFER_ENCODING)] {
+                case [GET | OPTIONS, _]: Source.EMPTY;
+                case [_, Success((_:String).split(',').map(StringTools.trim) => encodings)] if(encodings.indexOf('chunked') != -1): Chunked.decode(parts.b);
+                case _: return new Error(411, 'Content-Length header missing');
+              }
           })
         ));
 }

@@ -193,6 +193,8 @@ abstract HeaderValue(String) from String to String {
   public var ACCEPT              = 'accept';
   public var ACCEPT_ENCODING     = 'accept-encoding';
   
+  public var TRANSFER_ENCODING   = 'transfer-encoding';
+  
   public var LOCATION            = 'location';
   public var AUTHORIZATION       = 'authorization';
   
