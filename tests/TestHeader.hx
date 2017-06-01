@@ -148,5 +148,5 @@ class TestHeader {
 		return assert(!createContentLengthHeader(v).getContentLength().isSuccess());
 		
 	public function getMissingContentLength()
-		return assert(Type.enumEq(new Header().getContentLength(), Success(0)));
+		return assert(new Header().getContentLength().match(Failure(_)));
 }
