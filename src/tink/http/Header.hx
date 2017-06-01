@@ -117,7 +117,6 @@ class Header {
     return switch byName(CONTENT_LENGTH) {
       case Success(Std.parseInt(_) => null): Failure(new Error(UnprocessableEntity, 'Invalid Content-Length Header'));
       case Success(Std.parseInt(_) => v): Success(v);
-      case Failure(e) if(e.message == headerNotFound(CONTENT_LENGTH)): Success(0); // this should be ok
       case Failure(e): Failure(e);
     }
 

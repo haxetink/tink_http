@@ -116,10 +116,14 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
   static public function parse(clientIp, source:RealSource) 
     return
       source.parse(IncomingRequestHeader.parser())
-        .next(function (parts) return switch parts.a.getContentLength() {
-          case Success(len): new IncomingRequest(clientIp, parts.a, Plain(parts.b.limit(len)));
-          case Failure(e): e;
-        });
+        .next(function (parts) return new IncomingRequest(
+          clientIp,
+          parts.a,
+          Plain(switch parts.a.getContentLength() {
+            case Success(len): parts.b.limit(len);
+            case Failure(_): parts.b;
+          })
+        ));
 }
 
 enum IncomingRequestBody {
