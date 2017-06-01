@@ -120,8 +120,11 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
           clientIp,
           parts.a,
           Plain(switch parts.a.getContentLength() {
-            case Success(len): parts.b.limit(len);
-            case Failure(_): parts.b;
+            case Success(len):
+              parts.b.limit(len);
+            case Failure(_):
+              // TODO: emit 411 error in some scenarios?
+              parts.b;
           })
         ));
 }
