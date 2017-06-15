@@ -119,6 +119,20 @@ class Header {
       case Success(Std.parseInt(_) => v): Success(v);
       case Failure(e): Failure(e);
     }
+    
+  public function accepts(type:String) {
+    var prefix = type.split('/')[0];
+    return byName(ACCEPT).map(function(v) {
+      for(entry in v.parse()) {
+        if(entry.value == '*/*' || entry.value == type) return true;
+        switch entry.value.split('/') {
+          case [p, '*'] if(prefix == p): return true;
+          default: // continue
+        }
+      }
+      return false;
+    });
+  }
 
   private var LINEBREAK(get, never):String; 
     inline function get_LINEBREAK() return '\r\n';

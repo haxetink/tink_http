@@ -149,4 +149,15 @@ class TestHeader {
 		
 	public function getMissingContentLength()
 		return assert(new Header().getContentLength().match(Failure(_)));
+		
+	@:variant('text/plain, text/html', 'text/plain', true)
+	@:variant('text/plain, text/html', 'text/html', true)
+	@:variant('text/*, application/json', 'text/html', true)
+	@:variant('*/*, application/json', 'text/html', true)
+	@:variant('application/json, text/*', 'text/html', true)
+	@:variant('application/json, */*', 'text/html', true)
+	@:variant('text/x-dvi; q=.8; mxb=100000; mxt=5.0, text/x-c', 'text/plain', false)
+	@:variant('text/*', 'application/json', false)
+	public function accepts(header:String, type:String, accepted:Bool)
+		return assert(new Header([new HeaderField(ACCEPT, header)]).accepts(type).sure() == accepted);
 }
