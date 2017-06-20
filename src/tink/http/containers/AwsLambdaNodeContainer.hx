@@ -13,6 +13,12 @@ using tink.CoreApi;
 /**
  *  Setup: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-set-up-simple-proxy.html#api-gateway-simple-proxy-for-lambda-output-format
  *  
+ *  TL;DR; Create API gateway with:
+ *    - Method: ANY
+ *    - Resourcep path; /{proxy+}
+ *    - Integration type: lambda function
+ *    - Use Lambda Proxy integration: checked
+ *  
  *  Usage:
  *  ```
  *  class Server {
