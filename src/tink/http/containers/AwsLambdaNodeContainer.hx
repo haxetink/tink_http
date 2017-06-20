@@ -41,7 +41,7 @@ class AwsLambdaNodeContainer implements Container {
       event.requestContext.sourceIp,
       new IncomingRequestHeader(
         event.httpMethod,
-        event.path,
+        event.path + (event.queryStringParameters == null ? '' : '?' + [for(key in event.queryStringParameters.keys()) '$key=' + event.queryStringParameters.get(key)].join('&')),
         HTTP1_1,
         [for(key in event.headers.keys()) new HeaderField(key, event.headers.get(key))]
       ),
@@ -80,6 +80,7 @@ class AwsLambdaNodeContainer implements Container {
 private typedef LambdaEvent = {
   httpMethod:Method,
   path:String,
+  queryStringParameters:DynamicAccess<String>,
   headers:DynamicAccess<String>,
   body:String,
   isBase64Encoded:Bool,
