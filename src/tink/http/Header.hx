@@ -194,23 +194,35 @@ abstract HeaderValue(String) from String to String {
 
 @:enum abstract HeaderName(String) to String {
   
-  public var REFERER             = 'referer';
-  public var HOST                = 'host';
-  
-  public var SET_COOKIE          = 'set-cookie';
-  public var COOKIE              = 'cookie';
-  
-  public var CONTENT_TYPE        = 'content-type';
-  public var CONTENT_LENGTH      = 'content-length';
-  public var CONTENT_DISPOSITION = 'content-disposition';
-  
-  public var ACCEPT              = 'accept';
-  public var ACCEPT_ENCODING     = 'accept-encoding';
-  
-  public var TRANSFER_ENCODING   = 'transfer-encoding';
-  
-  public var LOCATION            = 'location';
-  public var AUTHORIZATION       = 'authorization';
+  var REFERER                          = 'referer';
+  var HOST                             = 'host';
+
+  var SET_COOKIE                       = 'set-cookie';
+  var COOKIE                           = 'cookie';
+
+  var CONTENT_TYPE                     = 'content-type';
+  var CONTENT_LENGTH                   = 'content-length';
+  var CONTENT_DISPOSITION              = 'content-disposition';
+
+  var ACCEPT                           = 'accept';
+  var ACCEPT_ENCODING                  = 'accept-encoding';
+
+  var TRANSFER_ENCODING                = 'transfer-encoding';
+
+  var LOCATION                         = 'location';
+  var AUTHORIZATION                    = 'authorization';
+
+  var ORIGIN                           = 'origin';
+  var VARY                             = 'vary';
+
+  var ACCESS_CONTROL_REQUEST_METHOD    = 'access-control-request-method';
+  var ACCESS_CONTROL_REQUEST_HEADERS   = 'access-control-request-headers';
+  var ACCESS_CONTROL_ALLOW_ORIGIN      = 'access-control-allow-origin';
+  var ACCESS_CONTROL_ALLOW_CREDENTIALS = 'access-control-allow-credentials';
+  var ACCESS_CONTROL_EXPOSE_HEADERS    = 'access-control-expose-headers';
+  var ACCESS_CONTROL_MAX_AGE           = 'access-control-max-age';
+  var ACCESS_CONTROL_ALLOW_METHODS     = 'access-control-allow-methods';
+  var ACCESS_CONTROL_ALLOW_HEADERS     = 'access-control-allow-headers';
   
   inline function new(s) this = s;
   
