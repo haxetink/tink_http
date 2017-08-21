@@ -55,7 +55,10 @@ class JsClient implements ClientObject {
       http.onerror = function(e) {
         cb(Failure(Error.withData(502, 'XMLHttpRequest Error', e)));
       }
-      req.body.all().handle(function(chunk) http.send(new Int8Array(chunk.toBytes().getData())));
+      if(req.header.method == GET)
+        http.send();
+      else
+        req.body.all().handle(function(chunk) http.send(new Int8Array(chunk.toBytes().getData())));
     });
   }
   
