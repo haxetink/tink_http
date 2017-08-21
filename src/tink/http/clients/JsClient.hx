@@ -12,6 +12,7 @@ using tink.io.Source;
 using tink.CoreApi;
 
 class JsClient implements ClientObject {
+  var secure = false;
   public function new() {}
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
@@ -21,7 +22,10 @@ class JsClient implements ClientObject {
   function jsRequest(req:OutgoingRequest) {
     return Future.async(function(cb) {
       var http = getHttp();
-      http.open(req.header.method, req.header.url);
+      
+      var url:String = req.header.url;
+      if(req.header.url.scheme == null) url = (secure ? 'https:' : 'http:') + url;
+      http.open(req.header.method, url);
       http.withCredentials = true;
       http.responseType = ARRAYBUFFER;
       for(header in req.header) http.setRequestHeader(header.name, header.value);
