@@ -113,7 +113,7 @@ class TestHeader {
 	@:variant(new tink.http.Request.RequestHeader(GET, '', []), tink.http.Request.RequestHeader)
 	@:variant(new tink.http.Request.IncomingRequestHeader(GET, '', []), tink.http.Request.IncomingRequestHeader)
 	@:variant(new tink.http.Request.OutgoingRequestHeader(GET, '', []), tink.http.Request.OutgoingRequestHeader)
-	@:variant(new tink.http.Response.ResponseHeader(200, 'OK', []), tink.http.Response.ResponseHeader)
+	@:variant(new tink.http.Response.ResponseHeader(200, 'OK', []), tink.http.Response.ResponseHeaderBase)
 	public function concat(header:Header, cls:Class<Header>) {
 		var header = header.concat([new HeaderField('host', 'haxetink.org')]);
 		asserts.assert(Std.is(header, cls));

@@ -11,7 +11,24 @@ using tink.CoreApi;
 typedef StatusCode = httpstatus.HttpStatusCode;
 typedef Reason = httpstatus.HttpStatusMessage;
 
-class ResponseHeader extends Header {
+@:forward
+abstract ResponseHeader(ResponseHeaderBase) from ResponseHeaderBase to ResponseHeaderBase {
+  public inline function new(statusCode, ?reason, ?fields, ?protocol:Protocol = HTTP1_1)
+    this = new ResponseHeaderBase(statusCode, reason, fields, protocol);
+    
+  @:from
+  public static inline function fromStatusCode(code:StatusCode):ResponseHeader
+    return new ResponseHeader(code);
+    
+  @:from
+  public static inline function fromHeaderFields(fields:Array<HeaderField>):ResponseHeader
+    return new ResponseHeader(OK, fields);
+    
+  inline static public function parser()
+    return ResponseHeaderBase.parser();
+}
+
+class ResponseHeaderBase extends Header {
   
   public var statusCode(default, null):StatusCode;
   public var reason(default, null):Reason;
