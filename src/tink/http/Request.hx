@@ -64,7 +64,7 @@ class IncomingRequestHeader extends RequestHeader {
   public function getAuth()
     return getAuthWith(function(s, p) return switch s {
       case 'Basic':
-        var decoded = Base64.decode(p).toString();
+        var decoded = try Base64.decode(p).toString() catch(e:Dynamic) return Failure(Error.withData('Error in decoding basic auth', e));
         switch decoded.indexOf(':') {
           case -1: Failure(new Error('Cannot parse username and password because ":" is missing'));
           case i: Success(Basic(decoded.substr(0, i), decoded.substr(i + 1)));
