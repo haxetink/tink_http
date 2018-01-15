@@ -65,6 +65,10 @@ class AwsLambdaNodeContainer implements Container {
   public function run(handler:Handler) 
     return Future.async(function (cb) {
       handler.process(getRequest()).handle(function(res) {
+        var binary = switch res.header.byName(CONTENT_TYPE) {
+          case Success('application/octet-stream'): true;
+          case _: false;
+        }
         res.body.all().handle(function(chunk) {
           callback(null, {
             statusCode: res.header.statusCode,
@@ -73,8 +77,8 @@ class AwsLambdaNodeContainer implements Container {
               for(h in res.header) headers.set(h.name, h.value);
               headers;
             },
-            body: chunk.toString(), // TODO: need to distinguish binary/plain-text body?
-            isBase64Encoded: false,
+            isBase64Encoded: binary,
+            body: binary ? Base64.encode(chunk) : chunk.toString(), // TODO: need to distinguish binary/plain-text body?
           });
           cb(Shutdown);
         });
