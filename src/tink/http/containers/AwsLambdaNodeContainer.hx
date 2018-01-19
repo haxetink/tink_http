@@ -5,6 +5,7 @@ import haxe.DynamicAccess;
 import tink.http.Method;
 import tink.http.Container;
 import tink.http.Request;
+import tink.http.Response;
 import tink.http.Header;
 
 using tink.io.Source;
@@ -35,11 +36,13 @@ class AwsLambdaNodeContainer implements Container {
   var event:LambdaEvent;
   var context:Dynamic;
   var callback:js.Error->LambdaResponse->Void;
+  var isBinary:ResponseHeader->Bool;
   
-  public function new(event, context, callback) {
+  public function new(event, context, callback, ?isBinary) {
     this.event = event;
     this.context = context;
     this.callback = callback;
+    this.isBinary = isBinary == null ? function(_) return false : isBinary;
   }
   
   inline function getRequest():IncomingRequest {
@@ -65,12 +68,9 @@ class AwsLambdaNodeContainer implements Container {
   public function run(handler:Handler) 
     return Future.async(function (cb) {
       handler.process(getRequest()).handle(function(res) {
-        var binary = switch res.header.byName(CONTENT_TYPE) {
-          case Success('application/octet-stream'): true;
-          case _: false;
-        }
+        var binary = isBinary(res.header);
         res.body.all().handle(function(chunk) {
-          callback(null, {
+          var res:LambdaResponse = {
             statusCode: res.header.statusCode,
             headers: {
               var headers = new DynamicAccess();
@@ -78,8 +78,10 @@ class AwsLambdaNodeContainer implements Container {
               headers;
             },
             isBase64Encoded: binary,
-            body: binary ? Base64.encode(chunk) : chunk.toString(), // TODO: need to distinguish binary/plain-text body?
-          });
+            body: binary ? Base64.encode(chunk) : chunk.toString(),
+          };
+          // trace(haxe.Json.stringify(res));
+          callback(null, res);
           cb(Shutdown);
         });
       });
