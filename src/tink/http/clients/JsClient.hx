@@ -62,6 +62,7 @@ class JsClient implements ClientObject {
     });
   }
   
+  #if ie6
   // see: http://stackoverflow.com/a/2557268/3212365
   static var factories:Array<Void->XMLHttpRequest> = [
     function() return new XMLHttpRequest(), // browser compatibility: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Browser_compatibility
@@ -73,4 +74,10 @@ class JsClient implements ClientObject {
       for(f in factories) try return f() catch(e:Dynamic) {}
       throw 'No compatible XMLHttpRequest object can be found';
   }
+  #else
+  inline function getHttp() {
+      return new XMLHttpRequest();
+  }
+  #end
+  
 }
