@@ -13,7 +13,11 @@ using tink.CoreApi;
 
 class JsClient implements ClientObject {
   var secure = false;
-  public function new() {}
+  var credentials = false;
+  
+  public function new(?credentials) {
+    if(credentials) this.credentials = true;
+  }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return jsRequest(req);
@@ -26,7 +30,7 @@ class JsClient implements ClientObject {
       var url:String = req.header.url;
       if(req.header.url.scheme == null) url = (secure ? 'https:' : 'http:') + url;
       http.open(req.header.method, url);
-      http.withCredentials = true;
+      http.withCredentials = credentials;
       http.responseType = ARRAYBUFFER;
       for(header in req.header) http.setRequestHeader(header.name, header.value);
       http.onreadystatechange = function() if(http.readyState == 4) { // this is equivalent to onload...
