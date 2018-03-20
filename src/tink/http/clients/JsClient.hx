@@ -42,12 +42,7 @@ class JsClient implements ClientObject {
         if(http.status != 0) {
           var headers = switch http.getAllResponseHeaders() {
             case null: [];
-            case v: [for(line in v.split('\r\n')) {
-              if(line != '') {
-                var s = line.split(': ');
-                new HeaderField(s[0], s.slice(1).join(': '));
-              }
-            }];
+            case v: [for(line in v.split('\r\n')) if(line != '') HeaderField.ofString(line)];
           }
           var header = new ResponseHeader(http.status, http.statusText, headers);
           cb(Success(new IncomingResponse(
