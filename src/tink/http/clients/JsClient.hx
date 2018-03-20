@@ -53,11 +53,11 @@ class JsClient implements ClientObject {
             }
           )));
         } else {
-          cb(Failure(new Error(502, 'XMLHttpRequest Error')));
+          cb(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: 'Status code is zero'})));
         }
       }
       http.onerror = function(e) {
-        cb(Failure(Error.withData(502, 'XMLHttpRequest Error', e)));
+        cb(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: e})));
       }
       if(req.header.method == GET)
         http.send();
