@@ -136,7 +136,8 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
       case -1: 
         new HeaderField(s, null);
       case v: 
-        new HeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
+        var name = s.substr(0, v);
+        new HeaderField(name, s.substr(v + 1).trim()); //urldecode?      
     }
   
   /**
