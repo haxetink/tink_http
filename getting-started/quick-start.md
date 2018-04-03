@@ -15,7 +15,7 @@
 ```haxe
 import tink.http.containers.*;
 import tink.http.Response;
-import tink.core.Future;
+using tink.CoreApi;
 
 class Server {
 	static function main() {
