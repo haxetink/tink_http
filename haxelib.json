@@ -17,6 +17,7 @@
 	"dependencies": {
 		"http-status": "",
 		"tink_url": "",
-		"tink_io": "gh:haxetink/tink_io#pure"
+		"tink_io": "gh:haxetink/tink_io#pure",
+		"tink_http_fetch": "gh:kevinresol/tink_http_fetch#pure"
 	}
 }

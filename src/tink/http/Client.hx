@@ -6,7 +6,8 @@ using tink.CoreApi;
 
 @:forward
 abstract Client(ClientObject) from ClientObject to ClientObject {
-  
+  public static inline function fetch(url, ?options)
+    return tink.http.Fetch.fetch(url, options);
 }
 
 interface ClientObject {
