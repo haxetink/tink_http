@@ -53,7 +53,11 @@ class JsClient implements ClientObject {
             }
           )));
         } else {
-          cb(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: 'Status code is zero'})));
+          // onerror may be able to capture the error, give it a chance first
+          haxe.Timer.delay(
+            cb.bind(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: 'Status code is zero'}))),
+            1
+          );
         }
       }
       http.onerror = function(e) {
