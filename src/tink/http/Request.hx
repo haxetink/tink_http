@@ -1,31 +1,38 @@
 package tink.http;
 
-import haxe.io.Bytes;
-import tink.http.Request.IncomingRequest;
-import tink.io.*;
+import haxe.crypto.Base64;
 import tink.http.Message;
 import tink.http.Header;
-import tink.io.StreamParser;
-import tink.url.Auth;
-import tink.url.Host;
+import tink.http.Protocol;
 import tink.url.Query;
 import tink.Url;
 
-
 using tink.CoreApi;
-using StringTools;
+using tink.io.StreamParser;
+using tink.io.Source;
 
-class IncomingRequestHeader extends Header {
-  public var method(default, null):Method;
-  public var uri(default, null):Url;
-  public var version(default, null):String;
+class RequestHeader extends Header {
   
-  public function new(method, uri, version, fields) {
+  public var method(default, null):Method;
+  public var url(default, null):Url;
+  public var protocol(default, null):Protocol;
+
+  public function new(method:Method, url:Url, protocol:Protocol = HTTP1_1, fields) {
     this.method = method;
-    this.uri = uri;
-    this.version = version;
+    this.url = url;
+    this.protocol = protocol;
     super(fields);
-  }
+  }  
+
+  override function concat(fields:Array<HeaderField>):RequestHeader
+    return new RequestHeader(method, url, protocol, this.fields.concat(fields));
+
+  override public function toString()
+    return '$method ${url.pathWithQuery} $protocol$LINEBREAK'+super.toString();
+
+}
+
+class IncomingRequestHeader extends RequestHeader {
   
   var cookies:Map<String, String>;
   
@@ -36,14 +43,49 @@ class IncomingRequestHeader extends Header {
     return cookies;
   }
   
-  public function cookieNames() {
+  override function concat(fields:Array<HeaderField>):IncomingRequestHeader
+    return new IncomingRequestHeader(method, url, protocol, this.fields.concat(fields));
+  
+  /**
+   *  List all cookie names
+   */
+  public function cookieNames()
     return cookies.keys();
-  }
   
-  public function getCookie(name:String) {
+  /**
+   *  Get a single cookie
+   */
+  public function getCookie(name:String)
     return getCookies()[name];
-  }
+    
+  /**
+   *  Get the Authorization header as an Enum
+   */
+  public function getAuth()
+    return getAuthWith(function(s, p) return switch s {
+      case 'Basic':
+        var decoded = try Base64.decode(p).toString() catch(e:Dynamic) return Failure(Error.withData('Error in decoding basic auth', e));
+        switch decoded.indexOf(':') {
+          case -1: Failure(new Error('Cannot parse username and password because ":" is missing'));
+          case i: Success(Basic(decoded.substr(0, i), decoded.substr(i + 1)));
+        }
+      case 'Bearer':
+        Success(Bearer(p));
+      case s:
+        Success(Others(s, p));
+    });
   
+  public function getAuthWith<T>(parser:String->String->Outcome<T, Error>):Outcome<T, Error>
+    return byName(AUTHORIZATION).flatMap(function(v:String) return switch v.indexOf(' ') {
+        case -1:
+          Failure(new Error(UnprocessableEntity, 'Invalid Authorization Header'));
+        case i:
+          parser(v.substr(0, i), v.substr(i + 1));
+    });
+  
+  /**
+   *  Get a StreamParser which can parse a Source into an IncomingRequestHeader
+   */
   static public function parser():StreamParser<IncomingRequestHeader>
     return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
       return switch line.split(' ') {
@@ -55,59 +97,9 @@ class IncomingRequestHeader extends Header {
     );
 }
 
-class OutgoingRequestHeader extends Header {
-  
-  public var method(default, null):Method;
-  public var host(default, null):Host;//TODO: do something about validating host names
-  public var uri(default, null):Url;
-  
-  public function new(method, host:Host, ?uri:Url, ?fields) {
-    this.method = method;
-    this.host = host;
-    
-    if (uri == null) 
-      uri = '/';
-      
-    @:privateAccess {
-      uri = new Url({
-        path: switch (uri.path:String) {
-          case null | '': '/';
-          case _.charAt(0) => '/': uri.path;
-          case v: '/$v';
-        },
-        query: uri.query,
-        payload: null,
-      });
-      Url.makePayload(cast uri);
-    };
-    
-    this.uri = uri;
-    
-    super(fields);
-  }
-  
-  public function fullUri() {
-    return '//$host$uri';//TODO: this should somehow be provided by tink_url
-  }
-  
-  public function toString() {
-    var ret = ['$method $uri HTTP/1.1'],
-        hasHost = false;
-        
-    for (f in fields) 
-      ret.push(f.toString());
-    
-    switch get('Host') {
-      case []:
-        ret.push(new HeaderField('Host', (host:String)).toString());  
-      default:
-    } 
-    
-    ret.push('');
-    ret.push('');
-    
-    return ret.join('\r\n');
-  }
+class OutgoingRequestHeader extends RequestHeader {
+  override function concat(fields:Array<HeaderField>):OutgoingRequestHeader
+    return new OutgoingRequestHeader(method, url, protocol, this.fields.concat(fields));
 }
 
 class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}
@@ -121,13 +113,32 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
     super(header, body);
   }
   
-  static public function parse(clientIp, source:Source) 
+  static public function parse(clientIp, source:RealSource) 
     return
-      source.parse(IncomingRequestHeader.parser()) >> function (parts) return new IncomingRequest(clientIp, parts.data, Plain(parts.rest));
-  
+      source.parse(IncomingRequestHeader.parser())
+        .next(function (parts) return new IncomingRequest(
+          clientIp,
+          parts.a,
+          Plain(switch parts.a.getContentLength() {
+            case Success(len):
+              parts.b.limit(len);
+            case Failure(_):
+              switch [parts.a.method, parts.a.byName(TRANSFER_ENCODING)] {
+                case [GET | OPTIONS, _]: Source.EMPTY;
+                case [_, Success((_:String).split(',').map(StringTools.trim) => encodings)] if(encodings.indexOf('chunked') != -1): Chunked.decode(parts.b);
+                case _: return new Error(411, 'Content-Length header missing');
+              }
+          })
+        ));
 }
 
 enum IncomingRequestBody {
-  Plain(source:Source);
+  Plain(source:RealSource);
   Parsed(parts:StructuredBody);
+}
+
+enum Authorization {
+  Basic(user:String, pass:String);
+  Bearer(token:String);
+  Others(scheme:String, param:String);
 }

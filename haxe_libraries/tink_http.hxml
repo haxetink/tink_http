@@ -1,0 +1,6 @@
+# @install: echo ok
+-D tink_http=0.0.0
+-cp src
+-lib tink_io
+-lib tink_url
+-lib http-status

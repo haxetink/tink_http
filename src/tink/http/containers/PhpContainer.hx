@@ -2,12 +2,9 @@ package tink.http.containers;
 
 import php.NativeArray;
 import sys.io.File;
-import tink.core.Future;
-import tink.core.Named;
 import tink.http.Container;
 import tink.http.Handler;
 import tink.http.Header;
-import tink.http.Method;
 import tink.http.StructuredBody;
 import tink.http.Request;
 import tink.io.Sink;
@@ -22,13 +19,7 @@ class PhpContainer implements Container {
   }
   static public var inst(default, null):PhpContainer = new PhpContainer();
   
-  function new() {
-    inline function defined(s:String):Bool return untyped __call__('defined', s);
-    inline function define(s:String, v:Dynamic) untyped __call__('define', s, v);
-    inline function fopen(p:String, m:String) return untyped __call__('fopen', 'php://' + p, m);
-		if(!defined('STDOUT')) define('STDOUT', try fopen('stdout', 'w') catch(e:Dynamic) fopen('temp', 'w'));
-		if(!defined('STDIN')) define('STDIN', fopen('stdin', 'r'));
-  }
+  function new() { }
  
   static function getParts<In>(a:NativeArray, process:In->BodyPart):StructuredBody {
     var map = php.Lib.hashOfAssociativeArray(a);
@@ -132,12 +123,12 @@ class PhpContainer implements Container {
         getRequest()
       ).handle(function (res) {
         untyped __call__('http_response_code', res.header.statusCode);
-        for (h in res.header.fields)
+        for (h in res.header)
           untyped __call__('header', h.name + ': ' + h.value);
           
         var out = Sink.ofOutput('output buffer', @:privateAccess new sys.io.FileOutput(untyped __call__('fopen', 'php://output', "w")));
         res.body.pipeTo(out, { end: true }).handle(function (o) {
-          cb(Done);
+          cb(Shutdown);
         });
       })
     );
