@@ -1,24 +1,28 @@
 package tink.http;
 
-import haxe.io.Bytes;
 import tink.http.Request;
 import tink.http.Response;
 
 using tink.CoreApi;
 
 interface Container {
+  /**
+   *  Start the Container
+   *  @param handler - The HTTP handler (see `Handler`)
+   *  @return ContainerResult: For non-persistent containers like modneko & php, it will be Shutdown. For persistent containers such as nodejs, it will be Running
+   */
   function run(handler:Handler):Future<ContainerResult>;
 }
 
 enum ContainerResult {
   Running(running:RunningState);
   Failed(e:Error);
-  Done;
+  Shutdown;
 }
 
 typedef RunningState = {
   var failures(default, null):Signal<ContainerFailure>;
-  function shutdown(hard:Bool):Future<Noise>;
+  function shutdown(hard:Bool):Promise<Bool>;
 }
 
 typedef ContainerFailure = { 

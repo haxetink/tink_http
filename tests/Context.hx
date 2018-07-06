@@ -1,5 +1,10 @@
+package;
+
+#if tink_http
 import tink.http.Handler;
 import tink.http.Client;
+import tink.http.clients.*;
+#end
 
 #if neko
 import sys.FileSystem;
@@ -60,7 +65,7 @@ class Context {
       buildModNeko(port);
       var cwd = Sys.getCwd();
       Sys.setCwd('bin/neko');
-      var server = ProcessTools.streamAll('nekotools', ['server', '-p', '$port', '-rewrite']);
+      var server = ProcessTools.streamAll('nekotools', ['server', '-p', '$port', '-rewrite', '-log', 'log.txt']);
       Sys.setCwd(cwd);
       return server;
     },
@@ -68,7 +73,7 @@ class Context {
     'neko-mod' => function(port) {
       buildModNeko(port);
       File.saveContent('bin/neko/.htaccess', ['RewriteEngine On','RewriteBase /','RewriteRule ^(.*)$ index.n [QSA,L]'].join('\n'));
-      ProcessTools.streamAll('docker', ['run', '-d', '-v', FileSystem.fullPath(Sys.getCwd() + '/bin/neko') + ':/var/www/html', '-p', port + ':80', '--name', 'tink_http_mod_neko', 'codeurs/mod-neko']);
+      ProcessTools.streamAll('docker', ['run', '-d', '-e', '$RUN=true', '-v', FileSystem.fullPath(Sys.getCwd() + '/bin/neko') + ':/var/www/html', '-p', port + ':80', '--name', 'tink_http_mod_neko', 'codeurs/mod-neko']);
       return {
         kill: function() {
           new Process('docker', ['kill', 'tink_http_mod_neko']).exitCode();
@@ -89,6 +94,7 @@ class Context {
   
   #end
   
+  #if tink_http
   public static var servers: Map<String, Int -> Handler -> Void> = [
   
     '' => null,
@@ -112,44 +118,32 @@ class Context {
       new tink.http.containers.NodeContainer(port).run(handler),
     #end
     
-    #if (tink_tcp && tink_runloop)
+    #if (tink_tcp && (nodejs || tink_runloop))
     'tcp' => function (port, handler)
       #if tink_runloop @:privateAccess tink.RunLoop.create(function() #end
-        new tink.http.containers.TcpContainer(port)
-        .run(handler)
+        new tink.http.containers.TcpContainer(
+          #if nodejs
+            tink.tcp.nodejs.NodejsAcceptor.inst.bind.bind(port)
+          #else
+            #error "not implemented"
+          #end
+        )
+        .run(handler).eager()
       #if tink_runloop ) #end, 
     #end
   
   ];
   
-  public static var clients: Map<String, Client> = [
-    
-    #if (!nodejs)
-    'std' => new StdClient(),
-    #end
-    
-    #if (tink_tcp)
-    'tcp' => new TcpClient(),
-    #end
-    
-    #if nodejs
-    'node' => new NodeClient(),
-    #end
-    
-    #if (neko || nodejs)
-    'curl' => new CurlClient()
-    #end
-    
-    #if (js && !nodejs)
-    'js' => new JsClient()
-    #end
-  
-  ];
+  public static var clients: Array<ClientType> = ClientType.createAll();
+  #end
   
   #if neko
   
-  static function targetArgs(port: Int)
-    return ['-lib buddy', '-D port=$port', '-main Runner'];
+  static function targetArgs(port: Int) {
+    var args = ['-lib tink_unittest', '-D port=$port', '-main RunTests'];
+    if(Env.getDefine('container_only') != null) args.push('-D container_only');
+    return args;
+  }
     
   static function travixTarget(name, port: Int)
     return ProcessTools.travix(name, targetArgs(port));

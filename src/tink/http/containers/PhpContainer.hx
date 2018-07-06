@@ -2,12 +2,9 @@ package tink.http.containers;
 
 import php.NativeArray;
 import sys.io.File;
-import tink.core.Future;
-import tink.core.Named;
 import tink.http.Container;
 import tink.http.Handler;
 import tink.http.Header;
-import tink.http.Method;
 import tink.http.StructuredBody;
 import tink.http.Request;
 import tink.io.Sink;
@@ -126,12 +123,12 @@ class PhpContainer implements Container {
         getRequest()
       ).handle(function (res) {
         untyped __call__('http_response_code', res.header.statusCode);
-        for (h in res.header.fields)
+        for (h in res.header)
           untyped __call__('header', h.name + ': ' + h.value);
           
         var out = Sink.ofOutput('output buffer', @:privateAccess new sys.io.FileOutput(untyped __call__('fopen', 'php://output', "w")));
         res.body.pipeTo(out, { end: true }).handle(function (o) {
-          cb(Done);
+          cb(Shutdown);
         });
       })
     );
