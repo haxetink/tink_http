@@ -39,9 +39,8 @@ class FlashClient implements ClientObject {
       
       var header:ResponseHeader;
       
-      
       function onHttpStatusEvent(e:HTTPStatusEvent) {
-        function trim(s:String) {
+        inline function trim(s:String) {
           var len = s.length;
           return
             if(s.charCodeAt(len - 2) == '\r'.code && s.charCodeAt(len - 1) == '\n'.code)
@@ -61,7 +60,8 @@ class FlashClient implements ClientObject {
       
       loader.addEventListener(Event.COMPLETE, function(e) {
         var bytes:Bytes = (e.target.data:ByteArray);
-        cb(Success(new IncomingResponse(header, bytes)));
+        if(header == null) cb(Failure(new Error('Response header not ready, please check the implementation of ' + Type.getClassName(Type.getClass(this)))));
+        else cb(Success(new IncomingResponse(header, bytes)));
       });
       loader.addEventListener(HTTPStatusEvent.HTTP_STATUS, onHttpStatusEvent);
       // loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS, onHttpStatusEvent); // TODO: enable on AIR only
