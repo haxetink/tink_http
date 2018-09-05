@@ -83,6 +83,7 @@ class Fetch {
 				case Local(c): new LocalContainerClient(c);
 				case Curl: secure ? new SecureCurlClient() : new CurlClient();
 				case StdLib: secure ? new SecureStdClient() : new StdClient();
+				case Custom(c): c;
 				#if php case Php: secure ? new SecurePhpClient() : new PhpClient(); #end
 				// #if (js || php) case Std: secure ? new SecureStdClient() : new StdClient(); #end
 				#if tink_tcp case Tcp: secure ? new SecureTcpClient() : new TcpClient(); #end
@@ -112,6 +113,7 @@ enum ClientType {
 	Local(container:tink.http.containers.LocalContainer);
 	Curl;
 	StdLib;
+	Custom(v:Client);
 	#if php Php; #end
 	#if tink_tcp Tcp; #end
 	#if flash Flash; #end
