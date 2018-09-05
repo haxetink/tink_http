@@ -9,6 +9,7 @@ os:
       
 install:
   - yarn global add lix
+  - lix download
 
 script:
   - haxe master.hxml -D containers=node -D targets=js,node,neko,php
