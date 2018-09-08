@@ -30,6 +30,7 @@ class TestHeader {
 		return assert(header.toString() == str);
 	}
 	
+	@:exclude
 	@:describe('Parse Incoming Request Header')
 	public function parseIncomingRequestHeader() {
 		var req:IdealSource = 'GET /path HTTP/1.1\r\nHost: www.example.com\r\nUser-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-us,en;q=0.5\r\nAccept-Encoding: gzip,deflate\r\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\nKeep-Alive: 300\r\nConnection: keep-alive\r\nCookie: PHPSESSID=r2t5uvjq435r4q7ib3vtdjq120\r\nPragma: no-cache\r\nCache-Control: no-cache\r\n\r\nabc';
@@ -67,6 +68,7 @@ class TestHeader {
 			});
 	}
 	
+	@:exclude
 	@:describe('Parse Incoming Response Header')
 	public function parseIncomingResponseHeader() {
 		var req:IdealSource = 'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nDate: Sat, 28 Nov 2009 04:36:25 GMT\r\nServer: LiteSpeed\r\nConnection: close\r\nX-Powered-By: W3 Total Cache/0.8\r\nPragma: public\r\nExpires: Sat, 28 Nov 2009 05:36:25 GMT\r\nEtag: "pub1259380237;gz"\r\nCache-Control: max-age=3600, public\r\nContent-Type: text/html; charset=UTF-8\r\nLast-Modified: Sat, 28 Nov 2009 03:50:37 GMT\r\nX-Pingback: http://net.tutsplus.com/xmlrpc.php\r\nContent-Encoding: gzip\r\nVary: Accept-Encoding, Cookie, User-Agent\r\n\r\nabc';
