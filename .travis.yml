@@ -10,7 +10,7 @@ jobs:
         - linux
         # - osx
       install:
-        - npm i -g lix haxe-travix
+        - npm i -g lix
         - lix download
       script:
         - haxe master.hxml -D containers=node -D targets=js,node,neko,php
