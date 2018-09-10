@@ -81,7 +81,7 @@ class Fetch {
 						#elseif sys new SocketClient()
 						#end ;
 				case Local(c): new LocalContainerClient(c);
-				case Curl: secure ? new SecureCurlClient() : new CurlClient();
+				#if (sys || nodejs) case Curl: secure ? new SecureCurlClient() : new CurlClient(); #end
 				case StdLib: secure ? new SecureStdClient() : new StdClient();
 				case Custom(c): c;
 				#if php case Php: secure ? new SecurePhpClient() : new PhpClient(); #end
@@ -111,7 +111,7 @@ typedef FetchOptions = {
 enum ClientType {
 	Default;
 	Local(container:tink.http.containers.LocalContainer);
-	Curl;
+	#if (sys || nodejs) Curl; #end
 	StdLib;
 	Custom(v:Client);
 	#if php Php; #end
