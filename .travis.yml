@@ -1,25 +1,38 @@
 sudo: required
 dist: trusty
 
+stages:
+  - test
+  - deploy
+
+language: node_js
+node_js: 8
+
+os:
+  - linux
+  # - osx
+
+env:
+  - HAXE_VERSION=3.3.0-rc.1
+  - HAXE_VERSION=3.4.7
+  - HAXE_VERSION=latest
+  
+install:
+  - npm i -g lix
+  - lix install haxe $HAXE_VERSION
+  - lix download
+  
+script:
+  - haxe master.hxml -D containers=node -D targets=js,node,neko,php
+  - haxe master.hxml -D containers=php,neko-mod,node-tcp -D targets=node -D container_only
+  # - haxe master.hxml -D containers=neko-tools -D targets=node # does not support PATCH/PUT/DELETE
+  # - haxe master.hxml -D containers=node -D targets=cpp # haxeshim not working with cpp yet
+  # - haxe master.hxml -D containers=node -D targets=js # why DELETE on travix does not send the body?
+  # - haxe master.hxml -D containers=tcp -D targets=node -lib tink_tcp -lib tink_runloop
+
 jobs:
   include:
-    - stage: test
-      language: node_js
-      node_js: 8
-      os:
-        - linux
-        # - osx
-      install:
-        - npm i -g lix
-        - lix download
-      script:
-        - haxe master.hxml -D containers=node -D targets=js,node,neko,php
-        - haxe master.hxml -D containers=php,neko-mod,node-tcp -D targets=node -D container_only
-        # - haxe master.hxml -D containers=neko-tools -D targets=node # does not support PATCH/PUT/DELETE
-        # - haxe master.hxml -D containers=node -D targets=cpp # haxeshim not working with cpp yet
-        # - haxe master.hxml -D containers=node -D targets=js # why DELETE on travix does not send the body?
-        # - haxe master.hxml -D containers=tcp -D targets=node -lib tink_tcp -lib tink_runloop
-    
+    # - stage: test # should uncomment this when there is no matrix above (e.g. only one os, one env, etc)
     - stage: deploy
       language: haxe
       haxe: "3.4.7"
