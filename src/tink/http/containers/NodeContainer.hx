@@ -21,7 +21,7 @@ class NodeContainer implements Container {
         handler.process(
           new IncomingRequest(
             req.socket.remoteAddress, 
-            new IncomingRequestHeader(cast req.method, req.url, 'HTTP/' + req.httpVersion, [for (i in 0...Std.int(req.rawHeaders.length / 2)) new HeaderField(req.rawHeaders[2 * i], req.rawHeaders[2 * i +1])]), 
+            IncomingRequestHeader.fromIncomingMessage(req),
             Plain(Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', req)))
         ).handle(function (out) {
           res.writeHead(out.header.statusCode, out.header.reason, cast [for (h in out.header) [(h.name : String), h.value]]);//TODO: readable status code
@@ -36,7 +36,7 @@ class NodeContainer implements Container {
         handler.process(
           new IncomingRequest(
             req.socket.remoteAddress, 
-            new IncomingRequestHeader(cast req.method, req.url, 'HTTP/' + req.httpVersion, [for (i in 0...Std.int(req.rawHeaders.length / 2)) new HeaderField(req.rawHeaders[2 * i], req.rawHeaders[2 * i +1])]), 
+            IncomingRequestHeader.fromIncomingMessage(req),
             Plain(Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', socket)))
         ).handle(function (out) {
           out.body.prepend(out.header.toString()).pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', socket)).handle(function (_) {

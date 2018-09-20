@@ -95,6 +95,19 @@ class IncomingRequestHeader extends RequestHeader {
           Failure(new Error(UnprocessableEntity, 'Invalid HTTP header'));
       }
     );
+    
+  #if nodejs
+  static public function fromIncomingMessage(req:js.node.http.IncomingMessage) {
+    return new IncomingRequestHeader(
+      cast req.method,
+      req.url,
+      'HTTP/' + req.httpVersion,
+      [for (i in 0...Std.int(req.rawHeaders.length / 2)) 
+        new HeaderField(req.rawHeaders[2 * i], req.rawHeaders[2 * i +1])
+      ]
+    );
+  }
+  #end
 }
 
 class OutgoingRequestHeader extends RequestHeader {
