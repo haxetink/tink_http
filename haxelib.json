@@ -9,7 +9,8 @@
 	"classPath": "src",
 	"description": "Universal HTTP abstraction",
 	"contributors": [
-		"back2dos"
+		"back2dos",
+		"kevinresol"
 	],
 	"releasenote": "Moved out multipart handling. Typesafe headers. Various other changes.",
 	"version": "0.6.0",
