@@ -13,7 +13,7 @@
 		"kevinresol"
 	],
 	"releasenote": "General overhaul.",
-	"version": "0.8.0",
+	"version": "0.8.1",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
 		"tink_url": "",
