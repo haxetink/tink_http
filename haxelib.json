@@ -18,7 +18,7 @@
 	"dependencies": {
 		"tink_url": "",
 		"http-status": "",
-		"tink_io": "gh:haxetink/tink_io",
+		"tink_io": "",
 		"tink_anon": ""
 	}
 }
