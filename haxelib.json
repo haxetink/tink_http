@@ -12,13 +12,13 @@
 		"back2dos",
 		"kevinresol"
 	],
-	"releasenote": "Moved out multipart handling. Typesafe headers. Various other changes.",
-	"version": "0.6.0",
+	"releasenote": "General overhaul.",
+	"version": "0.8.0",
 	"url": "http://haxetink.org/tink_http",
 	"dependencies": {
-		"http-status": "",
 		"tink_url": "",
-		"tink_anon": "",
-		"tink_io": "gh:haxetink/tink_io"
+		"http-status": "",
+		"tink_io": "gh:haxetink/tink_io",
+		"tink_anon": ""
 	}
 }
