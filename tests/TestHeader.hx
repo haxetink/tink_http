@@ -162,4 +162,8 @@ class TestHeader {
 	@:variant('text/*', 'application/json', false)
 	public function accepts(header:String, type:String, accepted:Bool)
 		return assert(new Header([new HeaderField(ACCEPT, header)]).accepts(type).sure() == accepted);
+		
+	@:variant('foo', 'bar', 'Basic Zm9vOmJhcg==')
+	public function basicAuth(username:String, password:String, output:String)
+		return assert(HeaderValue.basicAuth(username, password) == output);
 }

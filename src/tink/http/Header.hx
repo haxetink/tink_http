@@ -2,6 +2,8 @@ package tink.http;
 
 import tink.io.StreamParser;
 import tink.url.Query;
+import haxe.crypto.Base64;
+import haxe.io.Bytes;
 
 using tink.CoreApi;
 using StringTools;
@@ -180,6 +182,9 @@ abstract HeaderValue(String) from String to String {
         extensions: parseExtension(value, Query.parseString(v, ';', i + 1)),
       }
     }];
+    
+  public static function basicAuth(username:String, password:String)
+    return 'Basic ' + Base64.encode(Bytes.ofString('$username:$password')).toString();
   
   static var DAYS = 'Sun,Mon,Tue,Wen,Thu,Fri,Sat'.split(',');
   static var MONTHS = 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
