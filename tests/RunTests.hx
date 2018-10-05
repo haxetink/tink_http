@@ -16,8 +16,8 @@ class RunTests {
     #if !container_only
       new TestHeader(),
       new TestChunked(),
-    #end
       new FetchTest(#if php Php #end),
+    #end
     ]);
     
     #if !no_client
