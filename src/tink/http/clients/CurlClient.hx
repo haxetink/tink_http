@@ -11,9 +11,9 @@ using tink.CoreApi;
 
 // Does not restrict to any platform as long as they can run the curl command somehow
 class CurlClient implements ClientObject {
-  var curl:Array<String>->IdealSource->RealSource;
+  var curl:Array<String>->RealSource->RealSource;
   var protocol:String = 'http';
-  public function new(?curl:Array<String>->IdealSource->RealSource) {
+  public function new(?curl:Array<String>->RealSource->RealSource) {
     this.curl = 
       if(curl != null) curl;
       else {
@@ -22,9 +22,14 @@ class CurlClient implements ClientObject {
             args.push('--data-binary');
             args.push('@-');
             var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
-            var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
-            body.pipeTo(sink, {end: true}).eager();
-            return #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
+            var stdin = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
+            var stdout = #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
+            body.pipeTo(stdin, {end: true}).handle(function(o) switch o {
+              case AllWritten: trace('piped'); // good
+              case SourceFailed(e) | SinkFailed(e, _): trace(e); // TODO: how to force an error in the returned source?
+              case SinkEnded(_): trace("SinkEnded"); // TODO: how to force an error in the returned source?
+            });
+            return stdout;
           }
         #else
           throw "curl function not supplied";

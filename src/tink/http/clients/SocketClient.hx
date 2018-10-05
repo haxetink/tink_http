@@ -66,7 +66,7 @@ class SocketClient implements ClientObject {
               });
               
             case SinkEnded(_): cb(Failure(new Error('Sink ended unexpectedly')));
-            case SinkFailed(e, _): cb(Failure(e));
+            case SourceFailed(e) | SinkFailed(e, _): cb(Failure(e));
           }
         });
       });

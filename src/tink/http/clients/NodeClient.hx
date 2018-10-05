@@ -65,7 +65,7 @@ class NodeClient implements ClientObject {
           switch res {
             case AllWritten:
             case SinkEnded(_): fail(new Error(502, 'Gateway Error'));
-            case SinkFailed(e, _): fail(e);
+            case SourceFailed(e) | SinkFailed(e, _): fail(e);
           }
         });
       });

@@ -115,7 +115,7 @@ class OutgoingRequestHeader extends RequestHeader {
     return new OutgoingRequestHeader(method, url, protocol, this.fields.concat(fields));
 }
 
-class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}
+class OutgoingRequest extends Message<OutgoingRequestHeader, RealSource> {}
 
 class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody> {
   
