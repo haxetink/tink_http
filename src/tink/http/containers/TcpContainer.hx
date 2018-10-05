@@ -48,6 +48,7 @@ class Split<E> {
   }
 }
 
+@:require('tink_tcp')
 class TcpContainer implements Container {
   static public function wrap(handler:tink.http.Handler):tink.tcp.Handler {
     return function (i:tink.tcp.Incoming):Future<tink.tcp.Outgoing> {
