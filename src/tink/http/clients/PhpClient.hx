@@ -16,7 +16,6 @@ class PhpClient implements ClientObject {
     return Future.async(function(cb) {
       req.body.all().handle(function(o) switch o {
         case Success(chunk):
-          
           var options = php.Lib.associativeArrayOfObject({
             http: php.Lib.associativeArrayOfObject({
               // protocol_version: // TODO: req does not define the version?
