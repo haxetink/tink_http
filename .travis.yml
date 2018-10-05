@@ -26,8 +26,9 @@ install:
   - lix download
   
 script:
-  - haxe master.hxml -D containers=node -D targets=js,node,neko,php
+  - haxe master.hxml -D containers=node -D targets=js,node,php
   - haxe master.hxml -D containers=neko-mod -D targets=node -D container_only
+  # - haxe master.hxml -D containers=node -D targets=neko,php # can't parse header again?
   # - haxe master.hxml -D containers=php -D targets=node -D container_only # Automatically populating $HTTP_RAW_POST_DATA is deprecated and will be removed in a future version.
   # - haxe master.hxml -D containers=node-tcp -D targets=node -D container_only # seems not working
   # - haxe master.hxml -D containers=neko-tools -D targets=node # does not support PATCH/PUT/DELETE
