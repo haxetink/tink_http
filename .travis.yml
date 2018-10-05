@@ -5,6 +5,10 @@ stages:
   - test
   - deploy
 
+cache:
+  directories:
+    - $HOME/haxe
+
 language: node_js
 node_js: 8
 
