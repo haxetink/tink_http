@@ -23,22 +23,22 @@ class FetchTest {
     this.client = client;
   }
   
-  public function testGet() return testStatus('http://httpbin.org/');
-  public function testPost() return testData('http://httpbin.org/post', POST);
-  public function testDelete() return testData('http://httpbin.org/delete', DELETE);
-  public function testPatch() return testData('http://httpbin.org/patch', PATCH);
-  public function testPut() return testData('http://httpbin.org/put', PUT);
-  public function testRedirect() return testStatus('http://httpbin.org/redirect/5');
+  public function get() return testStatus('http://httpbin.org/');
+  public function post() return testData('http://httpbin.org/post', POST);
+  public function delete() return testData('http://httpbin.org/delete', DELETE);
+  public function patch() return testData('http://httpbin.org/patch', PATCH);
+  public function put() return testData('http://httpbin.org/put', PUT);
+  public function redirect() return testStatus('http://httpbin.org/redirect/5');
   
   #if(!python && !cs && !interp)
-  public function testSecureGet() return testStatus('https://httpbin.org/');
-  public function testSecurePost() return testData('https://httpbin.org/post', POST);
-  public function testSecureDelete() return testData('https://httpbin.org/delete', DELETE);
-  public function testSecurePatch() return testData('https://httpbin.org/patch', PATCH);
-  public function testSecurePut() return testData('https://httpbin.org/put', PUT);
-  public function testSecureRedirect() return testStatus('https://httpbin.org/redirect/5');
+  public function secureGet() return testStatus('https://httpbin.org/');
+  public function securePost() return testData('https://httpbin.org/post', POST);
+  public function secureDelete() return testData('https://httpbin.org/delete', DELETE);
+  public function securePatch() return testData('https://httpbin.org/patch', PATCH);
+  public function securePut() return testData('https://httpbin.org/put', PUT);
+  public function secureRedirect() return testStatus('https://httpbin.org/redirect/5');
   
-  public function testHeaders(buffer:AssertionBuffer) {
+  public function headers(buffer:AssertionBuffer) {
     var name = 'my-sample-header';
     var value = 'foobar';
     return fetch('https://httpbin.org/headers', {
@@ -57,7 +57,7 @@ class FetchTest {
   #end
   
   function testStatus(url:String, status = 200) {
-    return fetch(url, {client: client}).next(function(res) {
+    return fetch(url, {client: client}).all().next(function(res) {
       return assert(res.header.statusCode == status);
     });
   }
@@ -83,7 +83,8 @@ class FetchTest {
   }
   
   function objectToHeader(obj:Dynamic) {
-    return new Header([for(key in Reflect.fields(obj)) new HeaderField(key, Reflect.field(obj, key))]);
+    return new Header([for(key in Reflect.fields(obj))
+      new HeaderField(key, Reflect.field(obj, key))]);
   }
   
 }

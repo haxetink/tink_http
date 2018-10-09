@@ -23,12 +23,22 @@ class SocketClient implements ClientObject {
     
     return Future.async(function(cb) {
       
+      function addHeaders(headers:Array<HeaderField>)
+        req = new OutgoingRequest(req.header.concat(headers), req.body);
+      
       switch req.header.byName('connection') {
-        case Success((_:String).toLowerCase() => 'close'): // ok
+        case Success((_:String).toLowerCase() => 'close'):
+          // ok
         case Success(v):
           cb(Failure(new Error('Only "Connection: Close" is supported. But specified as "$v"')));
           return;
-        case Failure(_): @:privateAccess req.header.fields.push(new HeaderField('connection', 'close'));
+        case Failure(_):
+          addHeaders([new HeaderField('connection', 'close')]);
+      }
+      
+      switch req.header.byName('host') {
+        case Success(_): // ok
+        case Failure(_): addHeaders([new HeaderField('host', req.header.url.host.name)]);
       }
       
       var socket = 
