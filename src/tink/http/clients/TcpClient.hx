@@ -23,7 +23,7 @@ class TcpClient implements ClientObject {
       
       req.body.prepend(req.header.toString()).pipeTo(cnx.sink, {end: true /* implement connection reuse */}).handle(function(o) switch o {
         case AllWritten: // ok
-        case SourceFailed(e) | SinkFailed(e, _): cb(Failure(e));
+        case SinkFailed(e, _): cb(Failure(e));
         case SinkEnded(_): cb(Failure(new Error('Sink ended')));
       });
       
