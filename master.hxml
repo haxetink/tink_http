@@ -1,3 +1,4 @@
 -cp tests
 -main Master
 -x bin/master/run
+-lib tink_core

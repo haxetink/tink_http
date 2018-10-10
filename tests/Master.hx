@@ -1,10 +1,11 @@
 package;
 
 import haxe.CallStack;
-import neko.vm.Thread;
 import sys.net.Host;
 import sys.net.Socket;
 import sys.io.File;
+
+using tink.CoreApi;
 
 class Master {
 	
@@ -31,33 +32,33 @@ class Master {
 			try {
 				Sys.println(Ansi.text(Cyan, '\n>> Building container $container'));
 				var process = server(port);
-				waitForConnection(port);
-				
-				for (target in targets.split(',')) {
-					if (!Context.targets.exists(target)) {
-						Ansi.fail('No such target: $target');
-						continue;
+				waitForConnection(port).handle(function() {
+					for (target in targets.split(',')) {
+						if (!Context.targets.exists(target)) {
+							Ansi.fail('No such target: $target');
+							continue;
+						}
+						Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
+						var runner = Context.targets.get(target)(port);
+						var code = runner.exitCode();
+						if (code != 0)
+							Ansi.fail('$target failed');
+						result = result && code == 0;
+						if (!result) break;
 					}
-					Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
-					var runner = Context.targets.get(target)(port);
-					var code = runner.exitCode();
-					if (code != 0)
-						Ansi.fail('$target failed');
-					result = result && code == 0;
-					if (!result) break;
-				}
+					
+					close(port);
+					process.kill();
+					restoreHxml();
+					Sys.exit(result ? 0 : 1);
+				});
 				
-				close(port);
-				process.kill();
 			} catch(e: Dynamic) {
 				Sys.println(e);
 				Sys.print(CallStack.toString(CallStack.exceptionStack()));
+				restoreHxml();
 			}
 		}
-		
-		restoreHxml();
-		Sys.sleep(.01);
-		Sys.exit(result ? 0 : 1);
 	}
 	
 	static function restoreHxml() {
@@ -77,31 +78,18 @@ class Master {
 	}
 	
 	static function waitForConnection(port: Int) {
-		var connected = false;
-		Thread.create(function() {
-		var i = 60*4;
-				while (i > 0) {
-			i--;
-			Sys.sleep(1);
-		}
-		if (!connected)
-			fail('Could not connect to server (timeout: ${i}s)');
-			});
-			var i = 0;
-			while (i < 20) {
+		return Future.async(function(cb) {
+			var retry = 20;
+
+			function next() {
 				var http = new haxe.Http('http://127.0.0.1:'+port+'/active');
 				var result = false;
-				http.onData = function(_) result = true;
+				http.onData = function(_) cb(true);
+				http.onError = function(_) if(retry-- == 0) cb(false) else haxe.Timer.delay(next, 100);
 				http.request();
-				if (result) {
-			connected = true;
-			return true;
-		} else {
-			Sys.sleep(.1);
-		}
 			}
-			fail('Could not connect to server');
-		return false;
+			next();
+		});
 	}
 
 	static function checkPort(port: Int) {
