@@ -1,4 +1,6 @@
 -cp tests
 -main Master
--x bin/master/run
+-neko bin/master/run.n
 -lib tink_core
+
+-cmd neko bin/master/run.n
