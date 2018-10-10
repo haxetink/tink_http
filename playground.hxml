@@ -1,0 +1,7 @@
+-cp tests
+-js bin/playground.js
+-main Playground
+
+-lib hxnodejs
+-lib travix
+-lib tink_http

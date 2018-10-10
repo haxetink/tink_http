@@ -7,6 +7,7 @@ import tink.http.Header;
 import tink.http.Method;
 import tink.http.Client;
 import tink.http.clients.*;
+import tink.streams.Stream;
 import tink.url.Host;
 import tink.io.Worker;
 import tink.Url;
@@ -123,12 +124,38 @@ enum ClientType {
 @:forward
 abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse, Error> to Surprise<IncomingResponse, Error> from Promise<IncomingResponse> to Promise<IncomingResponse> {
 	public function all():Promise<CompleteResponse> {
-		return this
-			.next(function(r) {
-				return r.body.all()
-					.next(function(chunk) return new CompleteResponse(r.header, chunk));
-			});
+		return this.next(function(r) {
+			return r.body.all().next(function(chunk) return new CompleteResponse(r.header, chunk));
+		});
+	}
+	
+	public function progress():Promise<ProgressResponse> {
+		return this.next(function(r) {
+			return new ProgressResponse(
+				r.header,
+				tink.state.Progress.make(function(progress, finish) {
+					var total = switch r.header.getContentLength() {
+						case Success(len): Some((len:Float));
+						case Failure(_): None;
+					}
+					var chunk = Chunk.EMPTY;
+					progress(chunk.length, total);
+					r.body.chunked()
+						.forEach(function(part) {
+							chunk = chunk & part;
+							progress(chunk.length, total);
+							return Resume;
+						})
+						.handle(function(o) switch o {
+							case Depleted: finish(Success(chunk));
+							case Failed(e): finish(Failure(e));
+							case Halted(_): finish(Failure(new Error('unreachable')));
+						});
+				})
+			);
+		});
 	}
 }
 
 typedef CompleteResponse = Message<ResponseHeader, Chunk>;
+typedef ProgressResponse = Message<ResponseHeader, tink.state.Progress<Outcome<Chunk, Error>>>;
