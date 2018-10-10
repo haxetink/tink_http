@@ -80,14 +80,26 @@ class Master {
 	}
 	
 	static function waitForConnection(port: Int) {
+		Sys.println('Waiting for server to be ready...');
 		return Future.async(function(cb) {
-			var retry = 20;
+			var retry = 10;
+			var delay = 100;
 
 			function next() {
 				var http = new haxe.Http('http://127.0.0.1:'+port+'/active');
 				var result = false;
-				http.onData = function(_) cb(true);
-				http.onError = function(_) if(retry-- == 0) cb(false) else haxe.Timer.delay(next, 100);
+				http.onData = function(_) {
+					Sys.println('Server ready');
+					cb(true);
+				}
+				http.onError = function(_) {
+					if(retry-- == 0) {
+						fail('Server not ready');
+						cb(false);
+					} else {
+						haxe.Timer.delay(next, delay *= 2);
+					}
+				}
 				http.request();
 			}
 			next();
