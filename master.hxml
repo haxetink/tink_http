@@ -2,5 +2,6 @@
 -main Master
 -neko bin/master/run.n
 -lib tink_core
+-lib tink_await
 
 -cmd neko bin/master/run.n

@@ -7,11 +7,13 @@ import sys.io.File;
 
 using tink.CoreApi;
 
+@:await
 class Master {
 	
 	public static var port = 8000;
 	static var originalHxml:String;
 	
+	@:await
 	public static function main() {
 		checkPort(port);
 		originalHxml = File.getContent('tests.hxml');
@@ -24,48 +26,41 @@ class Master {
 			fail('No targets set, use -D targets=php,neko');
 		
 		var result = true;
-		var iter = containers.split(',').iterator();
-		
-		function next() {
-			if(iter.hasNext()) {
-				var container = iter.next();
+		for(container in containers.split(',')) {
+			
+			if (!Context.containers.exists(container))
+				fail('Container $container not available');
 				
-				if (!Context.containers.exists(container))
-					fail('Container $container not available');
-					
-				var server = Context.containers.get(container);
+			var server = Context.containers.get(container);
 
-				try {
-					Sys.println(Ansi.text(Cyan, '\n>> Building container $container'));
-					var process = server(port);
-					waitForConnection(port).handle(function() {
-						for (target in targets.split(',')) {
-							if (!Context.targets.exists(target)) {
-								Ansi.fail('No such target: $target');
-								continue;
-							}
-							Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
-							var runner = Context.targets.get(target)(port);
-							var code = runner.exitCode();
-							if (code != 0)
-								Ansi.fail('$target failed');
-							result = result && code == 0;
-							if (!result) break;
+			try {
+				Sys.println(Ansi.text(Cyan, '\n>> Building container $container'));
+				var process = server(port);
+				@:await waitForConnection(port).next(function(_) {
+					for (target in targets.split(',')) {
+						if (!Context.targets.exists(target)) {
+							Ansi.fail('No such target: $target');
+							continue;
 						}
-						
-						close(port);
-						process.kill();
-						next();
-					});
+						Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
+						var runner = Context.targets.get(target)(port);
+						var code = runner.exitCode();
+						if (code != 0)
+							Ansi.fail('$target failed');
+						result = result && code == 0;
+						if (!result) break;
+					}
 					
-				}
+					close(port);
+					process.kill();
+					return Noise;
+				});
 				
-			} else {
-				restoreHxml();
-				Sys.exit(result ? 0 : 1);
 			}
 		}
-		next();
+		restoreHxml();
+		Sys.exit(result ? 0 : 1);
+		
 	}
 	
 	static function restoreHxml() {
