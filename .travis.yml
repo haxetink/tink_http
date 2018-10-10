@@ -18,7 +18,7 @@ os:
 
 env:
   - HAXE_VERSION=3.4.7
-  # - HAXE_VERSION=latest
+  - HAXE_VERSION=latest
   
 install:
   - npm i -g lix
@@ -35,7 +35,7 @@ script:
 
 jobs:
   include:
-    - stage: test # should uncomment this when there is no matrix above (e.g. only one os, one env, etc)
+    # - stage: test # should uncomment this when there is no matrix above (e.g. only one os, one env, etc)
     - stage: deploy
       language: haxe
       haxe: "3.4.7"
