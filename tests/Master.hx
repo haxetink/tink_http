@@ -82,7 +82,7 @@ class Master {
 	static function waitForConnection(port: Int) {
 		Sys.println('Waiting for server to be ready...');
 		return Future.async(function(cb) {
-			var retry = 10;
+			var retry = 30;
 			var delay = 100;
 
 			function next() {
@@ -97,7 +97,9 @@ class Master {
 						fail('Server not ready');
 						cb(false);
 					} else {
-						haxe.Timer.delay(next, delay *= 2);
+						delay *= 2;
+						if(delay > 5000) delay = 5000;
+						haxe.Timer.delay(next, delay);
 					}
 				}
 				http.request();
