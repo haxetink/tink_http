@@ -160,6 +160,7 @@ class Context {
     'cpp' => travixTarget.bind('cpp'),
     'js' => travixTarget.bind('js'),
     'lua' => travixTarget.bind('lua'),
+    'hl' => travixTarget.bind('hl'),
     
     'neko-tcp' => tcpTarget.bind('neko'),
   ];

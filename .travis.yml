@@ -27,6 +27,7 @@ install:
   
 script:
   - haxe master.hxml -D containers=node -D targets=js,node,php,neko,cpp,cs
+  - if [[ "$(haxe -version)" =~ ^4.* ]]; then haxe master.hxml -D containers=node -D targets=hl; fi
   - haxe master.hxml -D containers=node-tcp,neko-mod -D targets=node -D container_only
   # - haxe master.hxml -D containers=php -D targets=node -D container_only # Automatically populating $HTTP_RAW_POST_DATA is deprecated and will be removed in a future version.
   # - haxe master.hxml -D containers=neko-tools -D targets=node # does not support PATCH/PUT/DELETE
