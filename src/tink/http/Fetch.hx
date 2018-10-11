@@ -135,6 +135,7 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 		});
 	}
 	
+	#if tink_state
 	public function progress():Promise<ProgressResponse> {
 		return this.next(function(r) {
 			return 
@@ -165,7 +166,10 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 					);
 		});
 	}
+	#end
 }
 
 typedef CompleteResponse = Message<ResponseHeader, Chunk>;
+#if tink_state
 typedef ProgressResponse = Message<ResponseHeader, tink.state.Progress<Outcome<Chunk, Error>>>;
+#end
