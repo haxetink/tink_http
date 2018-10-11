@@ -30,18 +30,19 @@ class FetchTest {
   public function put() return testData('http://httpbin.org/put', PUT);
   public function redirect() return testStatus('http://httpbin.org/redirect/5');
   
-  #if(!python && !cs && !interp)
+  #if(!python && !cs && !interp && !lua)
   public function secureGet() return testStatus('https://httpbin.org/');
   public function securePost() return testData('https://httpbin.org/post', POST);
   public function secureDelete() return testData('https://httpbin.org/delete', DELETE);
   public function securePatch() return testData('https://httpbin.org/patch', PATCH);
   public function securePut() return testData('https://httpbin.org/put', PUT);
   public function secureRedirect() return testStatus('https://httpbin.org/redirect/5');
+  #end
   
   public function headers(buffer:AssertionBuffer) {
     var name = 'my-sample-header';
     var value = 'foobar';
-    return fetch('https://httpbin.org/headers', {
+    return fetch('http://httpbin.org/headers', {
       headers:[
         // {name: name, value: value},
         new HeaderField(name, value),
@@ -54,7 +55,6 @@ class FetchTest {
           return buffer.done();
       });
   }
-  #end
   
   function testStatus(url:String, status = 200) {
     return fetch(url, {client: client}).all().next(function(res) {

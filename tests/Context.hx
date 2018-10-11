@@ -159,6 +159,7 @@ class Context {
     'cs' => travixTarget.bind('cs'),
     'cpp' => travixTarget.bind('cpp'),
     'js' => travixTarget.bind('js'),
+    'lua' => travixTarget.bind('lua'),
     
     'neko-tcp' => tcpTarget.bind('neko'),
   ];
