@@ -15,6 +15,9 @@ using tink.CoreApi;
 class TestHeader {
 	public function new() {}
 	
+	#if (cpp && (haxe_ver >= 4))
+		// https://github.com/HaxeFoundation/haxe/issues/7536
+	#else
 	@:describe('Build Outgoing Request Header')
 	@:variant(GET, 'https://www.example.com', HTTP1_1, [], 'GET / HTTP/1.1\r\n\r\n\r\n')
 	@:variant(GET, 'https://www.example.com', HTTP2, [new tink.http.Header.HeaderField('host', 'v')], 'GET / HTTP/2\r\nhost: v\r\n\r\n')
@@ -22,6 +25,7 @@ class TestHeader {
 		var header = new OutgoingRequestHeader(method, url, version, fields);
 		return assert(header.toString() == str);
 	}
+	#end
 	
 	@:variant(200, 'OK', HTTP1_1, [], 'HTTP/1.1 200 OK\r\n\r\n\r\n')
 	@:variant(403, 'Forbidden', HTTP2, [new tink.http.Header.HeaderField('content-length', '0')], 'HTTP/2 403 Forbidden\r\ncontent-length: 0\r\n\r\n')
