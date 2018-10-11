@@ -23,10 +23,9 @@ class RunTests {
     #if !no_client
     for(client in Context.clients) {
       #if !container_only
-      tests = tests.concat([
-        TestSuite.make(new TestHttp(client, Httpbin, false), '$client -> http://httpbin.org'),
-        TestSuite.make(new TestHttp(client, Httpbin, true), '$client -> https://httpbin.org'),
-      ]);
+      tests.push(TestSuite.make(new TestHttp(client, Httpbin, false), '$client -> http://httpbin.org'));
+      #if cs if(client == Curl) #end // cs doesn't support ssl socket yet
+      tests.push(TestSuite.make(new TestHttp(client, Httpbin, true), '$client -> https://httpbin.org'));
       #end
       
       if(port != null) tests = tests.concat([
