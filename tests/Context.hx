@@ -156,8 +156,12 @@ class Context {
     'node' => travixTarget.bind('node'),
     'php' => travixTarget.bind('php'),
     'java' => travixTarget.bind('java'),
+    'cs' => travixTarget.bind('cs'),
     'cpp' => travixTarget.bind('cpp'),
     'js' => travixTarget.bind('js'),
+    'lua' => travixTarget.bind('lua'),
+    'python' => travixTarget.bind('python'),
+    'hl' => travixTarget.bind('hl'),
     
     'neko-tcp' => tcpTarget.bind('neko'),
   ];

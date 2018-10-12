@@ -18,7 +18,7 @@ os:
 
 env:
   - HAXE_VERSION=3.4.7
-  # - HAXE_VERSION=latest
+  - HAXE_VERSION=latest
   
 install:
   - npm i -g lix
@@ -26,19 +26,17 @@ install:
   - lix download
   
 script:
-  - haxe master.hxml -D containers=node -D targets=js,node,php
-  - haxe master.hxml -D containers=neko-mod -D targets=node -D container_only
-  # - haxe master.hxml -D containers=node -D targets=neko # can't parse header again?
+  - haxe master.hxml -D containers=node -D targets=js,node,php,neko,cpp,cs
+  - if [[ "$(haxe -version)" =~ ^4.* ]]; then haxe master.hxml -D containers=node -D targets=hl; fi
+  - haxe master.hxml -D containers=node-tcp,neko-mod -D targets=node -D container_only
   # - haxe master.hxml -D containers=php -D targets=node -D container_only # Automatically populating $HTTP_RAW_POST_DATA is deprecated and will be removed in a future version.
-  # - haxe master.hxml -D containers=node-tcp -D targets=node -D container_only # seems not working
   # - haxe master.hxml -D containers=neko-tools -D targets=node # does not support PATCH/PUT/DELETE
   # - haxe master.hxml -D containers=node -D targets=cpp # haxeshim not working with cpp yet
-  # - haxe master.hxml -D containers=node -D targets=js # why DELETE on travix does not send the body?
   # - haxe master.hxml -D containers=tcp -D targets=node -lib tink_tcp -lib tink_runloop
 
 jobs:
   include:
-    - stage: test # should uncomment this when there is no matrix above (e.g. only one os, one env, etc)
+    # - stage: test # should uncomment this when there is no matrix above (e.g. only one os, one env, etc)
     - stage: deploy
       language: haxe
       haxe: "3.4.7"

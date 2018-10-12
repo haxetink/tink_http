@@ -1,16 +1,19 @@
 package;
 
 import haxe.CallStack;
-import neko.vm.Thread;
 import sys.net.Host;
 import sys.net.Socket;
 import sys.io.File;
 
+using tink.CoreApi;
+
+@:await
 class Master {
 	
 	public static var port = 8000;
 	static var originalHxml:String;
 	
+	@:await
 	public static function main() {
 		checkPort(port);
 		originalHxml = File.getContent('tests.hxml');
@@ -23,41 +26,41 @@ class Master {
 			fail('No targets set, use -D targets=php,neko');
 		
 		var result = true;
-		for (container in containers.split(',')) {
+		for(container in containers.split(',')) {
+			
 			if (!Context.containers.exists(container))
 				fail('Container $container not available');
-			
+				
 			var server = Context.containers.get(container);
+
 			try {
 				Sys.println(Ansi.text(Cyan, '\n>> Building container $container'));
 				var process = server(port);
-				waitForConnection(port);
-				
-				for (target in targets.split(',')) {
-					if (!Context.targets.exists(target)) {
-						Ansi.fail('No such target: $target');
-						continue;
+				@:await waitForConnection(port).next(function(_) {
+					for (target in targets.split(',')) {
+						if (!Context.targets.exists(target)) {
+							Ansi.fail('No such target: $target');
+							continue;
+						}
+						Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
+						var runner = Context.targets.get(target)(port);
+						var code = runner.exitCode();
+						if (code != 0)
+							Ansi.fail('$target failed');
+						result = result && code == 0;
+						if (!result) break;
 					}
-					Sys.println(Ansi.text(Yellow, '\n>> Running target $target'));
-					var runner = Context.targets.get(target)(port);
-					var code = runner.exitCode();
-					if (code != 0)
-						Ansi.fail('$target failed');
-					result = result && code == 0;
-					if (!result) break;
-				}
+					
+					close(port);
+					process.kill();
+					return Noise;
+				});
 				
-				close(port);
-				process.kill();
-			} catch(e: Dynamic) {
-				Sys.println(e);
-				Sys.print(CallStack.toString(CallStack.exceptionStack()));
 			}
 		}
-		
 		restoreHxml();
-		Sys.sleep(.01);
 		Sys.exit(result ? 0 : 1);
+		
 	}
 	
 	static function restoreHxml() {
@@ -77,31 +80,32 @@ class Master {
 	}
 	
 	static function waitForConnection(port: Int) {
-		var connected = false;
-		Thread.create(function() {
-		var i = 60*4;
-				while (i > 0) {
-			i--;
-			Sys.sleep(1);
-		}
-		if (!connected)
-			fail('Could not connect to server (timeout: ${i}s)');
-			});
-			var i = 0;
-			while (i < 20) {
+		Sys.println('Waiting for server to be ready...');
+		return Future.async(function(cb) {
+			var retry = 30;
+			var delay = 100;
+
+			function next() {
 				var http = new haxe.Http('http://127.0.0.1:'+port+'/active');
 				var result = false;
-				http.onData = function(_) result = true;
+				http.onData = function(_) {
+					Sys.println('Server ready');
+					cb(true);
+				}
+				http.onError = function(_) {
+					if(retry-- == 0) {
+						fail('Server not ready');
+						cb(false);
+					} else {
+						delay *= 2;
+						if(delay > 5000) delay = 5000;
+						haxe.Timer.delay(next, delay);
+					}
+				}
 				http.request();
-				if (result) {
-			connected = true;
-			return true;
-		} else {
-			Sys.sleep(.1);
-		}
 			}
-			fail('Could not connect to server');
-		return false;
+			next();
+		});
 	}
 
 	static function checkPort(port: Int) {

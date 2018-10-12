@@ -11,31 +11,12 @@ using tink.CoreApi;
 
 // Does not restrict to any platform as long as they can run the curl command somehow
 class CurlClient implements ClientObject {
-  var curl:Array<String>->RealSource->RealSource;
   var protocol:String = 'http';
+  
   public function new(?curl:Array<String>->RealSource->RealSource) {
-    this.curl = 
-      if(curl != null) curl;
-      else {
-        #if (sys || nodejs)
-          function(args, body) {
-            args.push('--data-binary');
-            args.push('@-');
-            var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
-            var stdin = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
-            var stdout = #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
-            body.pipeTo(stdin, {end: true}).handle(function(o) switch o {
-              case AllWritten: trace('piped'); // good
-              case SourceFailed(e) | SinkFailed(e, _): trace(e); // TODO: how to force an error in the returned source?
-              case SinkEnded(_): trace("SinkEnded"); // TODO: how to force an error in the returned source?
-            });
-            return stdout;
-          }
-        #else
-          throw "curl function not supplied";
-        #end
-      }
+    if(curl != null) this.curl = curl;
   }
+  
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     var args = [];
     
@@ -61,5 +42,21 @@ class CurlClient implements ClientObject {
     return curl(args, req.body)
       .parse(ResponseHeader.parser())
       .next(function (p) return new IncomingResponse(p.a, p.b));
+  }
+  
+  dynamic function curl(args:Array<String>, body:RealSource):RealSource {
+    #if (sys || nodejs)
+      args.push('--data-binary');
+      args.push('@-');
+      var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
+      var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
+      body.pipeTo(sink, {end: true}).handle(function(o) trace(o));
+      
+      var ret = #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
+      ret.all().handle(function(o) trace(o.sure()));
+      return ret;
+    #else
+      throw "curl function not supplied";
+    #end
   }
 }

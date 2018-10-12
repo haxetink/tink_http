@@ -1,6 +1,0 @@
--js bin/node/tests.js
--lib hxnodejs
--lib travix
--lib tink_http
--lib tink_tcp
-tests.hxml
