@@ -72,13 +72,15 @@ class Fetch {
 			var c:Client = switch type {
 				case Default:
 					if(secure)
-						#if (js && !nodejs) new SecureJsClient()
-						#elseif nodejs new SecureNodeClient()
+						#if nodejs new SecureNodeClient()
+						#elseif js new SecureJsClient()
+						#elseif flash new SecureFlashClient()
 						#elseif sys new SecureSocketClient()
 						#end
 					else 
-						#if (js && !nodejs) new JsClient()
-						#elseif nodejs new NodeClient()
+						#if nodejs new NodeClient()
+						#elseif js new JsClient()
+						#elseif flash new FlashClient()
 						#elseif sys new SocketClient()
 						#end ;
 				case Local(c): new LocalContainerClient(c);
