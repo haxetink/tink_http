@@ -18,7 +18,9 @@ enum ClientType {
   Tcp;
   #end
   
-  #if ((nodejs || sys) && !php) // TODO: php fails to read from stdout of curl process
+  #if ((nodejs || sys) && !php && !lua) 
+  // TODO: php fails to read from stdout of curl process
+  // TODO: lua suffers from https://github.com/HaxeFoundation/haxe/issues/7544
   Curl;
   #end
   

@@ -35,7 +35,7 @@ class TestHttp {
       #if tink_tcp
       case Tcp: secure ? new SecureTcpClient() : new TcpClient();
       #end
-      #if ((nodejs || sys) && !php)
+      #if ((nodejs || sys) && !php && !lua)
       case Curl: secure ? new SecureCurlClient() : new CurlClient();
       #end
       #if flash
@@ -122,22 +122,22 @@ class LocalConverter implements Converter {
   public function new() {}
   public function convert(res:IncomingResponse):Promise<EchoedRequest> {
     return res.body.all().next(function(chunk):EchoedRequest {
-      // trace(chunk);
       var parsed:Data = haxe.Json.parse(chunk);
       
       return {
         headers: new Header(
-          if(parsed.headers == null)
-            []
-          else
+          if(Reflect.hasField(parsed, 'headers'))
             [for(h in parsed.headers) new HeaderField(h.name, h.value)]
+          else
+            []
         ),
         query: {
           var map = new Map();
-          if(parsed.query != null) for(name in parsed.query.keys()) map.set(name, parsed.query.get(name));
+          if(Reflect.hasField(parsed, 'query'))
+            for(name in parsed.query.keys()) map.set(name, parsed.query.get(name));
           map;
         },
-        body: parsed.body == null ? Chunk.EMPTY : parsed.body,
+        body: Reflect.hasField(parsed, 'body') ? parsed.body : Chunk.EMPTY,
         origin: parsed.ip,
       }
     });
@@ -148,7 +148,6 @@ class HttpbinConverter implements Converter {
   public function new() {}
   public function convert(res:IncomingResponse):Promise<EchoedRequest> {
     return res.body.all().next(function(chunk):EchoedRequest {
-      // trace(chunk);
       var parsed: {
         headers:DynamicAccess<String>,
         args:DynamicAccess<String>,
@@ -158,18 +157,19 @@ class HttpbinConverter implements Converter {
       
       return {
         headers: new Header(
-          if(parsed.headers == null)
-            []
-          else
+          if(Reflect.hasField(parsed, 'headers'))
             [for(name in parsed.headers.keys()) new HeaderField(name, parsed.headers.get(name))]
+          else
+            []
         ),
         query: {
           var map = new Map();
-          if(parsed.args != null) for(name in parsed.args.keys()) map.set(name, parsed.args.get(name));
+          if(Reflect.hasField(parsed, 'args'))
+            for(name in parsed.args.keys()) map.set(name, parsed.args.get(name));
           map;
         },
-        body: parsed.data == null ? Chunk.EMPTY : parsed.data,
-        origin: parsed.origin,
+        body: Reflect.hasField(parsed, 'data') ? parsed.data : Chunk.EMPTY,
+        origin: #if python !Reflect.hasField(parsed, 'origin') ? null : #end parsed.origin,
       }
     });
   }

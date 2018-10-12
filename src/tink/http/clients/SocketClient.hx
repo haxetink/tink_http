@@ -45,6 +45,7 @@ class SocketClient implements ClientObject {
         if(secure)
           #if php new php.net.SslSocket();
           #elseif java new java.net.SslSocket();
+          #elseif python new python.net.SslSocket();
           #elseif (!no_ssl && (hxssl || hl || cpp || (neko && !(macro || interp)))) new sys.ssl.Socket();
           #else throw "Https is only supported with -lib hxssl";
           #end
