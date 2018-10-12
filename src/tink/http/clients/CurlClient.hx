@@ -50,11 +50,8 @@ class CurlClient implements ClientObject {
       args.push('@-');
       var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
       var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
-      body.pipeTo(sink, {end: true}).handle(function(o) trace(o));
-      
-      var ret = #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
-      ret.all().handle(function(o) trace(o.sure()));
-      return ret;
+      body.pipeTo(sink, {end: true}).eager();
+      return #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
     #else
       throw "curl function not supplied";
     #end
