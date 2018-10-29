@@ -1,24 +1,24 @@
 {
 	"name": "tink_http",
-	"license": "MIT",
+	"description": "Universal HTTP abstraction",
+	"classPath": "src",
+	"dependencies": {
+		"tink_anon": "",
+		"tink_io": "",
+		"tink_url": "",
+		"http-status": ""
+	},
+	"url": "http://haxetink.org/tink_http",
+	"contributors": [
+		"back2dos",
+		"kevinresol"
+	],
+	"version": "0.8.2",
+	"releasenote": "Target-specifc fixes",
 	"tags": [
 		"tink",
 		"cross",
 		"http"
 	],
-	"classPath": "src",
-	"description": "Universal HTTP abstraction",
-	"contributors": [
-		"back2dos",
-		"kevinresol"
-	],
-	"releasenote": "General overhaul.",
-	"version": "0.8.1",
-	"url": "http://haxetink.org/tink_http",
-	"dependencies": {
-		"tink_url": "",
-		"http-status": "",
-		"tink_io": "",
-		"tink_anon": ""
-	}
+	"license": "MIT"
 }
