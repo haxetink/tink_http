@@ -26,7 +26,7 @@ abstract FetchResponse(Promise<IncomingResponse>) to Promise<IncomingResponse> {
 A simple GET request can be achived by the following code:
 
 ```haxe
-tink.http.Client.fetch(url).all()
+tink.http.Client.fetch('https://httpbin.org/get').all()
   .handle(function(o) switch o {
     case Success(res):
       trace(res.header.statusCode);
@@ -41,7 +41,7 @@ tink.http.Client.fetch(url).all()
 A simple POST request with custom headers and a body:
 
 ```haxe
-tink.http.Client.fetch(url, {
+tink.http.Client.fetch('https://httpbin.org/post', {
 	method: POST,
 	headers: [new HeaderField(CONTENT_TYPE, 'application/json')],
 	body: '{"foo":"bar"}',
