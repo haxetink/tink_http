@@ -1,5 +1,7 @@
 # Client
 
+> Note: if you are looking for a simple-to-use API, please check out the [fetch API](basics/fetch.md)
+
 A client allows you to make HTTP requests to a server. In other words it turns outgoing requests into incoming responses.
 
 It is defined like so:

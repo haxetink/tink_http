@@ -10,6 +10,7 @@ Tinkerbell HTTP provides a cross platform abstraction over the server and client
 
 **Basics**
 - [Request, Response and Header](basics/request-response-header.md) - Basic HTTP concepts
+- [Fetch](basics/fetch.md) - A simple-to-use HTTP request API
 - [Client](basics/client.md) - Make a HTTP request to a server
 - [Server](basics/server.md) - Serve a HTTP request from a client
 

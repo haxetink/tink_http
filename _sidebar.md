@@ -3,6 +3,7 @@
 	
 - **Basics**
   - [Request, Response and Header](basics/request-response-header.md)
+  - [Fetch](basics/fetch.md)
   - [Client](basics/client.md)
   - [Server](basics/server.md)
 

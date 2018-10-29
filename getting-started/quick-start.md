@@ -33,17 +33,13 @@ class Server {
 ## First Web Client
 
 ```haxe
-import tink.http.clients.*;
-import tink.http.Request;
-using tink.io.Source;
+import tink.http.Client.*;
 
 class Client {
 	static function main() {
-		var client = new SecureNodeClient();
-		client.request(new OutgoingRequest(new OutgoingRequestHeader(GET, 'https://www.google.com', []), ''))
-			.next(function(res) return res.body.all())
+		fetch('https://www.google.com').all()
 			.handle(function(o) switch o {
-				case Success(body): trace(body); // should trace an html page
+				case Success(res): trace(res.body.toString()); // should trace an html page
 				case Failure(e): trace(e);
 			});
 	}
