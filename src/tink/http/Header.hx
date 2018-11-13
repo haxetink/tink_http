@@ -238,6 +238,10 @@ abstract HeaderValue(String) from String to String {
     return new HeaderName(s.toLowerCase());
 }
 
+#if tink_json
+@:jsonParse(function(json) return tink.http.Header.HeaderField.ofString(json))
+@:jsonStringify(function(field:tink.http.Header.HeaderField) return field.toString())
+#end
 class HeaderField extends NamedWith<HeaderName, HeaderValue> {
   
   public function toString() 
