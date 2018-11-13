@@ -219,6 +219,9 @@ abstract HeaderValue(String) from String to String {
 
   var ORIGIN                           = 'origin';
   var VARY                             = 'vary';
+  
+  var CACHE_CONTROL                    = 'cache-control';
+  var EXPIRES                          = 'expires';
 
   var ACCESS_CONTROL_REQUEST_METHOD    = 'access-control-request-method';
   var ACCESS_CONTROL_REQUEST_HEADERS   = 'access-control-request-headers';
