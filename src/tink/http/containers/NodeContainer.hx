@@ -26,8 +26,15 @@ class NodeContainer implements Container {
             Plain(Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', req)))
         ).handle(function (out) {
           res.writeHead(out.header.statusCode, out.header.reason, cast [for (h in out.header) [(h.name : String), h.value]]);//TODO: readable status code
-          out.body.pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', res)).handle(function (x) {
-            res.end();
+          out.body.pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', res)).handle(function (x) switch x {
+            case AllWritten:
+              res.end();
+            case SourceFailed(e):
+              // TODO: res.addTrailers(...);
+              var socket:js.node.net.Socket = untyped res.socket; // res.socket is not defined in hxnodejs?!
+              socket.end();
+            case SinkFailed(e, _):
+            case SinkEnded(_): // shouldn't happen?
           });
         });
         

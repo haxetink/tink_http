@@ -58,7 +58,7 @@ class ResponseHeaderBase extends Header {
     );    
 }
 
-private class OutgoingResponseData extends Message<ResponseHeader, IdealSource> {}
+private class OutgoingResponseData extends Message<ResponseHeader, RealSource> {}
 
 @:forward
 abstract OutgoingResponse(OutgoingResponseData) {

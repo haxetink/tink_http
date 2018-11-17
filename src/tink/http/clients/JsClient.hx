@@ -66,7 +66,10 @@ class JsClient implements ClientObject {
       if(req.header.method == GET)
         http.send();
       else
-        req.body.all().handle(function(chunk) http.send(new Int8Array(chunk.toBytes().getData())));
+        req.body.all().handle(function(o) switch o {
+          case Success(chunk): http.send(new Int8Array(chunk.toBytes().getData()));
+          case Failure(e): cb(Failure(e));
+        });
     });
   }
   

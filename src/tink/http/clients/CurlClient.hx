@@ -11,10 +11,9 @@ using tink.CoreApi;
 
 // Does not restrict to any platform as long as they can run the curl command somehow
 class CurlClient implements ClientObject {
-  
   var protocol:String = 'http';
   
-  public function new(?curl:Array<String>->IdealSource->RealSource) {
+  public function new(?curl:Array<String>->RealSource->RealSource) {
     if(curl != null) this.curl = curl;
   }
   
@@ -45,7 +44,7 @@ class CurlClient implements ClientObject {
       .next(function (p) return new IncomingResponse(p.a, p.b));
   }
   
-  dynamic function curl(args:Array<String>, body:IdealSource):RealSource {
+  dynamic function curl(args:Array<String>, body:RealSource):RealSource {
     #if (sys || nodejs)
       args.push('--data-binary');
       args.push('@-');

@@ -62,9 +62,12 @@ class StdClient implements ClientObject {
         case GET | HEAD | OPTIONS:
           send(false);
         default:
-          req.body.all().handle(function(bytes) {
-            r.setPostData(bytes.toString());
-            send(true);  
+          req.body.all().handle(function(o) switch o {
+            case Success(chunk):
+              r.setPostData(chunk.toString());
+              send(true);  
+            case Failure(e):
+              cb(Failure(e));
         });
       }
     });
