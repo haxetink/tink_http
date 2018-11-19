@@ -11,9 +11,11 @@ using tink.CoreApi;
 class NodeContainer implements Container {
   
   var kind:ServerKind;
+  var upgradable:Bool;
   
-  public function new(kind:ServerKind) {
+  public function new(kind:ServerKind, ?opt:{?upgradable:Bool}) {
     this.kind = kind;
+    this.upgradable = opt != null && opt.upgradable;
   }
   
   static public function toNodeHandler(handler:Handler)
@@ -83,7 +85,8 @@ class NodeContainer implements Container {
         cb(Failed(e));
       });
       
-      server.on('upgrade', toUpgradeHandler(handler));
+      if(upgradable)
+        server.on('upgrade', toUpgradeHandler(handler));
       
       function onListen() {
         cb(Running({ 
