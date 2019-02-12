@@ -234,7 +234,7 @@ abstract HeaderValue(String) from String to String {
   
   inline function new(s) this = s;
   
-  @:from static function ofString(s:String)
+  @:from static inline function ofString(s:String)
     return new HeaderName(s.toLowerCase());
 }
 
