@@ -5,8 +5,8 @@ import tink.http.Response;
 using tink.CoreApi;
 
 class SecureJsClient extends JsClient {
-  public function new() {
-    super();
+  public function new(?credentials) {
+    super(credentials);
     secure = true;
   }
   override function request(req:OutgoingRequest):Promise<IncomingResponse> {
