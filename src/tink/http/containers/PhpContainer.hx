@@ -152,7 +152,8 @@ class PhpContainer implements Container {
          #else
           untyped __call__('header', h.name + ': ' + h.value);
           #end
-        var out = Sink.ofOutput('output buffer', @:privateAccess new sys.io.FileOutput(php.Global.fopen( 'php://output', "w")));
+        var out = Sink.ofOutput('output buffer', @:privateAccess new sys.io.FileOutput( #if haxe4 php.Global.fopen( #else untyped __call__('fopen',  #end'php://output', "w") ));
+       
         res.body.pipeTo(out, { end: true }).handle(function (o) {
           cb(Shutdown);
         });
