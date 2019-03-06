@@ -1,8 +1,10 @@
 package tink.http.containers;
 
+#if haxe4
 import php.SuperGlobal;
 import php.Global;
 import php.Syntax;
+#end
 import php.NativeArray;
 import sys.io.File;
 import tink.http.Container;
