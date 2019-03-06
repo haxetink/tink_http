@@ -27,8 +27,8 @@ install:
   
 script:
   # Use a stable container (node) to test the clients in all targets
-  - haxe master.hxml -D containers=node -D targets=js,node,php,neko,cpp,cs,python,lua
-  - if [[ "$(haxe -version)" =~ ^4.* ]]; then haxe master.hxml -D containers=node -D targets=hl; fi
+  - haxe master.hxml -D containers=node -D targets=js,node,php,neko,cpp #,cs
+  - if [[ "$(haxe -version)" =~ ^4.* ]]; then haxe master.hxml -D containers=node -D targets=hl,python,lua; fi
   # Use a stable client (node) to test the containers
   - haxe master.hxml -D containers=node-tcp,neko-mod -D targets=node -D container_only
   
