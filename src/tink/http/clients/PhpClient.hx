@@ -24,7 +24,7 @@
               }),
             });
             
-            var context = #if haxe 4 php.Syntax.code('stream_context_create({0})', options) #else untyped __call__('stream_context_create', options) #end;
+            var context = #if haxe4 php.Syntax.code('stream_context_create({0})', options) #else untyped __call__('stream_context_create', options) #end;
             var url:String = req.header.url;
             //var result = @:privateAccess new sys.io.FileInput(untyped __call__('fopen', url, 'rb', false, context));
             var result = @:privateAccess new sys.io.FileInput(
