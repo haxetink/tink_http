@@ -1,5 +1,8 @@
 package tink.http.containers;
 
+import php.SuperGlobal;
+import php.Global;
+import php.Syntax;
 import php.NativeArray;
 import sys.io.File;
 import tink.http.Container;
@@ -15,7 +18,11 @@ using tink.CoreApi;
 
 class PhpContainer implements Container {
   inline static function getServerVar(key:String):String {
-    return untyped __php__("$_SERVER[{0}]", key);
+   return #if haxe4
+       Syntax.code("$_SERVER[{0}]", key);
+       #else
+       untyped __php__("$_SERVER[{0}]", key);
+       #end
   }
   static public var inst(default, null):PhpContainer = new PhpContainer();
   
@@ -41,11 +48,15 @@ class PhpContainer implements Container {
       getServerVar('REQUEST_URI'),
       '1.1', //TODO: do something meaningful here,
       {
-        if (untyped __call__('function_exists', 'getallheaders')) {
-          var raw = php.Lib.hashOfAssociativeArray(untyped __call__('getallheaders'));
+        if ( #if haxe4  php.Global.function_exists('getallheaders') #else untyped __call__('function_exists', 'getallheaders') #end){
+       
+        var raw =  php.Lib.hashOfAssociativeArray( #if haxe4 php.Global.getallheaders() #else untyped __call__('getallheaders') #end );
+        
           [for (name in raw.keys()) new HeaderField(name, raw[name])];
         } else {
-          var h = php.Lib.hashOfAssociativeArray(untyped __php__("$_SERVER"));
+          
+          var h = php.Lib.hashOfAssociativeArray(#if haxe4 SuperGlobal._SERVER #else untyped __php__("$_SERVER") #end);
+          
           var headers = [];
           inline function add(name, value) headers.push(new HeaderField(name, value));
           for(k in h.keys()) {
@@ -78,9 +89,10 @@ class PhpContainer implements Container {
       header,
       switch header.contentType() {
         case Success({ type: 'multipart', subtype: 'form-data' }) if (header.method == POST):
-          Parsed(
-            getParts(untyped __php__("$_POST"), Value)
-            .concat(getParts(untyped __php__("$_FILES"), function (v:NativeArray) {
+          Parsed(  getParts( #if haxe4   SuperGlobal._POST #else untyped __php__("$_POST") #end, Value)
+            .concat(getParts(#if haxe4 SuperGlobal._FILES #else untyped __php__("$_FILES") #end, function (v:NativeArray) {
+              
+            
               //return Value(cast v);
               inline function prop<A>(name:String):A
                 return untyped v[name];
@@ -101,7 +113,9 @@ class PhpContainer implements Container {
                         sys.io.File.read(tmpName, true)
                       ),
                       saveTo: function (path:String) return Future.sync(
-                        if (untyped __call__('rename', tmpName, path))
+                        
+                        if ( #if haxe4 untyped Global.rename(tmpName, path) #else untyped __call__('rename', tmpName, path) #end)
+                        
                           Success(Noise)
                         else
                           Failure(new Error('Failed to save $streamName to $path'))
@@ -112,7 +126,10 @@ class PhpContainer implements Container {
             })) 
           );
         default: 
-          Plain((untyped __call__('file_get_contents', 'php://input') : String));
+        
+          Plain( (#if haxe4 Global.file_get_contents( #else untyped __call__('file_get_contents',#end 'php://input') : String) );
+          
+          
       }
     );
   }
@@ -122,11 +139,18 @@ class PhpContainer implements Container {
       handler.process(
         getRequest()
       ).handle(function (res) {
+        #if haxe4
+        Syntax.code('http_response_code({0})',res.header.statusCode);
+        #else
         untyped __call__('http_response_code', res.header.statusCode);
+        #end
         for (h in res.header)
+        #if haxe4
+          Global.header(h.name + ': ' + h.value);
+         #else
           untyped __call__('header', h.name + ': ' + h.value);
-          
-        var out = Sink.ofOutput('output buffer', @:privateAccess new sys.io.FileOutput(untyped __call__('fopen', 'php://output', "w")));
+          #end
+        var out = Sink.ofOutput('output buffer', @:privateAccess new sys.io.FileOutput(php.Global.fopen( 'php://output', "w")));
         res.body.pipeTo(out, { end: true }).handle(function (o) {
           cb(Shutdown);
         });
