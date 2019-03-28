@@ -6,7 +6,11 @@ import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
 import js.html.XMLHttpRequest;
+#if haxe4
+import js.lib.Int8Array;
+#else
 import js.html.Int8Array;
+#end
 
 using tink.io.Source;
 using tink.CoreApi;
