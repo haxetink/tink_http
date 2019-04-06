@@ -93,8 +93,10 @@ abstract OutgoingResponse(OutgoingResponseData) {
     return blob(c, 'application/octet-stream');
     
   static public function reportError(e:Error) {
+    var code:Int = e.code;
+    if(code < 100 || code > 999) code = 500; // see: https://github.com/nodejs/node/blob/baa54a5ae78ff04a3e8d8ac97c052304a6f6c18c/lib/_http_server.js#L212
     return new OutgoingResponse(
-      new ResponseHeader(e.code, e.code, [new HeaderField('Content-Type', 'application/json')]),
+      new ResponseHeader(code, code, [new HeaderField('Content-Type', 'application/json')]),
       haxe.Json.stringify({//TODO: reconsider the wisdom of json encoding this way, since it relies on reflection
         error: e.message,
         details: e.data,
