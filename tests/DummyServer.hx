@@ -24,7 +24,7 @@ class DummyServer {
     var main = Context.servers.get(server);
     var handler:Handler = handleRequest;
     handler = handler.applyMiddleware(new CrossOriginResourceSharing(CorsProcessor.regex(~/.*/, true)));
-    main(port, handleRequest);
+    main(port, handler);
   }
   
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
