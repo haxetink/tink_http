@@ -38,9 +38,8 @@ class JsClient implements ClientObject {
       http.responseType = ARRAYBUFFER;
       for(header in req.header) 
         switch header.name {
-          case CONTENT_LENGTH: // browsers doesn't allow setting content-length header explicitly
-          case _:
-            http.setRequestHeader(header.name, header.value);
+          case CONTENT_LENGTH | HOST: // browsers doesn't allow setting these headers explicitly
+          case _: http.setRequestHeader(header.name, header.value);
         }
       http.onreadystatechange = function() if(http.readyState == 4) { // this is equivalent to onload...
         if(http.status != 0) {
