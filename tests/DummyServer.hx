@@ -2,6 +2,8 @@ import haxe.io.Bytes;
 import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
+import tink.http.Handler;
+import tink.http.middleware.CrossOriginResourceSharing;
 import tink.io.Sink;
 import haxe.io.BytesOutput;
 import tink.io.Worker;
@@ -20,6 +22,8 @@ class DummyServer {
     Sys.println('>> Server $server listening on $port');
     #end
     var main = Context.servers.get(server);
+    var handler:Handler = handleRequest;
+    handler = handler.applyMiddleware(new CrossOriginResourceSharing(CorsProcessor.regex(~/.*/, true)));
     main(port, handleRequest);
   }
   

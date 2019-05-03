@@ -26,7 +26,7 @@ class Context {
   #if neko
   
   static function mainArgs(port: Int, server: String)
-    return ['-D port=$port', '-D server=$server', '-main DummyServer'];
+    return ['-D port=$port', '-D server=$server', '-main DummyServer', '-lib tink_http_middleware'];
   
   static function tcpArgs(port: Int, concurrent)
     return mainArgs(port, 'tcp').concat(['-lib tink_tcp', '-lib tink_runloop']).concat(concurrent?['-D concurrent']:[]);
