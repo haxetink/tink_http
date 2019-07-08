@@ -6,6 +6,8 @@ import tink.http.Header;
 import tink.io.*;
 import js.node.http.*;
 
+import #if haxe4 js.lib.Error #else js.Error #end as JsError;
+
 using tink.CoreApi;
 
 class NodeContainer implements Container {
@@ -78,7 +80,7 @@ class NodeContainer implements Container {
           server;
       }
       
-      function tinkify(e:js.Error)
+      function tinkify(e:JsError)
         return Error.withData(e.message, e);
         
       server.on('error', function (e) {
