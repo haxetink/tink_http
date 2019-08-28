@@ -29,7 +29,14 @@ class NodeContainer implements Container {
             IncomingRequestHeader.fromIncomingMessage(req),
             Plain(Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', req)))
         ).handle(function (out) {
-          res.writeHead(out.header.statusCode, out.header.reason, cast [for (h in out.header) [(h.name : String), h.value]]);//TODO: readable status code
+          var headers = new Map();
+          for(h in out.header) {
+            if(!headers.exists(h.name)) headers[h.name] = [];
+            headers[h.name].push(h.value);
+          }
+          for(name in headers.keys())
+            res.setHeader(name, headers[name]);
+          res.writeHead(out.header.statusCode, out.header.reason);//TODO: readable status code
           out.body.pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', res)).handle(function (x) {
             res.end();
           });
