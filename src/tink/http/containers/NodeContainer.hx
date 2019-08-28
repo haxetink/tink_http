@@ -20,15 +20,20 @@ class NodeContainer implements Container {
     this.upgradable = opt != null && opt.upgradable;
   }
   
-  static public function toNodeHandler(handler:Handler)
+  static public function toNodeHandler(handler:Handler, ?options:{?body:IncomingMessage->IncomingRequestBody}) {
+    var body =
+      switch options {
+        case null | {body: null}: function(msg:IncomingMessage) return Plain(Source.ofNodeStream('Incoming HTTP message from ${msg.socket.remoteAddress}', msg));
+        case _: options.body;
+      }
     return 
       function (req:IncomingMessage, res:ServerResponse)
         handler.process(
           new IncomingRequest(
             req.socket.remoteAddress, 
             IncomingRequestHeader.fromIncomingMessage(req),
-            Plain(Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', req)))
-        ).handle(function (out) {
+            body(req)
+        )).handle(function (out) {
           var headers = new Map();
           for(h in out.header) {
             if(!headers.exists(h.name)) headers[h.name] = [];
@@ -41,6 +46,7 @@ class NodeContainer implements Container {
             res.end();
           });
         });
+  }
         
   static public function toUpgradeHandler(handler:Handler)
     return 
