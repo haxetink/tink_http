@@ -55,7 +55,7 @@ class NodeClient implements ClientObject {
         function fail(e:Error)
           cb(Failure(e));
           
-        fwd.on('error', function (e:js.Error) fail(Error.withData(e.message, e)));
+        fwd.on('error', function (e:#if haxe4 js.lib.Error #else js.Error #end) fail(Error.withData(e.message, e)));
         
         req.body.pipeTo(
           Sink.ofNodeStream('Request to ${req.header.url}', fwd)
