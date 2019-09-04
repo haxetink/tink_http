@@ -5,3 +5,4 @@
 -lib hxnodejs
 -lib travix
 -lib tink_http
+-lib tink_state
