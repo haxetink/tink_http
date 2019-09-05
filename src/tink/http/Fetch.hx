@@ -44,6 +44,10 @@ class Fetch {
 			}
 			
 			var client = getClient(type, url.scheme == 'https');
+
+			if (options != null && options.augment != null)
+				client = client.augment(options.augment);
+
 			client.request(new OutgoingRequest(
 				new OutgoingRequestHeader(method, url, headers),
 				body
@@ -109,6 +113,7 @@ typedef FetchOptions = {
 	?body:IdealSource,
 	?client:ClientType,
 	?followRedirect:Bool,
+	?augment:Processors,
 }
 
 enum ClientType {
