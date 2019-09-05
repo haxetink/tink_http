@@ -19,7 +19,7 @@ abstract Client(ClientObject) from ClientObject to ClientObject {
     return Fetch.fetch(url, options);
   }
 
-  public inline function augment(pipeline:Pipeline)
+  public inline function augment(pipeline:Processors)
     return CustomClient.create(this, pipeline.before, pipeline.after);
 }
 
@@ -32,12 +32,13 @@ interface ClientObject {
   function request(req:OutgoingRequest):Promise<IncomingResponse>;
 }
 
-private typedef Pipeline = { 
+typedef Processors = { 
   @:optional var before(default, never):Array<Preprocessor>;
   @:optional var after(default, never):Array<Postprocessor>;
 }
-private typedef Preprocessor = Next<OutgoingRequest, OutgoingRequest>;
-private typedef Postprocessor = Next<IncomingResponse, IncomingResponse>;
+
+typedef Preprocessor = Next<OutgoingRequest, OutgoingRequest>;
+typedef Postprocessor = OutgoingRequest->Next<IncomingResponse, IncomingResponse>;
 
 private class CustomClient implements ClientObject {
   
@@ -61,7 +62,11 @@ private class CustomClient implements ClientObject {
 
   public function request(req) 
     return 
-      pipe(req, preprocessors).next(real.request).next(pipe.bind(_, postprocessors));
+      pipe(req, preprocessors)
+        .next(function (req) 
+          return real.request(req)
+            .next(pipe.bind(_, [for (p in postprocessors) p(req)]))
+        );
 
   static function concat<A>(a:Null<Array<A>>, b:Null<Array<A>>):Null<Array<A>>
     return switch [a, b] {
