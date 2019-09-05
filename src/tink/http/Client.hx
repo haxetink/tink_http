@@ -19,8 +19,8 @@ abstract Client(ClientObject) from ClientObject to ClientObject {
     return Fetch.fetch(url, options);
   }
 
-  public inline function augment(pre:Array<Preprocessor>, post:Array<Postprocessor>)
-    return CustomClient.create(this, pre, post);
+  public inline function augment(pipeline:Pipeline)
+    return CustomClient.create(this, pipeline.before, pipeline.after);
 }
 
 interface ClientObject {
@@ -32,6 +32,10 @@ interface ClientObject {
   function request(req:OutgoingRequest):Promise<IncomingResponse>;
 }
 
+private typedef Pipeline = { 
+  @:optional var before(default, never):Array<Preprocessor>;
+  @:optional var after(default, never):Array<Postprocessor>;
+}
 private typedef Preprocessor = Next<OutgoingRequest, OutgoingRequest>;
 private typedef Postprocessor = Next<IncomingResponse, IncomingResponse>;
 
@@ -47,9 +51,9 @@ private class CustomClient implements ClientObject {
     this.real = real;
   }
 
-  function pipe<A>(value:A, transforms:Array<Next<A, A>>, ?index:Int = 0):Promise<A>
+  function pipe<A>(value:A, transforms:Null<Array<Next<A, A>>>, ?index:Int = 0):Promise<A>
     return 
-      if (index < transforms.length) 
+      if (transforms != null && index < transforms.length) 
         transforms[index](value)
           .next(pipe.bind(_, transforms, index + 1))
       else
@@ -59,9 +63,15 @@ private class CustomClient implements ClientObject {
     return 
       pipe(req, preprocessors).next(real.request).next(pipe.bind(_, postprocessors));
 
+  static function concat<A>(a:Null<Array<A>>, b:Null<Array<A>>):Null<Array<A>>
+    return switch [a, b] {
+      case [null, v] | [v, null]: v;
+      default: a.concat(b);
+    }
+
   static public function create(c:ClientObject, preprocessors, postprocessors)
     return switch downcast(c, CustomClient) {
       case null: new CustomClient(preprocessors, postprocessors, c);
-      case v: new CustomClient(preprocessors.concat(v.preprocessors), v.postprocessors.concat(postprocessors), v.real);
+      case v: new CustomClient(concat(preprocessors, v.preprocessors), concat(v.postprocessors, postprocessors), v.real);
     }
 }
