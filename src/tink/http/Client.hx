@@ -19,7 +19,7 @@ abstract Client(ClientObject) from ClientObject to ClientObject {
     return Fetch.fetch(url, options);
   }
 
-  public inline function augment(pipeline:Processors)
+  public inline function augment(pipeline:Processors):Client
     return CustomClient.create(this, pipeline.before, pipeline.after);
 }
 
