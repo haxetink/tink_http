@@ -65,7 +65,7 @@ private class CustomClient implements ClientObject {
       pipe(req, preprocessors)
         .next(function (req) 
           return real.request(req)
-            .next(pipe.bind(_, [for (p in postprocessors) p(req)]))
+            .next(pipe.bind(_, postprocessors == null ? null : [for (p in postprocessors) p(req)]))
         );
 
   static function concat<A>(a:Null<Array<A>>, b:Null<Array<A>>):Null<Array<A>>
