@@ -5,6 +5,13 @@ import tink.http.Container;
 using tink.io.Source;
 using tink.CoreApi;
 
+/**
+ * Calling run() will export your handler via `exports[name]`
+ * as demonstrated in the official documentation:
+ * https://firebase.google.com/docs/functions/get-started#add-the-addmessage-function
+ * Note that you must do so in the main() function synchronously
+ * otherwise the runtime will not be able to pick it up
+ */
 class FirebaseFunctionContainer implements Container {
 	var name:String;
 	var regions:Regions;
