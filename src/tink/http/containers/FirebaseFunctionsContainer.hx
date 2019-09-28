@@ -12,7 +12,7 @@ using tink.CoreApi;
  * Note that you must do so in the main() function synchronously
  * otherwise the runtime will not be able to pick it up
  */
-class FirebaseFunctionContainer implements Container {
+class FirebaseFunctionsContainer implements Container {
 	var name:String;
 	var regions:Regions;
 	var options:RuntimeOptions;
