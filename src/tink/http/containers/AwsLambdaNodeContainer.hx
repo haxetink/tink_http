@@ -23,9 +23,8 @@ using tink.CoreApi;
  *  Usage:
  *  ```
  *  class Server {
- *    @:expose('handler')
- *    static function handler(event, context, callback) {
- *      var container = new AwsLambdaNodeContainer(event, context, callback);
+ *    static function main() {
+ *      var container = new AwsLambdaNodeContainer('handler');
  *      container.run(function(req) return Future.sync(('Done':OutgoingResponse))).eager();
  *    }
  *  }
@@ -33,15 +32,11 @@ using tink.CoreApi;
  */
 class AwsLambdaNodeContainer implements Container {
   
-  var event:LambdaEvent;
-  var context:Dynamic;
-  var callback:js.Error->LambdaResponse->Void;
+  var name:String;
   var isBinary:ResponseHeader->Bool;
   
-  public function new(event, context, callback, ?isBinary) {
-    this.event = event;
-    this.context = context;
-    this.callback = callback;
+  public function new(name:String, ?isBinary) {
+    this.name = name;
     this.isBinary = isBinary == null ? function(_) return false : isBinary;
   }
   
@@ -67,24 +62,30 @@ class AwsLambdaNodeContainer implements Container {
   
   public function run(handler:Handler) 
     return Future.async(function (cb) {
-      handler.process(getRequest()).handle(function(res) {
-        var binary = isBinary(res.header);
-        res.body.all().handle(function(chunk) {
-          var res:LambdaResponse = {
-            statusCode: res.header.statusCode,
-            headers: {
-              var headers = new DynamicAccess();
-              for(h in res.header) headers.set(h.name, h.value);
-              headers;
-            },
-            isBase64Encoded: binary,
-            body: binary ? Base64.encode(chunk) : chunk.toString(),
-          };
-          // trace(haxe.Json.stringify(res));
-          callback(null, res);
-          cb(Shutdown);
-        });
-      });
+      Reflect.setField(
+        js.Node.exports,
+        name,
+        function(event:LambdaEvent, context:Dynamic, callback:js.Error->LambdaResponse->Void) {
+          context.callbackWaitsForEmptyEventLoop = false;
+          handler.process(getRequest()).handle(function(res) {
+            var binary = isBinary(res.header);
+            res.body.all().handle(function(chunk) {
+              var res:LambdaResponse = {
+                statusCode: res.header.statusCode,
+                headers: {
+                  var headers = new DynamicAccess();
+                  for(h in res.header) headers.set(h.name, h.value);
+                  headers;
+                },
+                isBase64Encoded: binary,
+                body: binary ? Base64.encode(chunk) : chunk.toString(),
+              };
+              callback(null, res);
+              cb(Shutdown);
+            });
+          });
+        }
+      );
     });
 }
 
