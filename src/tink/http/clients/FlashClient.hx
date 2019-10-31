@@ -33,7 +33,12 @@ class FlashClient implements ClientObject {
       var loader = new URLLoader();
       loader.dataFormat = URLLoaderDataFormat.BINARY;
       
-      var request = new URLRequest(req.header.url);
+      var url:String =
+        switch req.header.url.scheme {
+          case null: (secure ? 'https:' : 'http:') + req.header.url;
+          case _: req.header.url;
+        }
+      var request = new URLRequest(url);
       request.method = req.header.method;
       request.requestHeaders = [for(h in req.header) new URLRequestHeader(h.name, h.value)];
       
