@@ -45,17 +45,9 @@ class FlashClient implements ClientObject {
       var header:ResponseHeader;
       
       function onHttpStatusEvent(e:HTTPStatusEvent) {
-        inline function trim(s:String) {
-          var len = s.length;
-          return
-            if(s.charCodeAt(len - 2) == '\r'.code && s.charCodeAt(len - 1) == '\n'.code)
-              s.substr(0, len - 2);
-            else
-              s;
-        }
         header = new ResponseHeader(
           e.status, e.status,
-          [for(h in e.responseHeaders) new HeaderField(h.name, trim(h.value))]
+          [for(h in e.responseHeaders) new HeaderField(h.name, h.value)]
         );
       }
       
