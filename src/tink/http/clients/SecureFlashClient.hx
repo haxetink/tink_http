@@ -1,3 +1,8 @@
 package tink.http.clients;
 
-typedef SecureFlashClient = FlashClient;
+class SecureFlashClient extends FlashClient {
+	public function new() {
+		super();
+		secure = true;
+	}
+}
