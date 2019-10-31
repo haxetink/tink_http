@@ -59,7 +59,7 @@ class FlashClient implements ClientObject {
       }
       
       loader.addEventListener(Event.COMPLETE, function(e) {
-        var bytes:Bytes = (e.target.data:ByteArray);
+        var bytes:Bytes = ((cast e.target).data:ByteArray);
         if(header == null) cb(Failure(new Error('Response header not ready, please check the implementation of ' + Type.getClassName(Type.getClass(this)))));
         else cb(Success(new IncomingResponse(header, bytes)));
       });
