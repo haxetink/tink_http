@@ -58,9 +58,14 @@ class SocketClient implements ClientObject {
       }
       
       worker.work(function() {
-        socket.connect(new sys.net.Host(req.header.url.host.name), port);
-        return Noise;
-      }).handle(function(_) {
+        return try { socket.connect( new sys.net.Host(req.header.url.host.name), port); Success(Noise); }
+        catch (e:Dynamic) Failure(new Error(Std.string(e))); 
+      }).handle(function(outcome : Outcome<Noise, Error>) {
+        switch outcome { 
+            case Success(_):
+            case Failure(e): return cb(Failure(e));
+        }
+
         var sink = Sink.ofOutput('Request to ${req.header.url}', socket.output, {worker: worker});
         var source = Source.ofInput('Response from ${req.header.url}', socket.input, {worker: worker});
         
