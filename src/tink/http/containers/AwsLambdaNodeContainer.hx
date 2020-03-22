@@ -7,6 +7,7 @@ import tink.http.Container;
 import tink.http.Request;
 import tink.http.Response;
 import tink.http.Header;
+import #if haxe4 js.lib.Error #else js.Error #end as JsError;
 
 using tink.io.Source;
 using tink.CoreApi;
@@ -40,7 +41,7 @@ class AwsLambdaNodeContainer implements Container {
     this.isBinary = isBinary == null ? function(_) return false : isBinary;
   }
   
-  inline function getRequest():IncomingRequest {
+  inline function getRequest(event:LambdaEvent):IncomingRequest {
     return new IncomingRequest(
       event.requestContext.sourceIp,
       new IncomingRequestHeader(
@@ -65,9 +66,9 @@ class AwsLambdaNodeContainer implements Container {
       Reflect.setField(
         js.Node.exports,
         name,
-        function(event:LambdaEvent, context:Dynamic, callback:js.Error->LambdaResponse->Void) {
+        function(event:LambdaEvent, context:Dynamic, callback:JsError->LambdaResponse->Void) {
           context.callbackWaitsForEmptyEventLoop = false;
-          handler.process(getRequest()).handle(function(res) {
+          handler.process(getRequest(event)).handle(function(res) {
             var binary = isBinary(res.header);
             res.body.all().handle(function(chunk) {
               var res:LambdaResponse = {
