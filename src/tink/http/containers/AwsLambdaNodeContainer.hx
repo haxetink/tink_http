@@ -25,7 +25,9 @@ using tink.CoreApi;
  *  ```
  *  class Server {
  *    static function main() {
- *      var container = new AwsLambdaNodeContainer('handler');
+ *      // handler function will be exposed as the name specified
+ *      // note that the container must be created synchronously in the main function
+ *      var container = new AwsLambdaNodeContainer('index'); 
  *      container.run(function(req) return Future.sync(('Done':OutgoingResponse))).eager();
  *    }
  *  }
