@@ -9,6 +9,7 @@ import tink.http.Response;
 import tink.http.Header;
 import #if haxe4 js.lib.Error #else js.Error #end as JsError;
 
+using StringTools;
 using tink.io.Source;
 using tink.CoreApi;
 
@@ -35,6 +36,8 @@ using tink.CoreApi;
  */
 class AwsLambdaNodeContainer implements Container {
   
+  static inline var PROXY = '{proxy+}';
+  
   var name:String;
   var isBinary:ResponseHeader->Bool;
   
@@ -48,9 +51,16 @@ class AwsLambdaNodeContainer implements Container {
       event.requestContext.sourceIp,
       new IncomingRequestHeader(
         event.httpMethod,
-        event.path + (event.queryStringParameters == null ? '' : '?' + [for(key in event.queryStringParameters.keys()) '$key=' + event.queryStringParameters.get(key)].join('&')),
-        HTTP1_1,
-        [for(key in event.headers.keys()) new HeaderField(key, event.headers.get(key))]
+        (switch event.resource.indexOf(PROXY) {
+          case -1: event.resource;
+          case i: event.resource.substr(0, i) + event.pathParameters.get('proxy') + event.resource.substr(i + PROXY.length);
+        }) + 
+        (switch event.multiValueQueryStringParameters {
+          case null: '';
+          case q: '?' + [for(key in q.keys()) for(value in q.get(key)) '${key.urlEncode()}=${value.urlEncode()}'].join('&');
+        }),
+        event.requestContext.protocol,
+        [for(key in event.multiValueHeaders.keys()) for(value in event.multiValueHeaders.get(key)) new HeaderField(key, value)]
       ),
       Plain(
         if(event.body == null)
@@ -94,14 +104,19 @@ class AwsLambdaNodeContainer implements Container {
 
 
 private typedef LambdaEvent = {
+  resource:String,
   httpMethod:Method,
   path:String,
   queryStringParameters:DynamicAccess<String>,
+  multiValueQueryStringParameters:DynamicAccess<Array<String>>,
   headers:DynamicAccess<String>,
+  multiValueHeaders:DynamicAccess<Array<String>>,
+  pathParameters:DynamicAccess<String>,
   body:String,
   isBase64Encoded:Bool,
   requestContext: {
     sourceIp:String,
+    protocol:String,
   },
 }
 
