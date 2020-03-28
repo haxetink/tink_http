@@ -7,7 +7,9 @@ import tink.http.Container;
 import tink.http.Request;
 import tink.http.Response;
 import tink.http.Header;
+import #if haxe4 js.lib.Error #else js.Error #end as JsError;
 
+using StringTools;
 using tink.io.Source;
 using tink.CoreApi;
 
@@ -23,9 +25,10 @@ using tink.CoreApi;
  *  Usage:
  *  ```
  *  class Server {
- *    @:expose('handler')
- *    static function handler(event, context, callback) {
- *      var container = new AwsLambdaNodeContainer(event, context, callback);
+ *    static function main() {
+ *      // handler function will be exposed as the name specified
+ *      // note that the container must be created synchronously in the main function
+ *      var container = new AwsLambdaNodeContainer('index'); 
  *      container.run(function(req) return Future.sync(('Done':OutgoingResponse))).eager();
  *    }
  *  }
@@ -33,26 +36,31 @@ using tink.CoreApi;
  */
 class AwsLambdaNodeContainer implements Container {
   
-  var event:LambdaEvent;
-  var context:Dynamic;
-  var callback:js.Error->LambdaResponse->Void;
+  static inline var PROXY = '{proxy+}';
+  
+  var name:String;
   var isBinary:ResponseHeader->Bool;
   
-  public function new(event, context, callback, ?isBinary) {
-    this.event = event;
-    this.context = context;
-    this.callback = callback;
+  public function new(name:String, ?isBinary) {
+    this.name = name;
     this.isBinary = isBinary == null ? function(_) return false : isBinary;
   }
   
-  inline function getRequest():IncomingRequest {
+  inline function getRequest(event:LambdaEvent):IncomingRequest {
     return new IncomingRequest(
       event.requestContext.sourceIp,
       new IncomingRequestHeader(
         event.httpMethod,
-        event.path + (event.queryStringParameters == null ? '' : '?' + [for(key in event.queryStringParameters.keys()) '$key=' + event.queryStringParameters.get(key)].join('&')),
-        HTTP1_1,
-        [for(key in event.headers.keys()) new HeaderField(key, event.headers.get(key))]
+        (switch event.resource.indexOf(PROXY) {
+          case -1: event.resource;
+          case i: event.resource.substr(0, i) + event.pathParameters.get('proxy') + event.resource.substr(i + PROXY.length);
+        }) + 
+        (switch event.multiValueQueryStringParameters {
+          case null: '';
+          case q: '?' + [for(key in q.keys()) for(value in q.get(key)) '${key.urlEncode()}=${value.urlEncode()}'].join('&');
+        }),
+        event.requestContext.protocol,
+        [for(key in event.multiValueHeaders.keys()) for(value in event.multiValueHeaders.get(key)) new HeaderField(key, value)]
       ),
       Plain(
         if(event.body == null)
@@ -67,37 +75,48 @@ class AwsLambdaNodeContainer implements Container {
   
   public function run(handler:Handler) 
     return Future.async(function (cb) {
-      handler.process(getRequest()).handle(function(res) {
-        var binary = isBinary(res.header);
-        res.body.all().handle(function(chunk) {
-          var res:LambdaResponse = {
-            statusCode: res.header.statusCode,
-            headers: {
-              var headers = new DynamicAccess();
-              for(h in res.header) headers.set(h.name, h.value);
-              headers;
-            },
-            isBase64Encoded: binary,
-            body: binary ? Base64.encode(chunk) : chunk.toString(),
-          };
-          // trace(haxe.Json.stringify(res));
-          callback(null, res);
-          cb(Shutdown);
-        });
-      });
+      Reflect.setField(
+        js.Node.exports,
+        name,
+        function(event:LambdaEvent, context:Dynamic, callback:JsError->LambdaResponse->Void) {
+          context.callbackWaitsForEmptyEventLoop = false;
+          handler.process(getRequest(event)).handle(function(res) {
+            var binary = isBinary(res.header);
+            res.body.all().handle(function(chunk) {
+              var res:LambdaResponse = {
+                statusCode: res.header.statusCode,
+                headers: {
+                  var headers = new DynamicAccess();
+                  for(h in res.header) headers.set(h.name, h.value);
+                  headers;
+                },
+                isBase64Encoded: binary,
+                body: binary ? Base64.encode(chunk) : chunk.toString(),
+              };
+              callback(null, res);
+              cb(Shutdown);
+            });
+          });
+        }
+      );
     });
 }
 
 
 private typedef LambdaEvent = {
+  resource:String,
   httpMethod:Method,
   path:String,
   queryStringParameters:DynamicAccess<String>,
+  multiValueQueryStringParameters:DynamicAccess<Array<String>>,
   headers:DynamicAccess<String>,
+  multiValueHeaders:DynamicAccess<Array<String>>,
+  pathParameters:DynamicAccess<String>,
   body:String,
   isBase64Encoded:Bool,
   requestContext: {
     sourceIp:String,
+    protocol:String,
   },
 }
 
