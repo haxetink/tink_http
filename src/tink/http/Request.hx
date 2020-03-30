@@ -110,6 +110,10 @@ class IncomingRequestHeader extends RequestHeader {
   #end
 }
 
+#if tink_json
+@:jsonParse(function (json) return new tink.http.Request.OutgoingRequestHeader(json.method, json.url, json.protocol, json.fields))
+@:jsonStringify(function (header:tink.http.Request.OutgoingRequestHeader) return {method: header.method, url: header.url, protocol: header.protocol, fields: @:privateAccess header.fields})
+#end
 class OutgoingRequestHeader extends RequestHeader {
   override function concat(fields:Array<HeaderField>):OutgoingRequestHeader
     return new OutgoingRequestHeader(method, url, protocol, this.fields.concat(fields));
