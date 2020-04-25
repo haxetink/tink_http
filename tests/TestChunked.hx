@@ -25,7 +25,12 @@ class TestChunked {
 	public function decode() {
 		var source:IdealSource = '3\r\n123\r\n0\r\n';
 		var decoded = Chunked.decode(source);
-		decoded.all().handle(function(c) asserts.assert(c.sure().toString() == '123'));
+		decoded.all().handle(
+			function(c) {
+				var s = c.sure().toString();
+				asserts.assert(c.sure().toString() == '123');
+			}
+		);
 		var source:IdealSource = '3\r\n123\r\n3\r\n123\r\n3\r\n123\r\n0\r\n';
 		var decoded = Chunked.decode(source);
 		decoded.all().handle(function(c) asserts.assert(c.sure().toString() == '123123123'));

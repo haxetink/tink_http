@@ -232,6 +232,8 @@ abstract HeaderValue(String) from String to String {
   var ACCESS_CONTROL_ALLOW_METHODS     = 'access-control-allow-methods';
   var ACCESS_CONTROL_ALLOW_HEADERS     = 'access-control-allow-headers';
   
+  var USER_AGENT                       = 'user-agent';
+  
   inline function new(s) this = s;
   
   @:from static inline function ofString(s:String)

@@ -47,15 +47,20 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 	public function transform(source:Source<Q>):RealSource {
 		return (
 			(source:RealSource).parseStream(new ChunkedParser())
-				.map(function(v) return v == null ? Chunk.EMPTY : v)
+				.map(
+					function(v) {
+						return v == null ? Chunk.EMPTY : v;
+					}
+				)
 			:Stream<Chunk, Error>
 		);
 	}
 }
 
-class ChunkedParser implements StreamParserObject<Chunk> {
+@:access(tink.chunk) class ChunkedParser implements StreamParserObject<Chunk> {
 	
 	static var LINEBREAK:Seekable = '\r\n';
+	
 	var chunkSize:Int;
 	
 	public function new() {
@@ -66,21 +71,32 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 		chunkSize = -1;
 	
 	public function progress(cursor:ChunkCursor):ParseStep<Chunk> {
+		//trace('cursor ${cursor.length} size: $chunkSize');
 		return
 			if(chunkSize < 0) {
 				switch cursor.seek(LINEBREAK) {
-					case Some(v): chunkSize = Std.parseInt('0x$v');
-					case None: // do nothing
+					case Some(v): 
+						//trace(v);
+						chunkSize = Std.parseInt('0x$v');
+						//trace(chunkSize);
+					case None: 
 				}
 				Progressed;
 			} else if(chunkSize == 0) {
-				Progressed;
+				if(cursor.length == 0){
+					Done(Chunk.EMPTY);
+				}else{
+					Progressed;
+				}
 			} else {
-				if(cursor.length >= chunkSize + 2)
-					switch cursor.seek(LINEBREAK) {
-						case Some(v): reset(); Done(v);
-						case None: Failed(new Error('Invalid encoding'));
-					}
+				if(cursor.length >= chunkSize + 2 ){
+					cursor.moveTo(chunkSize);
+					var res = cursor.left();
+					cursor.moveBy(2);//remove crlf
+					cursor.prune();
+					reset();
+					Done(res);
+				}
 				else Progressed;
 			}
 	}
@@ -88,7 +104,4 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 	public function eof(rest:ChunkCursor):Outcome<Chunk, Error> {
 		return chunkSize == 0 ? Success(Chunk.EMPTY) : Failure(new Error('Unexpected end of input'));
 	}
-	
-	
-	
 }

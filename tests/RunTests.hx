@@ -16,6 +16,7 @@ class RunTests {
     #if !container_only
       new TestHeader(),
       new TestChunked(),
+      new ChunkedEncoding(),
       new FetchTest(#if php Php #end),
     #end
     ]);
