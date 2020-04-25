@@ -22,22 +22,14 @@ class ChunkedEncoding{
         ]
       }
     );
-    res.progress().handle(
-      (x) -> switch(x){
-        case Success(s) :
-          trace(s.body);
-        case Failure(e) : 
-          trace(e);
-      }
-    );
     res.all().handle(
-      (x) -> switch(x){
+      function(x){switch(x){
         case Success(x) : 
           assertion.trigger(asserts.assert(true,"returned result"));null;
         default         : 
           assertion.trigger(asserts.assert(false));null;
       }
-    );
+    });
     return assertion.asFuture();
   }  
 }

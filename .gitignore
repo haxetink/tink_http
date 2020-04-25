@@ -1,4 +1,4 @@
 bin
 node_modules
 *.hxproj
-./stx
+.stx
