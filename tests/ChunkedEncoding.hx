@@ -24,11 +24,11 @@ class ChunkedEncoding{
     res.all().handle(
       function(x){switch(x){
         case Success(x) : 
-          assertion.trigger(asserts.assert(true,"returned result"));null;
+          asserts.assert(true,"returned result");
         default         : 
-          assertion.trigger(asserts.assert(false));null;
+          asserts.assert(false,"botched");
       }
     });
-    return assertion.asFuture();
+    return asserts.done();
   }  
 }
