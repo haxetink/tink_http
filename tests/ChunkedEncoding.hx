@@ -3,7 +3,6 @@ package ;
 using tink.CoreApi;
 import tink.http.Fetch;
 
-import tink.http.clients.SocketClientChunkedEncoding;
 
 @:asserts
 @:timeout(10000) 
