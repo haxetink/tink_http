@@ -18,8 +18,8 @@ class TestHeader {
 	#if (cpp && (haxe_ver >= 4))
 		// https://github.com/HaxeFoundation/haxe/issues/7536
 	#else
-	static public final credentials = 'usr:pwd';
-	static public final auth = HeaderValue.basicAuth(credentials.split(':')[0], credentials.split(':')[1]);
+	static public var credentials(default, null) = 'usr:pwd';
+	static public var auth(default, null) = HeaderValue.basicAuth(credentials.split(':')[0], credentials.split(':')[1]);
 	@:describe('Build Outgoing Request Header')
 	@:variant(GET, 'https://www.example.com', HTTP1_1, [], 'GET / HTTP/1.1\r\n\r\n\r\n')
 	@:variant(GET, 'https://www.example.com', HTTP2, [new tink.http.Header.HeaderField('host', 'v')], 'GET / HTTP/2\r\nhost: v\r\n\r\n')
