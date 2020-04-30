@@ -26,7 +26,7 @@ class RunTests {
       tests.push(TestSuite.make(new ChunkedEncoding()));
       tests.push(TestSuite.make(new TestHttp(client, Httpbin, false), '$client -> http://httpbin.org'));
          #if (cs || lua || python) if(client != Socket) #end // no support for ssl socket yet
-         tests.push(TestSuite.make(new TestHttp(client, Httpbin, true), '$client -> https://httpbin.org'));
+        tests.push(TestSuite.make(new TestHttp(client, Httpbin, true), '$client -> https://httpbin.org'));
       #end
       
       if(port != null) tests = tests.concat([

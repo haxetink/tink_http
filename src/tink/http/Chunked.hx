@@ -61,60 +61,60 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 	
 	static var LINEBREAK:Seekable = '\r\n';
 	
-	var chunkSize:Int;
-	
+	var chunkSize	: Int;
+	var result		: Chunk;
+
 	public function new() {
 		reset();
+		result = Chunk.EMPTY;
 	}
 	
 	function reset()
 		chunkSize = -1;
 	
-	private function consume(cursor:ChunkCursor){
+	private function push(chunk:Chunk){
+		this.result = result.concat(chunk);
+	}
+	private function consume(cursor:ChunkCursor):Void{
 		cursor.moveTo(this.chunkSize);
 		var res = cursor.left();
-		// trace('pull: $res');
-		cursor.moveBy(2);//remove crlf
+		//trace('res: $res');
+		push(res);
+		cursor.moveBy(2);
 		cursor.prune();
 		reset();
-		return res;
 	}
 	public function progress(cursor:ChunkCursor):ParseStep<Chunk> {
 		//trace('cursor.length ${cursor.length} size: $chunkSize');
 		return
 			if(chunkSize < 0) {
-				// trace('...');
+				//trace('...');
 				switch cursor.seek(LINEBREAK) {
 					case Some(v): 
-						// trace('peeking: $v');
+						//trace('peeking');
 						chunkSize = Std.parseInt('0x$v');
-						// trace('pulling: $chunkSize from ${cursor.length}');
-						if(cursor.length >= (chunkSize + 2) ){
-							if(chunkSize == 0){
-								switch(cursor.seek(LINEBREAK,{withoutPruning:true})){
-									case Some( _.toString() => "") : Done(Chunk.EMPTY);	
-									default 			: Progress;
-								}
-							}else{
-								//trace('consume');
-								Done(consume(cursor));
-							}
-						}
+						//trace('next_chunk: $chunkSize');
 					case None: 
 				}
-				Progressed;
-			} else if(chunkSize == 0) {
-				if(cursor.length == 0){
-					Done(Chunk.EMPTY);
+				if(chunkSize ==0){
+					Done(result);
 				}else{
 					Progressed;
 				}
-			} else {
-				// trace('len = ${cursor.length} size = $chunkSize');
-				if(cursor.length >= chunkSize + 2 ){
-					Done(consume(cursor));
+			} else if(chunkSize == 0) {
+				//trace("HERE");
+				switch(cursor.seek(LINEBREAK)){
+					case Some( _.toString() => "") : Done(result);
+					default : throw "oops";
 				}
-				else Progressed;
+			} else {
+				//trace('len = ${cursor.length} size = $chunkSize');
+				if(cursor.length >= chunkSize + 2 ){
+					//trace('consume: $result');
+					consume(cursor);
+					//trace('consumed: ${result}');
+				}
+				Progressed;
 			}
 	}
 	

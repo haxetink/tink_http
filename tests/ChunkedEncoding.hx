@@ -53,7 +53,7 @@ class ChunkedEncoding{
     var parts               = [aligned_chunk,unaligned_chunk,odd_bit,last_bit];
     var chunks              = parts.map(function(x){ return Chunk.ofString(x); });
 
-    var parsed              = new ChunkedDecoder().transform(stream);
+    var parsed              = Chunked.decode(stream);
 
     for(chunk in chunks){
       signal.trigger(Data(chunk));
@@ -61,11 +61,12 @@ class ChunkedEncoding{
     signal.trigger(Data("\r\n"));
     signal.trigger(End);
   
+    var res                 = "";
+  
     var result              = parsed.pipeTo(Sink.BLACKHOLE);
         result.handle(
           v -> {
-            asserts.assert(true,"is this thing on?");
-            //trace(v);
+            asserts.assert(true,"how to get the data from the maze of types");
           }
         );
     
