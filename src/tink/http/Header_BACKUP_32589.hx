@@ -231,9 +231,13 @@ abstract HeaderValue(String) from String to String {
   var ACCESS_CONTROL_MAX_AGE           = 'access-control-max-age';
   var ACCESS_CONTROL_ALLOW_METHODS     = 'access-control-allow-methods';
   var ACCESS_CONTROL_ALLOW_HEADERS     = 'access-control-allow-headers';
+<<<<<<< HEAD
   
   var USER_AGENT                       = 'user-agent';
   
+=======
+
+>>>>>>> c860ad4c4e6ea542b35b975a5bb3ea9ce2591a6b
   inline function new(s) this = s;
 
   @:from static inline function ofString(s:String)

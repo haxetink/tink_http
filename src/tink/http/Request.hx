@@ -12,7 +12,7 @@ using tink.io.StreamParser;
 using tink.io.Source;
 
 class RequestHeader extends Header {
-  
+
   public var method(default, null):Method;
   public var url(default, null):Url;
   public var protocol(default, null):Protocol;
@@ -22,7 +22,7 @@ class RequestHeader extends Header {
     this.url = url;
     this.protocol = protocol;
     super(fields);
-  }  
+  }
 
   override function concat(fields:Array<HeaderField>):RequestHeader
     return new RequestHeader(method, url, protocol, this.fields.concat(fields));
@@ -33,31 +33,31 @@ class RequestHeader extends Header {
 }
 
 class IncomingRequestHeader extends RequestHeader {
-  
+
   var cookies:Map<String, String>;
-  
+
   function getCookies() {
     if (cookies == null)
       cookies = [for (header in get('cookie')) for (entry in Query.parseString(header, ';')) entry.name => entry.value.toString()];
-      
+
     return cookies;
   }
-  
+
   override function concat(fields:Array<HeaderField>):IncomingRequestHeader
     return new IncomingRequestHeader(method, url, protocol, this.fields.concat(fields));
-  
+
   /**
    *  List all cookie names
    */
   public function cookieNames()
     return cookies.keys();
-  
+
   /**
    *  Get a single cookie
    */
   public function getCookie(name:String)
     return getCookies()[name];
-    
+
   /**
    *  Get the Authorization header as an Enum
    */
@@ -74,7 +74,7 @@ class IncomingRequestHeader extends RequestHeader {
       case s:
         Success(Others(s, p));
     });
-  
+
   public function getAuthWith<T>(parser:String->String->Outcome<T, Error>):Outcome<T, Error>
     return byName(AUTHORIZATION).flatMap(function(v:String) return switch v.indexOf(' ') {
         case -1:
@@ -82,27 +82,27 @@ class IncomingRequestHeader extends RequestHeader {
         case i:
           parser(v.substr(0, i), v.substr(i + 1));
     });
-  
+
   /**
    *  Get a StreamParser which can parse a Source into an IncomingRequestHeader
    */
   static public function parser():StreamParser<IncomingRequestHeader>
-    return new HeaderParser<IncomingRequestHeader>(function (line, headers) 
+    return new HeaderParser<IncomingRequestHeader>(function (line, headers)
       return switch line.split(' ') {
         case [method, url, protocol]:
           Success(new IncomingRequestHeader(cast method, url, protocol, headers));
-        default: 
+        default:
           Failure(new Error(UnprocessableEntity, 'Invalid HTTP header'));
       }
     );
-    
+
   #if nodejs
   static public function fromIncomingMessage(req:js.node.http.IncomingMessage) {
     return new IncomingRequestHeader(
       cast req.method,
       req.url,
       'HTTP/' + req.httpVersion,
-      [for (i in 0...Std.int(req.rawHeaders.length / 2)) 
+      [for (i in 0...Std.int(req.rawHeaders.length / 2))
         new HeaderField(req.rawHeaders[2 * i], req.rawHeaders[2 * i +1])
       ]
     );
@@ -115,6 +115,31 @@ class IncomingRequestHeader extends RequestHeader {
 @:jsonStringify(function (header:tink.http.Request.OutgoingRequestHeader) return {method: header.method, url: header.url, protocol: header.protocol, fields: @:privateAccess header.fields})
 #end
 class OutgoingRequestHeader extends RequestHeader {
+  public function new(method:Method, url:Url, protocol:Protocol = HTTP1_1, fields:Array<HeaderField>) {
+    switch  extractAuth(url) {
+      case Some(v):
+        url = v.url;
+        fields = fields.concat(v.headers);
+      default:
+    }
+    super(method, url, protocol, fields);
+  }
+
+  static function extractAuth(url:Url)
+    return switch url.auth {
+      case null: None;
+      case v:
+        Some({
+          headers: [new HeaderField(AUTHORIZATION, HeaderValue.basicAuth(v.user, v.password))],
+          url: Url.make({
+            scheme: url.scheme,
+            hosts: [for(host in url.hosts) host],
+            path: url.path,
+            query: url.query
+          }),
+        });
+    }
+
   override function concat(fields:Array<HeaderField>):OutgoingRequestHeader
     return new OutgoingRequestHeader(method, url, protocol, this.fields.concat(fields));
 }
@@ -122,15 +147,15 @@ class OutgoingRequestHeader extends RequestHeader {
 class OutgoingRequest extends Message<OutgoingRequestHeader, IdealSource> {}
 
 class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody> {
-  
+
   public var clientIp(default, null):String;
-  
+
   public function new(clientIp, header, body) {
     this.clientIp = clientIp;
     super(header, body);
   }
-  
-  static public function parse(clientIp, source:RealSource) 
+
+  static public function parse(clientIp, source:RealSource)
     return
       source.parse(IncomingRequestHeader.parser())
         .next(function (parts) return new IncomingRequest(
