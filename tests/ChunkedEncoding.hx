@@ -1,18 +1,22 @@
 package ;
 
+import tink.io.Sink;
 using tink.CoreApi;
+
+import tink.http.Chunked;
+import tink.Chunk;
+import tink.streams.Stream;
 import tink.http.Fetch;
 
-
 @:asserts
-@:timeout(10000) 
+@:timeout(2000) 
 class ChunkedEncoding{
   public function new(){}
   public function make_request(){
     var assertion = Future.trigger();
     var res = Fetch.fetch(
-      "https://api.github.com",
-      //"http://anglesharp.azurewebsites.net/Chunked"
+      "http://anglesharp.azurewebsites.net/Chunked",
+      //"https://api.github.com",
       {
         headers : [
           new tink.http.Header.HeaderField('user-agent',
@@ -26,9 +30,45 @@ class ChunkedEncoding{
         case Success(x) : 
           asserts.assert(true,"returned result");
         default         : 
+          trace(x);
           asserts.assert(false,"botched");
       }
     });
     return asserts.done();
   }  
+  
+  @:note('0b1kn00b','turns out I was wrong about azure using `\r\n`. Are you sure that `seek` works properly on multiple bytes?')
+  @:timeout(10000)
+  @:asserts
+  public function generate_data(){
+    //"http://anglesharp.azurewebsites.net/Chunked"
+    var aligned_chunk       = "7f\r\n<!DOCTYPE html>\r\n<html lang=en>\r\n<head>\r\n<meta charset='utf-8'>\r\n<title>Chunked transfer encoding test</title>\r\n</head>\r\n<body>\r\n";
+    var unaligned_chunk     = "27\r\n<h1>Chunked transfer encoding test</h1>\r\n31\r\n<h5>This is a chunked response ";
+    var odd_bit             = "after 100 ms.</h5>\r\n";
+    var last_bit            = "82\r\n<h5>This is a chunked response after 1 second. The server should not close the stream before all chunks are sent to a client.</h5>\r\ne\r\n</body></html>\r\n0\r\n";
+    
+    var signal              = Signal.trigger();
+    var stream              = new SignalStream(signal.asSignal());
+
+    var parts               = [aligned_chunk,unaligned_chunk,odd_bit,last_bit];
+    var chunks              = parts.map(function(x){ return Chunk.ofString(x); });
+
+    var parsed              = new ChunkedDecoder().transform(stream);
+
+    for(chunk in chunks){
+      signal.trigger(Data(chunk));
+    }
+    signal.trigger(Data("\r\n"));
+    signal.trigger(End);
+  
+    var result              = parsed.pipeTo(Sink.BLACKHOLE);
+        result.handle(
+          v -> {
+            asserts.assert(true,"is this thing on?");
+            //trace(v);
+          }
+        );
+    
+    return asserts.done();
+  }
 }

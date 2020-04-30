@@ -20,6 +20,6 @@
 
   #-cmd cd .stx/build/tink_http/test/php/
   #-cmd php index.php
---each
+#--each
   #-hl     .stx/build/tink_http/test/hl/test.hl
   #-cmd hl .stx/build/tink_http/test/hl/test.hl

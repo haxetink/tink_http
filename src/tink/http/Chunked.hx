@@ -70,15 +70,36 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 	function reset()
 		chunkSize = -1;
 	
+	private function consume(cursor:ChunkCursor){
+		cursor.moveTo(this.chunkSize);
+		var res = cursor.left();
+		// trace('pull: $res');
+		cursor.moveBy(2);//remove crlf
+		cursor.prune();
+		reset();
+		return res;
+	}
 	public function progress(cursor:ChunkCursor):ParseStep<Chunk> {
-		//trace('cursor ${cursor.length} size: $chunkSize');
+		//trace('cursor.length ${cursor.length} size: $chunkSize');
 		return
 			if(chunkSize < 0) {
+				// trace('...');
 				switch cursor.seek(LINEBREAK) {
 					case Some(v): 
-						//trace(v);
+						// trace('peeking: $v');
 						chunkSize = Std.parseInt('0x$v');
-						//trace(chunkSize);
+						// trace('pulling: $chunkSize from ${cursor.length}');
+						if(cursor.length >= (chunkSize + 2) ){
+							if(chunkSize == 0){
+								switch(cursor.seek(LINEBREAK,{withoutPruning:true})){
+									case Some( _.toString() => "") : Done(Chunk.EMPTY);	
+									default 			: Progress;
+								}
+							}else{
+								//trace('consume');
+								Done(consume(cursor));
+							}
+						}
 					case None: 
 				}
 				Progressed;
@@ -89,13 +110,9 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 					Progressed;
 				}
 			} else {
+				// trace('len = ${cursor.length} size = $chunkSize');
 				if(cursor.length >= chunkSize + 2 ){
-					cursor.moveTo(chunkSize);
-					var res = cursor.left();
-					cursor.moveBy(2);//remove crlf
-					cursor.prune();
-					reset();
-					Done(res);
+					Done(consume(cursor));
 				}
 				else Progressed;
 			}
