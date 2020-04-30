@@ -133,7 +133,7 @@ class OutgoingRequestHeader extends RequestHeader {
           headers: [new HeaderField(AUTHORIZATION, HeaderValue.basicAuth(v.user, v.password))],
           url: Url.make({
             scheme: url.scheme,
-            hosts: url.hosts,
+            hosts: [for(host in url.hosts) host],
             path: url.path,
             query: url.query
           }),
