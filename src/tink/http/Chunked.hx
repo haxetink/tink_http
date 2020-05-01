@@ -113,10 +113,7 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 				if(cursor.length >= chunkSize + 2 ){
 					consume(cursor);
 				}
-					//trace('consume: $result');
-					consume(cursor);
-					//trace('consumed: ${result}');
-				}
+				Progressed;
 			}
 	}
 	
