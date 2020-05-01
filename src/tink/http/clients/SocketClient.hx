@@ -76,7 +76,14 @@ class SocketClient implements ClientObject {
                 case Success(parsed): 
                   switch parsed.a.getContentLength() {
                     case Success(len): cb(Success(new IncomingResponse(parsed.a, parsed.b.limit(len))));
-                    case Failure(e): cb(Failure(new Error('Chunked encoding is not supported and the content-length header is required.')));
+                    case Failure(e): cb(
+                      Success(
+                        new IncomingResponse(
+                          parsed.a,
+                          new tink.http.Chunked.ChunkedDecoder().transform(parsed.b)
+                        )
+                      )
+                    );
                   }
                 case Failure(e): cb(Failure(e));
               });
