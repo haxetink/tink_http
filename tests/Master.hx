@@ -82,7 +82,7 @@ class Master {
 	static function waitForConnection(port: Int) {
 		Sys.println('Waiting for server to be ready...');
 		return Future.async(function(cb) {
-			var retry = 35;
+			var retry = 45;
 			var delay = 300;
 
 			function next() {
