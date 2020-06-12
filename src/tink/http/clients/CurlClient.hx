@@ -38,7 +38,8 @@ class CurlClient implements ClientObject {
       args.push('${header.name}: ${header.value}');
     }
     
-    args.push(req.header.url);
+    var url = req.header.url;
+    args.push(url.scheme != null ? url : protocol + ':' + url);
     
     return curl(args, req.body)
       .parse(ResponseHeader.parser())
