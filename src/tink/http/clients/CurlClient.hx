@@ -21,7 +21,7 @@ class CurlClient implements ClientObject {
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     var args = [];
     
-    args.push('-is');
+    args.push('-isS');
     
     args.push('-X');
     args.push(req.header.method);
@@ -49,10 +49,26 @@ class CurlClient implements ClientObject {
     #if (sys || nodejs)
       args.push('--data-binary');
       args.push('@-');
-      var process = #if sys new sys.io.Process #elseif nodejs js.node.ChildProcess.spawn #end ('curl', args);
-      var sink = #if sys Sink.ofOutput #else Sink.ofNodeStream #end ('stdin', process.stdin);
+      
+      #if nodejs
+      var process = js.node.ChildProcess.spawn('curl', args);
+      var sink = Sink.ofNodeStream('stdin', process.stdin);
       body.pipeTo(sink, {end: true}).eager();
-      return #if sys Source.ofInput #else Source.ofNodeStream #end ('stdout', process.stdout);
+      return Future.async(function(cb) process.once('exit', function(code, signal) cb(code)))
+        .next(function(code) return switch code {
+          case 0: Source.ofNodeStream('stdout', process.stdout);
+          case v: Source.ofNodeStream('stderr', process.stderr).all().next(function(stderr) return new Error(v, stderr.toString()));
+        });
+      #else
+      var process = new sys.io.Process('curl', args);
+      var sink = Sink.ofOutput('stdin', process.stdin);
+      body.pipeTo(sink, {end: true}).eager();
+      return switch process.exitCode() {
+        case 0: Source.ofInput('stdout', process.stdout);
+        case v: new Error(v, process.stderr.readAll().toString());
+      }
+      #end
+      
     #else
       throw "curl function not supplied";
     #end
