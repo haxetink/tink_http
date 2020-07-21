@@ -1,0 +1,4 @@
+# @install: lix --silent download "gh://github.com/brave-pi/hxnodejs-http2#a0486e5208367acf0c2779f9ece5000348efca50" into hxnodejs-http2/0.0.0/github/a0486e5208367acf0c2779f9ece5000348efca50
+-lib hxnodejs
+-cp ${HAXE_LIBCACHE}/hxnodejs-http2/0.0.0/github/a0486e5208367acf0c2779f9ece5000348efca50/.
+-D hxnodejs-http2=0.0.0
