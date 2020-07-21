@@ -1,8 +1,11 @@
+
 -cp tests
 -dce full
+-lib tink_http
+-lib hxnodejs
 -lib hxnodejs-http2
 -main Test
---next
+--each
 -D client
 -js bin/test/client.js
 --next
