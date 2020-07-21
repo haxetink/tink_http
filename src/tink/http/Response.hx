@@ -85,6 +85,9 @@ abstract OutgoingResponse(OutgoingResponseData) {
     //TODO: implement
     
   }
+  public static function ofStream(source:IdealSource, ?code = 200, ?headers:Array<HeaderField>)
+    return new OutgoingResponse(new ResponseHeader(code, code, headers == null ? [] : headers), source);
+
         
   @:from static function ofString(s:String) 
     return blob(s, 'text/plain');

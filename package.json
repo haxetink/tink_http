@@ -8,5 +8,7 @@
     "travix": "haxe -lib travix --run travix.Travix",
     "postinstall": "lix download"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lix": "^15.9.0"
+  }
 }
