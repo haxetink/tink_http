@@ -151,6 +151,7 @@ typedef HeaderValueComponent = {
   var extension(default, null):Extensions;
 }
 
+@:transitive
 abstract HeaderValue(String) from String to String {
 
   public function getExtension():Map<String, String>
