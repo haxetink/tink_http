@@ -19,34 +19,6 @@ class NodeContainer implements Container {
     this.kind = kind;
     this.upgradable = opt != null && opt.upgradable;
   }
-  
-  static public function toNodeHandler(handler:Handler, ?options:{?body:IncomingMessage->IncomingRequestBody}) {
-    var body =
-      switch options {
-        case null | {body: null}: function(msg:IncomingMessage) return Plain(Source.ofNodeStream('Incoming HTTP message from ${msg.socket.remoteAddress}', msg));
-        case _: options.body;
-      }
-    return 
-      function (req:IncomingMessage, res:ServerResponse)
-        handler.process(
-          new IncomingRequest(
-            req.socket.remoteAddress, 
-            IncomingRequestHeader.fromIncomingMessage(req),
-            body(req)
-        )).handle(function (out) {
-          var headers = new Map();
-          for(h in out.header) {
-            if(!headers.exists(h.name)) headers[h.name] = [];
-            headers[h.name].push(h.value);
-          }
-          for(name in headers.keys())
-            res.setHeader(name, headers[name]);
-          res.writeHead(out.header.statusCode, out.header.reason);//TODO: readable status code
-          out.body.pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', res)).handle(function (x) {
-            res.end();
-          });
-        });
-  }
         
   static public function toUpgradeHandler(handler:Handler)
     return 
@@ -122,7 +94,7 @@ class NodeContainer implements Container {
       else
         server.on('listening', onListen);
       
-      server.on('request', toNodeHandler(handler));
+      server.on('request', handler.toNodeHandler());
       server.on('error', function(e) cb(Failed(e)));
     });
 }

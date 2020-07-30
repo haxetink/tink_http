@@ -32,15 +32,13 @@ class FirebaseFunctionsContainer implements Container {
 					var f:FunctionBuilder = FirebaseFunctions;
 					if(regions != null) f = f.region(js.Syntax.code('...{0}', regions));
 					if(options != null) f = f.runWith(options);
-					f.https.onRequest(NodeContainer.toNodeHandler(
-						handler, {
-							// https://firebase.google.com/docs/functions/http-events#read_values_from_the_request
-							body: function(msg) {
-								var buffer:js.node.Buffer = untyped msg.rawBody;
-								return Plain(buffer == null ? Source.EMPTY : (buffer:tink.Chunk));
-							}
+					f.https.onRequest(handler.toNodeHandler({
+						// https://firebase.google.com/docs/functions/http-events#read_values_from_the_request
+						body: function(msg) {
+							var buffer:js.node.Buffer = untyped msg.rawBody;
+							return Plain(buffer == null ? Source.EMPTY : (buffer:tink.Chunk));
 						}
-					));
+					}));
 				}
 			);
 			
