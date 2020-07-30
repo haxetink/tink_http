@@ -2,9 +2,14 @@ package tink.http;
 
 import tink.http.Request;
 import tink.http.Response;
+import tink.http.Header;
 import tink.io.*;
 #if nodejs
 import js.node.http.*;
+#end
+#if java
+import java.javax.servlet.http.*;
+import java.io.*;
 #end
 
 using tink.CoreApi;
@@ -50,6 +55,42 @@ abstract Handler(HandlerObject) from HandlerObject to HandlerObject {
             res.end();
           });
         });
+  }
+  #end
+  
+  #if java
+  public function toJavaServletHandler() {
+    return function(req:HttpServletRequest, res:HttpServletResponse) 
+      this.process(
+        new IncomingRequest(
+          req.getRemoteAddr(),
+          new IncomingRequestHeader(
+            cast req.getMethod(), 
+            req.getRequestURI() + switch req.getQueryString() {
+              case null: '';
+              case v: '?$v';
+            },
+            req.getProtocol(),
+            {
+              var names = req.getHeaderNames();
+              var headers = [];
+              while(names.hasMoreElements()) {
+                var name = names.nextElement();
+                var values = req.getHeaders(name);
+                while(values.hasMoreElements()) headers.push(new HeaderField(name, values.nextElement()));
+              }
+              headers;
+            }
+          ),
+          Plain(Source.ofInput('Incoming HTTP message from ${req.getRemoteAddr()}', new NativeInput(req.getInputStream())))
+        )
+      ).handle(function (out) {
+        res.setStatus(out.header.statusCode);
+        for(header in out.header.fields) res.addHeader(header.name, header.value);
+        out.body.pipeTo(Sink.ofOutput('Outgoing HTTP response to ${req.getRemoteAddr()}', new NativeOutput(res.getOutputStream()))).handle(function (x) {
+          // res.getOutputStream().flush();
+        });
+      });
   }
   #end
 }
