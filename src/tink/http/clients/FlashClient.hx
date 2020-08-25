@@ -23,8 +23,6 @@ using tink.CoreApi;
 
 class FlashClient implements ClientObject {
   
-  var secure = false;
-  
   public function new() {}
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {

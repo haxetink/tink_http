@@ -16,7 +16,6 @@ using tink.io.Source;
 using tink.CoreApi;
 
 class JsClient implements ClientObject {
-  var secure = false;
   var credentials = false;
   
   public function new(?credentials) {

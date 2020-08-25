@@ -21,35 +21,37 @@ class TestHttp {
   var url:Url;
   var converter:Converter;
   
-  public function new(client:ClientType, target, secure) {
+  public function new(client:ClientType, target) {
     this.client = switch client {
       #if sys
-      case Socket: secure ? new SecureSocketClient() : new SocketClient();
+      case Socket: new SocketClient();
       #end
       #if (js && !nodejs)
-      case Js: secure ? new SecureJsClient() : new JsClient();
+      case Js: new JsClient();
       #end
       #if nodejs
-      case Node: secure ? new SecureNodeClient() : new NodeClient();
+      case Node: new NodeClient();
       #end
       #if tink_tcp
-      case Tcp: secure ? new SecureTcpClient() : new TcpClient();
+      case Tcp: new TcpClient();
       #end
       #if ((nodejs || sys) && !php && !lua)
-      case Curl: secure ? new SecureCurlClient() : new CurlClient();
+      case Curl: new CurlClient();
       #end
       #if flash
-      case Flash: secure ? new SecureFlashClient() : new FlashClient();
+      case Flash: new FlashClient();
       #end
     }
     
-    var schema = secure ? 'https' : 'http';
     switch target {
-      case Httpbin:
-        url = '$schema://httpbin.org';
+      case Httpbin(true):
+        url = 'https://httpbin.org';
+        converter = new HttpbinConverter();
+      case Httpbin(false):
+        url = 'http://httpbin.org';
         converter = new HttpbinConverter();
       case Local(port):
-        url = '$schema://localhost:$port';
+        url = 'http://localhost:$port';
         converter = new LocalConverter();
     }
   }
@@ -110,7 +112,7 @@ class TestHttp {
 
 
 enum Target {
-  Httpbin;
+  Httpbin(secure:Bool);
   Local(port:Int);
 }
 

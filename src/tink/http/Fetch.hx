@@ -19,8 +19,7 @@ using tink.CoreApi;
 
 class Fetch {
 	
-	static var client = new Map<ClientType, Client>();
-	static var sclient = new Map<ClientType, Client>();
+	static var cache = new Map<ClientType, Client>();
 	
 	public static function fetch(url:Url, ?options:FetchOptions):FetchResponse {
 		
@@ -43,7 +42,7 @@ class Fetch {
 				if(options.followRedirect == false) followRedirect = false; 
 			}
 			
-			var client = getClient(type, url.scheme == 'https');
+			var client = getClient(type);
 
 			if (options != null && options.augment != null)
 				client = client.augment(options.augment);
@@ -68,36 +67,24 @@ class Fetch {
 		});
 	}
 	
-	static function getClient(type:ClientType, secure:Bool) {
-		var cache = secure ? sclient : client;
-		
+	static function getClient(type:ClientType) {
 		if(!cache.exists(type)) {
-			
 			var c:Client = switch type {
 				case Default:
-					if(secure)
-						#if nodejs new SecureNodeClient()
-						#elseif js new SecureJsClient()
-						#elseif flash new SecureFlashClient()
-						#elseif sys new SecureSocketClient()
-						#end
-					else 
-						#if nodejs new NodeClient()
-						#elseif js new JsClient()
-						#elseif flash new FlashClient()
-						#elseif sys new SocketClient()
-						#end ;
+					#if nodejs new NodeClient()
+					#elseif js new JsClient()
+					#elseif flash new FlashClient()
+					#elseif sys new SocketClient()
+					#end ;
 				case Local(c): new LocalContainerClient(c);
-				#if (sys || nodejs) case Curl: secure ? new SecureCurlClient() : new CurlClient(); #end
-				case StdLib: secure ? new SecureStdClient() : new StdClient();
+				#if (sys || nodejs) case Curl: new CurlClient(); #end
+				case StdLib: new StdClient();
 				case Custom(c): c;
-				#if php case Php: secure ? new SecurePhpClient() : new PhpClient(); #end
-				// #if (js || php) case Std: secure ? new SecureStdClient() : new StdClient(); #end
-				#if tink_tcp case Tcp: secure ? new SecureTcpClient() : new TcpClient(); #end
-				#if flash case Flash: secure ? new SecureFlashClient() : new FlashClient(); #end
-				#if openfl case OpenFl: secure ? new SecureFlashClient() : new FlashClient(); #end
+				#if php case Php: new PhpClient(); #end
+				#if tink_tcp case Tcp: new TcpClient(); #end
+				#if flash case Flash: new FlashClient(); #end
+				#if openfl case OpenFl: new FlashClient(); #end
 			}
-			
 			
 			cache.set(type, c);
 		}
