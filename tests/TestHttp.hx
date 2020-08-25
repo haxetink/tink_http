@@ -17,13 +17,14 @@ using tink.CoreApi;
 @:timeout(20000)
 @:asserts
 class TestHttp {
+  var clientType:ClientType;
   var client:Client;
   var url:Url;
   var converter:Converter;
   var target:Target;
   
   public function new(client:ClientType, target) {
-    this.client = switch client {
+    this.client = switch this.clientType = client {
       #if sys
       case Socket: new SocketClient();
       #end
@@ -89,6 +90,12 @@ class TestHttp {
     return request(GET, url + '/headers', [for(field in fields) for(value in field.value) new HeaderField(field.name, value)])
       .next(function(echo) {
           switch target {
+            #if (js && !nodejs)
+            case _ if(clientType == Js): // js client combines multiple same-name headers into a single comma-delimited one (at least in puppeteer)
+              for(field in fields) {
+                asserts.assert(Type.enumEq(echo.headers.byName(field.name), Success(field.value.join(', '))));
+              }
+            #end
             case Httpbin(_): // httpbin combines multiple same-name headers into a single comma-delimited one
               for(field in fields) {
                 asserts.assert(Type.enumEq(echo.headers.byName(field.name), Success(field.value.join(','))));

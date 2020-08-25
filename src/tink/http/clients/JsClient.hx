@@ -27,7 +27,6 @@ class JsClient implements ClientObject {
       var http = getHttp();
       // if(req.header.url.scheme == null) cb(Failure(Helper.missingSchemeError()));
       http.open(req.header.method, req.header.url);
-      trace('opening ${req.header.url}');
       http.withCredentials = credentials;
       http.responseType = ARRAYBUFFER;
       for(header in req.header) 
