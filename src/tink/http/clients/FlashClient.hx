@@ -28,49 +28,49 @@ class FlashClient implements ClientObject {
   public function new() {}
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    
     return Future.async(function(cb) {
-      var loader = new URLLoader();
-      loader.dataFormat = URLLoaderDataFormat.BINARY;
-      
-      var url:String =
-        switch req.header.url.scheme {
-          case null: (secure ? 'https:' : 'http:') + req.header.url;
-          case _: req.header.url;
-        }
-      var request = new URLRequest(url);
-      request.method = req.header.method;
-      request.requestHeaders = [for(h in req.header) new URLRequestHeader(h.name, h.value)];
-      
-      var header:ResponseHeader;
-      
-      function onHttpStatusEvent(e:HTTPStatusEvent) {
-        header = new ResponseHeader(
-          e.status, e.status,
-          [for(h in e.responseHeaders) new HeaderField(h.name, h.value)]
-        );
+      switch Helpers.checkScheme(req.header.url.scheme) {
+        case Some(e):
+          cb(Failure(e));
+          
+        case None:
+          var loader = new URLLoader();
+          loader.dataFormat = URLLoaderDataFormat.BINARY;
+          
+          var request = new URLRequest(req.header.url);
+          request.method = req.header.method;
+          request.requestHeaders = [for(h in req.header) new URLRequestHeader(h.name, h.value)];
+          
+          var header:ResponseHeader;
+          
+          function onHttpStatusEvent(e:HTTPStatusEvent) {
+            header = new ResponseHeader(
+              e.status, e.status,
+              [for(h in e.responseHeaders) new HeaderField(h.name, h.value)]
+            );
+          }
+          
+          function onError(e:TextEvent) {
+            cb(Failure(new Error(e.text)));
+          }
+          
+          loader.addEventListener(Event.COMPLETE, function(e) {
+            var bytes = Bytes.ofData((cast e.target).data);
+            if(header == null) cb(Failure(new Error('Response header not ready, please check the implementation of ' + Type.getClassName(Type.getClass(this)))));
+            else cb(Success(new IncomingResponse(header, bytes)));
+          });
+          loader.addEventListener(HTTPStatusEvent.HTTP_STATUS, onHttpStatusEvent);
+          // loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS, onHttpStatusEvent); // TODO: enable on AIR only
+          loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onError);
+          loader.addEventListener(IOErrorEvent.IO_ERROR, onError);
+          // loader.addEventListener(Event.OPEN, openHandler);
+          // loader.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+          
+          req.body.all().handle(function(chunk) {
+            request.data = chunk.toBytes().getData();
+            loader.load(request);
+          });
       }
-      
-      function onError(e:TextEvent) {
-        cb(Failure(new Error(e.text)));
-      }
-      
-      loader.addEventListener(Event.COMPLETE, function(e) {
-        var bytes:Bytes = ((cast e.target).data:ByteArray);
-        if(header == null) cb(Failure(new Error('Response header not ready, please check the implementation of ' + Type.getClassName(Type.getClass(this)))));
-        else cb(Success(new IncomingResponse(header, bytes)));
-      });
-      loader.addEventListener(HTTPStatusEvent.HTTP_STATUS, onHttpStatusEvent);
-      // loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS, onHttpStatusEvent); // TODO: enable on AIR only
-      loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onError);
-      loader.addEventListener(IOErrorEvent.IO_ERROR, onError);
-      // loader.addEventListener(Event.OPEN, openHandler);
-      // loader.addEventListener(ProgressEvent.PROGRESS, progressHandler);
-      
-      req.body.all().handle(function(chunk) {
-        request.data = ByteArray.fromBytes(chunk);
-        loader.load(request);
-      });
     });
   }
 }

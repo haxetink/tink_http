@@ -24,16 +24,11 @@ class JsClient implements ClientObject {
   }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return jsRequest(req);
-  }
-  
-  function jsRequest(req:OutgoingRequest) {
     return Future.async(function(cb) {
       var http = getHttp();
-      
-      var url:String = req.header.url;
-      if(req.header.url.scheme == null) url = (secure ? 'https:' : 'http:') + url;
-      http.open(req.header.method, url);
+      // if(req.header.url.scheme == null) cb(Failure(Helper.missingSchemeError()));
+      http.open(req.header.method, req.header.url);
+      trace('opening ${req.header.url}');
       http.withCredentials = credentials;
       http.responseType = ARRAYBUFFER;
       for(header in req.header) 
