@@ -20,6 +20,7 @@ class TestHttp {
   var client:Client;
   var url:Url;
   var converter:Converter;
+  var target:Target;
   
   public function new(client:ClientType, target) {
     this.client = switch client {
@@ -43,7 +44,7 @@ class TestHttp {
       #end
     }
     
-    switch target {
+    switch this.target = target {
       case Httpbin(true):
         url = 'https://httpbin.org';
         converter = new HttpbinConverter();
@@ -82,11 +83,25 @@ class TestHttp {
       });
   }
   
-  // @:include
-  public function headers()
-    return request(GET, url + '/headers', [new HeaderField('x-custom-tink', 'tink_http')])
+  @:variant([new tink.core.Named('x-custom-tink', ['tink_http'])])
+  @:variant([new tink.core.Named('x-custom-tink', ['tink_http1', 'tink_http2'])])
+  public function headers(fields:Array<Named<Array<String>>>)
+    return request(GET, url + '/headers', [for(field in fields) for(value in field.value) new HeaderField(field.name, value)])
       .next(function(echo) {
-          asserts.assert(Type.enumEq(echo.headers.byName('x-custom-tink'), Success('tink_http')));
+          switch target {
+            case Httpbin(_): // httpbin combines multiple same-name headers into a single comma-delimited one
+              for(field in fields) {
+                asserts.assert(Type.enumEq(echo.headers.byName(field.name), Success(field.value.join(','))));
+              }
+            case Local(_):
+              for(field in fields) for(value in field.value) {
+                var found = false;
+                for(result in echo.headers)
+                  if(result.name == field.name && result.value == value)
+                    found = true;
+                asserts.assert(found, '${field.name}: $value" should exists in response');
+              }
+          }
           return asserts.done();
       });
   

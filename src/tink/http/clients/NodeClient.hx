@@ -9,6 +9,7 @@ import tink.http.Request;
 import tink.http.Response;
 import js.node.http.IncomingMessage;
 import js.node.http.ClientRequest;
+import js.node.Https.HttpsRequestOptions;
 
 using tink.CoreApi;
 
@@ -25,24 +26,39 @@ class NodeClient implements ClientObject {
       case Some(e):
         Promise.reject(e);
         case None:
-          var options:js.node.Https.HttpsRequestOptions = {
-            method: cast req.header.method,
-            path: req.header.url.pathWithQuery,
-            host: req.header.url.host.name,
-            port: req.header.url.host.port,
-            headers: cast {
-              var map = new DynamicAccess<String>();
-              for (h in req.header)
-                map[h.name] = h.value;
-              map;
-            },
-            agent: false,
-          }
+          var options = getNodeOptions(req.header);
           
           if(req.header.url.scheme == 'https')
             nodeRequest(js.node.Https, options, req);
           else
             nodeRequest(js.node.Http, options, req);
+    }
+  }
+  
+  function getNodeOptions(header:OutgoingRequestHeader):HttpsRequestOptions {
+    return {
+      method: cast header.method,
+      path: header.url.pathWithQuery,
+      host: header.url.host.name,
+      port: header.url.host.port,
+      headers: cast {
+        var map = new DynamicAccess<Array<String>>();
+        for (h in header) {
+          var name = h.name;
+          if(name == 'host') {
+            // HOST header must not be an array
+            map[h.name] = cast h.value;
+          } else {
+            var list = switch map[h.name] {
+              case null: map[h.name] = [];
+              case arr: arr;
+            }
+            list.push(h.value);
+          }
+        }
+        map;
+      },
+      agent: false,
     }
   }
     
