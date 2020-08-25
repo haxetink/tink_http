@@ -19,7 +19,7 @@ os:
 env:
   - HAXE_VERSION=stable
   - HAXE_VERSION=latest
-  - HAXE_VERSION=nightly
+  # - HAXE_VERSION=nightly
   
 install:
   - npm i -g lix
@@ -29,7 +29,7 @@ install:
 script:
   # Use a stable container (node) to test the clients in all targets
   - haxe master.hxml -D containers=node -D targets=js,node,php,neko,cpp #,cs
-  - if [[ "$(haxe -version)" =~ ^4.* ]]; then haxe master.hxml -D containers=node -D targets=hl,python,lua; fi
+  # - if [[ "$(haxe -version)" =~ ^4.* ]]; then haxe master.hxml -D containers=node -D targets=hl,python,lua; fi
   # Use a stable client (node) to test the containers
   - haxe master.hxml -D containers=node-tcp,neko-mod -D targets=node -D container_only
   
