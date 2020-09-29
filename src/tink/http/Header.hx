@@ -236,6 +236,8 @@ abstract HeaderValue(String) from String to String {
   var ACCESS_CONTROL_ALLOW_METHODS     = 'access-control-allow-methods';
   var ACCESS_CONTROL_ALLOW_HEADERS     = 'access-control-allow-headers';
 
+  var USER_AGENT                       = 'user-agent';
+
   inline function new(s) this = s;
 
   @:from static inline function ofString(s:String)
@@ -258,9 +260,9 @@ class HeaderField extends NamedWith<HeaderName, HeaderValue> {
       case -1:
         new HeaderField(s, null);
       case v:
-        new HeaderField(s.substr(0, v), s.substr(v + 1).trim()); //urldecode?
+        var name = s.substr(0, v);
+        new HeaderField(name, s.substr(v + 1).trim()); //urldecode?
     }
-
   /**
    * Constructs a Set-Cookie header. Please note that cookies are HttpOnly by default.
    * You can opt out of that behavior by setting `options.scriptable` to true.

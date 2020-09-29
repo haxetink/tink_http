@@ -47,48 +47,77 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 	public function transform(source:Source<Q>):RealSource {
 		return (
 			(source:RealSource).parseStream(new ChunkedParser())
-				.map(function(v) return v == null ? Chunk.EMPTY : v)
+				.map(
+					function(v) {
+						return v == null ? Chunk.EMPTY : v;
+					}
+				)
 			:Stream<Chunk, Error>
 		);
 	}
 }
 
-class ChunkedParser implements StreamParserObject<Chunk> {
+@:access(tink.chunk) class ChunkedParser implements StreamParserObject<Chunk> {
 	
 	static var LINEBREAK:Seekable = '\r\n';
-	var chunkSize:Int;
 	
+	var chunkSize	: Int;
+	var result		: Chunk;
+
 	public function new() {
 		reset();
+		result = Chunk.EMPTY;
 	}
 	
 	function reset()
 		chunkSize = -1;
 	
+	private function push(chunk:Chunk){
+		this.result = result.concat(chunk);
+	}
+	private function consume(cursor:ChunkCursor):Void{
+		cursor.moveTo(this.chunkSize);
+		var res = cursor.left();
+		//trace('res: $res');
+		push(res);
+		cursor.moveBy(2);
+		cursor.prune();
+		reset();
+	}
 	public function progress(cursor:ChunkCursor):ParseStep<Chunk> {
+		//trace('cursor.length ${cursor.length} size: $chunkSize');
 		return
 			if(chunkSize < 0) {
+				//trace('...');
 				switch cursor.seek(LINEBREAK) {
-					case Some(v): chunkSize = Std.parseInt('0x$v');
-					case None: // do nothing
+					case Some(v): 
+						//trace('peeking');
+						chunkSize = Std.parseInt('0x$v');
+						//trace('next_chunk: $chunkSize');
+						//trace(chunkSize);
+					case None: 
+				}
+				if(chunkSize ==0){
+					Done(result);
+				}else{
+					Progressed;
+				}
+			} else if(chunkSize == 0) {
+				//trace("HERE");
+				switch(cursor.seek(LINEBREAK)){
+					case Some( _.toString() => "") 	: Done(result);
+					default 												: throw "oops";
+				}
+			} else {
+				//trace('len = ${cursor.length} size = $chunkSize');
+				if(cursor.length >= chunkSize + 2 ){
+					consume(cursor);
 				}
 				Progressed;
-			} else if(chunkSize == 0) {
-				Progressed;
-			} else {
-				if(cursor.length >= chunkSize + 2)
-					switch cursor.seek(LINEBREAK) {
-						case Some(v): reset(); Done(v);
-						case None: Failed(new Error('Invalid encoding'));
-					}
-				else Progressed;
 			}
 	}
 	
 	public function eof(rest:ChunkCursor):Outcome<Chunk, Error> {
 		return chunkSize == 0 ? Success(Chunk.EMPTY) : Failure(new Error('Unexpected end of input'));
 	}
-	
-	
-	
 }

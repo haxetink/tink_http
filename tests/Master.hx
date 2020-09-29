@@ -82,8 +82,8 @@ class Master {
 	static function waitForConnection(port: Int) {
 		Sys.println('Waiting for server to be ready...');
 		return Future.async(function(cb) {
-			var retry = 30;
-			var delay = 100;
+			var retry = 45;
+			var delay = 300;
 
 			function next() {
 				var http = new haxe.Http('http://127.0.0.1:'+port+'/active');
