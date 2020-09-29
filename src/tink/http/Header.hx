@@ -209,11 +209,14 @@ abstract HeaderValue(String) from String to String {
   var CONTENT_TYPE                     = 'content-type';
   var CONTENT_LENGTH                   = 'content-length';
   var CONTENT_DISPOSITION              = 'content-disposition';
+  var CONTENT_RANGE                    = 'content-range';
 
   var ACCEPT                           = 'accept';
   var ACCEPT_ENCODING                  = 'accept-encoding';
 
   var TRANSFER_ENCODING                = 'transfer-encoding';
+  
+  var RANGE                            = 'range';
 
   var LOCATION                         = 'location';
   var AUTHORIZATION                    = 'authorization';
