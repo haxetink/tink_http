@@ -142,7 +142,7 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 		});
 	}
 	
-	#if tink_state
+	#if (tink_core >= "2")
 	public function progress():Promise<ProgressResponse> {
 		return this.next(function(r) {
 			return 
@@ -151,14 +151,14 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 				else 
 					new ProgressResponse(
 						r.header,
-						tink.state.Progress.make(function(progress, finish) {
+						tink.core.Progress.make(function(progress, finish) {
 							var total = switch r.header.getContentLength() {
 								case Success(len): Some((len:Float));
 								case Failure(_): None;
 							}
 							var chunk = Chunk.EMPTY;
 							progress(chunk.length, total);
-							r.body.chunked()
+							return r.body.chunked()
 								.forEach(function(part) {
 									chunk = chunk & part;
 									progress(chunk.length, total);
@@ -177,6 +177,6 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 }
 
 typedef CompleteResponse = Message<ResponseHeader, Chunk>;
-#if tink_state
-typedef ProgressResponse = Message<ResponseHeader, tink.state.Progress<Outcome<Chunk, Error>>>;
+#if (tink_core >= "2")
+typedef ProgressResponse = Message<ResponseHeader, tink.core.Progress<Outcome<Chunk, Error>>>;
 #end
