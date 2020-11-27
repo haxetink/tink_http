@@ -29,12 +29,10 @@ using tink.CoreApi;
  */
 class FlashSocketClient implements ClientObject {
   
-  var secure = false;
-  
   public function new() {}
   
-  function getSocket():Socket
-    return new Socket();
+  function getSocket(secure:Bool):Socket
+    return secure ? new SecureSocket() : new Socket();
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return Future.async(function(cb) {
@@ -47,7 +45,7 @@ class FlashSocketClient implements ClientObject {
         case Failure(_): @:privateAccess req.header.fields.push(new HeaderField('connection', 'close'));
       }
       
-      var socket = getSocket();
+      var socket = getSocket(req.header.url.scheme == 'https');
       
       var signal = Signal.trigger();
       var source:RealSource = new SignalStream(signal);

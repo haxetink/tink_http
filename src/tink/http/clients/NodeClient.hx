@@ -8,11 +8,13 @@ import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
 import js.node.http.IncomingMessage;
+import js.node.http.ClientRequest;
+import js.node.Https.HttpsRequestOptions;
 
 using tink.CoreApi;
 
 typedef NodeAgent<Opt> = {
-  public function request(options:Opt, callback:IncomingMessage->Void):js.node.http.ClientRequest;
+  public function request(options:Opt, callback:IncomingMessage->Void):ClientRequest;
 }
 
 class NodeClient implements ClientObject {
@@ -20,22 +22,45 @@ class NodeClient implements ClientObject {
   public function new() { }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    var options:js.node.Http.HttpRequestOptions = {
-      method: cast req.header.method,
-      path: req.header.url.pathWithQuery,
-      host: req.header.url.host.name,
-      port: req.header.url.host.port,
+    return switch Helpers.checkScheme(req.header.url.scheme) {
+      case Some(e):
+        Promise.reject(e);
+        case None:
+          var options = getNodeOptions(req.header);
+          
+          if(req.header.url.scheme == 'https')
+            nodeRequest(js.node.Https, options, req);
+          else
+            nodeRequest(js.node.Http, options, req);
+    }
+  }
+  
+  function getNodeOptions(header:OutgoingRequestHeader):HttpsRequestOptions {
+    return {
+      method: cast header.method,
+      path: header.url.pathWithQuery,
+      host: header.url.host.name,
+      port: header.url.host.port,
       headers: cast {
-        var map = new DynamicAccess<String>();
-        for (h in req.header)
-          map[h.name] = h.value;
+        var map = new DynamicAccess<Array<String>>();
+        for (h in header) {
+          var name = h.name;
+          if(name == 'host') {
+            // HOST header must not be an array
+            map[h.name] = cast h.value;
+          } else {
+            var list = switch map[h.name] {
+              case null: map[h.name] = [];
+              case arr: arr;
+            }
+            list.push(h.value);
+          }
+        }
         map;
       },
       agent: false,
     }
-    return nodeRequest(js.node.Http, options, req);
   }
-    
     
   function nodeRequest<A:NodeAgent<T>, T>(agent:A, options:T, req:OutgoingRequest):Promise<IncomingResponse> 
     return 

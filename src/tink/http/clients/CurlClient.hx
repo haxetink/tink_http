@@ -12,38 +12,39 @@ using tink.CoreApi;
 // Does not restrict to any platform as long as they can run the curl command somehow
 class CurlClient implements ClientObject {
   
-  var protocol:String = 'http';
-  
   public function new(?curl:Array<String>->IdealSource->RealSource) {
     if(curl != null) this.curl = curl;
   }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    var args = [];
-    
-    args.push('-isS');
-    
-    args.push('-X');
-    args.push(req.header.method);
-    
-    switch req.header.protocol {
-      case HTTP1_0: args.push('--http1.0');
-      case HTTP1_1: args.push('--http1.1');
-      case HTTP2: args.push('--http2');
-      default:
+    return switch Helpers.checkScheme(req.header.url.scheme) {
+      case Some(e):
+        Promise.reject(e);
+      case None:
+        var args = [];
+        
+        args.push('-isS');
+        
+        args.push('-X');
+        args.push(req.header.method);
+        
+        switch req.header.protocol {
+          case HTTP1_0: args.push('--http1.0');
+          case HTTP1_1: args.push('--http1.1');
+          case HTTP2: args.push('--http2');
+          default:
+        }
+        
+        for(header in req.header) {
+          args.push('-H');
+          args.push('${header.name}: ${header.value}');
+        }
+        
+        args.push(req.header.url);
+        curl(args, req.body)
+          .parse(ResponseHeader.parser())
+          .next(function (p) return new IncomingResponse(p.a, p.b));
     }
-    
-    for(header in req.header) {
-      args.push('-H');
-      args.push('${header.name}: ${header.value}');
-    }
-    
-    var url = req.header.url;
-    args.push(url.scheme != null ? url : protocol + ':' + url);
-    
-    return curl(args, req.body)
-      .parse(ResponseHeader.parser())
-      .next(function (p) return new IncomingResponse(p.a, p.b));
   }
   
   dynamic function curl(args:Array<String>, body:IdealSource):RealSource {

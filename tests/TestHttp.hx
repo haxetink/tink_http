@@ -17,39 +17,43 @@ using tink.CoreApi;
 @:timeout(20000)
 @:asserts
 class TestHttp {
+  var clientType:ClientType;
   var client:Client;
   var url:Url;
   var converter:Converter;
+  var target:Target;
   
-  public function new(client:ClientType, target, secure) {
-    this.client = switch client {
+  public function new(client:ClientType, target) {
+    this.client = switch this.clientType = client {
       #if sys
-      case Socket: secure ? new SecureSocketClient() : new SocketClient();
+      case Socket: new SocketClient();
       #end
       #if (js && !nodejs)
-      case Js: secure ? new SecureJsClient() : new JsClient();
+      case Js: new JsClient();
       #end
       #if nodejs
-      case Node: secure ? new SecureNodeClient() : new NodeClient();
+      case Node: new NodeClient();
       #end
       #if tink_tcp
-      case Tcp: secure ? new SecureTcpClient() : new TcpClient();
+      case Tcp: new TcpClient();
       #end
       #if ((nodejs || sys) && !php && !lua)
-      case Curl: secure ? new SecureCurlClient() : new CurlClient();
+      case Curl: new CurlClient();
       #end
       #if flash
-      case Flash: secure ? new SecureFlashClient() : new FlashClient();
+      case Flash: new FlashClient();
       #end
     }
     
-    var schema = secure ? 'https' : 'http';
-    switch target {
-      case Httpbin:
-        url = '$schema://httpbin.org';
+    switch this.target = target {
+      case Httpbin(true):
+        url = 'https://httpbin.org';
+        converter = new HttpbinConverter();
+      case Httpbin(false):
+        url = 'http://httpbin.org';
         converter = new HttpbinConverter();
       case Local(port):
-        url = '$schema://localhost:$port';
+        url = 'http://localhost:$port';
         converter = new LocalConverter();
     }
   }
@@ -80,11 +84,31 @@ class TestHttp {
       });
   }
   
-  // @:include
-  public function headers()
-    return request(GET, url + '/headers', [new HeaderField('x-custom-tink', 'tink_http')])
+  @:variant([new tink.core.Named('x-custom-tink', ['tink_http'])])
+  @:variant([new tink.core.Named('x-custom-tink', ['tink_http1', 'tink_http2'])])
+  public function headers(fields:Array<Named<Array<String>>>)
+    return request(GET, url + '/headers', [for(field in fields) for(value in field.value) new HeaderField(field.name, value)])
       .next(function(echo) {
-          asserts.assert(Type.enumEq(echo.headers.byName('x-custom-tink'), Success('tink_http')));
+          switch target {
+            #if (js && !nodejs)
+            case _ if(clientType == Js): // js client combines multiple same-name headers into a single comma-delimited one (at least in puppeteer)
+              for(field in fields) {
+                asserts.assert(Type.enumEq(echo.headers.byName(field.name), Success(field.value.join(', '))));
+              }
+            #end
+            case Httpbin(_): // httpbin combines multiple same-name headers into a single comma-delimited one
+              for(field in fields) {
+                asserts.assert(Type.enumEq(echo.headers.byName(field.name), Success(field.value.join(','))));
+              }
+            case Local(_):
+              for(field in fields) for(value in field.value) {
+                var found = false;
+                for(result in echo.headers)
+                  if(result.name == field.name && result.value == value)
+                    found = true;
+                asserts.assert(found, '${field.name}: $value" should exists in response');
+              }
+          }
           return asserts.done();
       });
   
@@ -110,7 +134,7 @@ class TestHttp {
 
 
 enum Target {
-  Httpbin;
+  Httpbin(secure:Bool);
   Local(port:Int);
 }
 

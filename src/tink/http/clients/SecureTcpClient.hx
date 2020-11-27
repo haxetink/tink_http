@@ -1,8 +1,4 @@
 package tink.http.clients;
 
-class SecureTcpClient extends TcpClient {
-  public function new() {
-    super();
-    secure = true;
-  }
-}
+@:deprecated('Use TcpClient instead')
+typedef SecureTcpClient = TcpClient;
