@@ -34,7 +34,7 @@ class FlashSocketClient implements ClientObject {
   function getSocket(secure:Bool):Socket
     return secure ? new SecureSocket() : new Socket();
   
-  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
+  public function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       
       switch req.header.byName('connection') {
