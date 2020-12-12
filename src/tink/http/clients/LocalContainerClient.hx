@@ -15,7 +15,7 @@ class LocalContainerClient implements ClientObject {
     this.container = container;
   }
   
-  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
+  public function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse> {
       return container.serve(new IncomingRequest(
         '127.0.0.1',
         new IncomingRequestHeader(req.header.method, req.header.url.pathWithQuery, 'HTTP/1.1', @:privateAccess req.header.fields),

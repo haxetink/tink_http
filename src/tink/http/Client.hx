@@ -1,6 +1,7 @@
 package tink.http;
 
 import haxe.extern.Rest;
+import tink.core.Progress;
 import tink.http.Request;
 import tink.http.Response;
 import tink.http.Fetch;
@@ -29,7 +30,11 @@ interface ClientObject {
    *  @param req - The HTTP request
    *  @return The HTTP response
    */
-  function request(req:OutgoingRequest):Promise<IncomingResponse>;
+  function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse>;
+}
+
+typedef ClientRequestHandlers = {
+  ?upload:ProgressValue->Void,
 }
 
 typedef Processors = { 
@@ -60,11 +65,11 @@ private class CustomClient implements ClientObject {
       else
         value;
 
-  public function request(req) 
+  public function request(req, ?handlers) 
     return 
       pipe(req, preprocessors)
         .next(function (req) 
-          return real.request(req)
+          return real.request(req, handlers)
             .next(pipe.bind(_, postprocessors == null ? null : [for (p in postprocessors) p(req)]))
         );
 

@@ -12,7 +12,7 @@ using tink.CoreApi;
 @:require('tink_tcp')
 class TcpClient implements ClientObject { 
   public function new() {}
-  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
+  public function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       switch Helpers.checkScheme(req.header.url.scheme) {
         case Some(e): cb(Failure(e));

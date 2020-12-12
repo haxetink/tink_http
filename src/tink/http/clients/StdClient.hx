@@ -15,7 +15,7 @@ class StdClient implements ClientObject {
   public function new(?worker:Worker) {
     this.worker = worker.ensure();
   }
-  public function request(req:OutgoingRequest):Promise<IncomingResponse> 
+  public function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse> 
     return Future.async(function (cb) {
             
       var r = new haxe.Http(req.header.url);

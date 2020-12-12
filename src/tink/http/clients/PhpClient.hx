@@ -12,7 +12,7 @@ using StringTools;
 class PhpClient implements ClientObject {
   public function new() {}
   
-  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
+  public function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       req.body.all().handle(function(chunk) {
         var options = php.Lib.associativeArrayOfObject({

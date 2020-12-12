@@ -25,7 +25,7 @@ class FlashClient implements ClientObject {
   
   public function new() {}
   
-  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
+  public function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       switch Helpers.checkScheme(req.header.url.scheme) {
         case Some(e):

@@ -1,6 +1,7 @@
 package tink.http.clients;
 
 import haxe.io.Bytes;
+import tink.core.Progress;
 import tink.http.Client;
 import tink.http.Header;
 import tink.http.Request;
@@ -22,7 +23,7 @@ class JsClient implements ClientObject {
     if(credentials) this.credentials = true;
   }
   
-  public function request(req:OutgoingRequest):Promise<IncomingResponse> {
+  public function request(req:OutgoingRequest, ?handlers:ClientRequestHandlers):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       var http = getHttp();
       // if(req.header.url.scheme == null) cb(Failure(Helper.missingSchemeError()));
@@ -55,6 +56,11 @@ class JsClient implements ClientObject {
             1
           );
         }
+      }
+      switch handlers {
+        case null | {upload: null}: // skip
+        case {upload: upload}: 
+          http.upload.onprogress = function(e) upload(new ProgressValue(e.loaded, Some(e.total)));
       }
       http.onerror = function(e) {
         cb(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: e})));
