@@ -50,7 +50,7 @@ class Fetch {
 			client.request(new OutgoingRequest(
 				new OutgoingRequestHeader(method, url, headers),
 				body
-			)).handle(function(res) {
+			), options.handlers).handle(function(res) {
 				switch res {
 					case Success(res):
 						switch res.header.statusCode {
@@ -101,6 +101,7 @@ typedef FetchOptions = {
 	?client:ClientType,
 	?followRedirect:Bool,
 	?augment:Processors,
+	?handlers:ClientRequestHandlers,
 }
 
 enum ClientType {
