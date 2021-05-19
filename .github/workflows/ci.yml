@@ -17,7 +17,8 @@ jobs:
           - nightly
         containers:
           - node
-          - node-tcp,neko-mod
+          - node-tcp
+          # - neko-mod 
         targets:
           - js,node,php,neko,cpp
           - node
