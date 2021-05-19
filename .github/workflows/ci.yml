@@ -53,7 +53,7 @@ jobs:
       run: lix download
       
     - name: Run Test
-      run: haxe master.hxml -D containers=${{ matrix.container }} -D targets=${{ matrix.target }}
+      run: haxe master.hxml -D containers=${{ matrix.containers }} -D targets=${{ matrix.targets }}
 
   release:
     runs-on: ubuntu-latest
