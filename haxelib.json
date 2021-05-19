@@ -13,8 +13,8 @@
 		"back2dos",
 		"kevinresol"
 	],
-	"version": "0.9.1",
-	"releasenote": "Lots of fixes and updates",
+	"version": "0.10.0",
+	"releasenote": "Deprecated secure clients. Reworked aws lambda container",
 	"tags": [
 		"tink",
 		"cross",
