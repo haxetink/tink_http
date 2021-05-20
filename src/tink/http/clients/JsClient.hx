@@ -11,7 +11,6 @@ import js.lib.Int8Array;
 #else
 import js.html.Int8Array;
 #end
-using StringTools;
 
 using tink.io.Source;
 using tink.CoreApi;
