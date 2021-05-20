@@ -25,7 +25,7 @@ class JsClient implements ClientObject {
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       var http = getHttp();
-      // if(req.header.url.scheme == null) cb(Failure(Helper.missingSchemeError()));
+      if(req.header.url.scheme == null || req.header.url.scheme == "undefined") cb(Failure(Helpers.missingSchemeError()));
       http.open(req.header.method, req.header.url);
       http.withCredentials = credentials;
       http.responseType = ARRAYBUFFER;
