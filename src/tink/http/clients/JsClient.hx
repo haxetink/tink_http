@@ -25,7 +25,8 @@ class JsClient implements ClientObject {
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return Future.async(function(cb) {
       var http = getHttp();
-      // if(req.header.url.scheme == null) cb(Failure(Helper.missingSchemeError()));
+      // null scheme is for urls such as "//google.com/foo" where the scheme of current url is to be reused
+      if(req.header.url.scheme != null && req.header.url.scheme != "http" && req.header.url.scheme != "https") cb(Failure(Helpers.missingSchemeError()));
       http.open(req.header.method, req.header.url);
       http.withCredentials = credentials;
       http.responseType = ARRAYBUFFER;
