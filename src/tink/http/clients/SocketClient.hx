@@ -48,7 +48,7 @@ class SocketClient implements ClientObject {
               #if php new php.net.SslSocket();
               #elseif java new java.net.SslSocket();
               #elseif python new python.net.SslSocket();
-              #elseif (!no_ssl && (hxssl || hl || cpp || (neko && !(macro || interp)))) new sys.ssl.Socket();
+              #elseif (!no_ssl && (hxssl || hl || cpp || eval || (neko && !(macro || interp)))) new sys.ssl.Socket();
               #else throw "Https is only supported with -lib hxssl";
               #end
             else
@@ -78,7 +78,7 @@ class SocketClient implements ClientObject {
                     case Success(parsed): 
                       switch parsed.a.getContentLength() {
                         case Success(len): cb(Success(new IncomingResponse(parsed.a, parsed.b.limit(len))));
-                        case Failure(e): cb(Failure(new Error('Chunked encoding is not supported and the content-length header is required.')));
+                        case Failure(_): cb(Success(new IncomingResponse(parsed.a, Chunked.decode(parsed.b))));
                       }
                     case Failure(e): cb(Failure(e));
                   });

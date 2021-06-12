@@ -56,14 +56,17 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 class ChunkedParser implements StreamParserObject<Chunk> {
 	
 	static var LINEBREAK:Seekable = '\r\n';
+	var lastChunkSize:Int = -1;
 	var chunkSize:Int;
 	
 	public function new() {
 		reset();
 	}
 	
-	function reset()
+	function reset() {
+		lastChunkSize = chunkSize;
 		chunkSize = -1;
+	}
 	
 	public function progress(cursor:ChunkCursor):ParseStep<Chunk> {
 		return
@@ -73,20 +76,18 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 					case None: // do nothing
 				}
 				Progressed;
-			} else if(chunkSize == 0) {
-				Progressed;
+			} else if(cursor.length >= chunkSize + 2) {
+				switch cursor.seek(LINEBREAK) {
+					case Some(v): reset(); Done(v);
+					case None: Failed(new Error('Invalid encoding'));
+				}
 			} else {
-				if(cursor.length >= chunkSize + 2)
-					switch cursor.seek(LINEBREAK) {
-						case Some(v): reset(); Done(v);
-						case None: Failed(new Error('Invalid encoding'));
-					}
-				else Progressed;
+				Progressed;
 			}
 	}
 	
 	public function eof(rest:ChunkCursor):Outcome<Chunk, Error> {
-		return chunkSize == 0 ? Success(Chunk.EMPTY) : Failure(new Error('Unexpected end of input'));
+		return chunkSize == -1 && lastChunkSize == 0 ? Success(Chunk.EMPTY) : Failure(new Error('Unexpected end of input'));
 	}
 	
 	

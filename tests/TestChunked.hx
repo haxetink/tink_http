@@ -1,37 +1,44 @@
 package;
 
 import tink.http.*;
+import tink.Chunk;
 
 using tink.io.Source;
 using tink.CoreApi;
 
 @:asserts
 class TestChunked {
+	final source:IdealSource = '123';
+	
 	public function new() {}
 	
-	public function encode() {
-		var source:IdealSource = '123';
-		var encoded = Chunked.encode(source);
-		encoded.all().handle(function(c) asserts.assert(c.toString() == '3\r\n123\r\n0\r\n'));
-		source = source.append(source).append(source);
-		var encoded = Chunked.encode(source);
-		encoded.all().handle(function(c) asserts.assert(c.toString() == '3\r\n123\r\n3\r\n123\r\n3\r\n123\r\n0\r\n'));
-		var source:IdealSource = '1234567890';
-		var encoded = Chunked.encode(source);
-		encoded.all().handle(function(c) asserts.assert(c.toString() == 'A\r\n1234567890\r\n0\r\n'));
+	@:variant(this.source, '3\r\n123\r\n0\r\n')
+	@:variant(this.source.append(this.source).append(this.source), '3\r\n123\r\n3\r\n123\r\n3\r\n123\r\n0\r\n')
+	@:variant('1234567890', 'A\r\n1234567890\r\n0\r\n')
+	public function encode(input:IdealSource, output:String) {
+		Chunked.encode(input).all()
+			.next(encoded -> asserts.assert(encoded.toString() == output))
+			.handle(asserts.handle);
 		return asserts.done();
 	}
 	
-	public function decode() {
-		var source:IdealSource = '3\r\n123\r\n0\r\n';
-		var decoded = Chunked.decode(source);
-		decoded.all().handle(function(c) asserts.assert(c.sure().toString() == '123'));
-		var source:IdealSource = '3\r\n123\r\n3\r\n123\r\n3\r\n123\r\n0\r\n';
-		var decoded = Chunked.decode(source);
-		decoded.all().handle(function(c) asserts.assert(c.sure().toString() == '123123123'));
-		var source:IdealSource = 'A\r\n1234567890\r\n0\r\n';
-		var decoded = Chunked.decode(source);
-		decoded.all().handle(function(c) asserts.assert(c.sure().toString() == '1234567890'));
+	@:variant('3\r\n123\r\n0\r\n', '123')
+	@:variant('3\r\n123\r\n3\r\n123\r\n3\r\n123\r\n0\r\n', '123123123')
+	@:variant('A\r\n1234567890\r\n0\r\n', '1234567890')
+	public function decode(input:IdealSource, output:String) {
+		Chunked.decode(input).all()
+			.next(decoded -> asserts.assert(decoded.toString() == output))
+			.handle(asserts.handle);
 		return asserts.done();
 	}
+	
+	@:include
+	public function decodeLarge() {
+		Chunked.decode(haxe.Resource.getBytes('chunked_data')).all()
+			.next(decoded -> asserts.assert(decoded.length == 245084))
+			.handle(asserts.handle);
+		return asserts.done();
+	}
+	
+	
 }
