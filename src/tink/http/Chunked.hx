@@ -37,7 +37,7 @@ class ChunkedEncoder<Q> implements Transformer<Q, Q> {
 	public function transform(source:Source<Q>):Source<Q> {
 		return source.chunked()
 			.map(function(chunk:tink.Chunk) return '${chunk.length.hex()}\r\n' & chunk & '\r\n')
-			.append([Chunk.ofString('0\r\n')].iterator());
+			.append([Chunk.ofString('0\r\n\r\n')].iterator());
 	}
 }
 

@@ -1,5 +1,3 @@
 -cp tests
 -lib tink_unittest
 -main RunTests
-
---resource tests/chunked_data.bin@chunked_data
