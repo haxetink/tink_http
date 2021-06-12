@@ -24,6 +24,7 @@ class TestChunked {
 	
 	@:variant('3\r\n123\r\n0\r\n\r\n', '123')
 	@:variant('3\r\n123\r\n3\r\n123\r\n3\r\n123\r\n0\r\n\r\n', '123123123')
+	@:variant('3\r\n123\r\n4\r\nA\r\nB\r\n3\r\n123\r\n0\r\n\r\n', '123A\r\nB123')
 	@:variant('A\r\n1234567890\r\n0\r\n\r\n', '1234567890')
 	public function decode(input:IdealSource, output:String) {
 		Chunked.decode(input).all()

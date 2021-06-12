@@ -58,6 +58,7 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 	static var LINEBREAK:Seekable = '\r\n';
 	var lastChunkSize:Int = -1;
 	var chunkSize:Int;
+	var remaining:Int;
 	
 	public function new() {
 		reset();
@@ -72,17 +73,25 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 		return
 			if(chunkSize < 0) {
 				switch cursor.seek(LINEBREAK) {
-					case Some(v): chunkSize = Std.parseInt('0x$v');
+					case Some(v): remaining = chunkSize = Std.parseInt('0x$v');
 					case None: // do nothing
 				}
 				Progressed;
-			} else if(cursor.length >= chunkSize + 2) {
-				switch cursor.seek(LINEBREAK) {
-					case Some(v): reset(); Done(v);
-					case None: Failed(new Error('Invalid encoding'));
-				}
 			} else {
-				Progressed;
+				final length = min(cursor.length, remaining);
+				final data = cursor.sweep(length);
+				remaining -= length;
+				if(remaining == 0) {
+					if(cursor.currentByte == '\r'.code && cursor.next() && cursor.currentByte == '\n'.code) {
+						cursor.next();
+						reset();
+						Done(data);
+					} else {
+						Failed(new Error('Invalid encoding, expected line break'));
+					}
+				} else {
+					Done(data);
+				}
 			}
 	}
 	
@@ -90,6 +99,9 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 		return chunkSize == -1 && lastChunkSize == 0 ? Success(Chunk.EMPTY) : Failure(new Error('Unexpected end of input'));
 	}
 	
+	inline static function min(a:Int, b:Int):Int {
+		return a > b ? b : a;
+	}
 	
 	
 }
