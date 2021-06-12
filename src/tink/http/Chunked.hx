@@ -36,8 +36,8 @@ class ChunkedEncoder<Q> implements Transformer<Q, Q> {
 	
 	public function transform(source:Source<Q>):Source<Q> {
 		return source.chunked()
-			.map(function(chunk:tink.Chunk) return '${chunk.length.hex()}\r\n' & chunk & '\r\n')
-			.append([Chunk.ofString('0\r\n\r\n')].iterator());
+			.map((chunk:Chunk) -> '${chunk.length.hex()}\r\n' & chunk & '\r\n')
+			.append(Stream.single(Chunk.ofString('0\r\n\r\n')));
 	}
 }
 
@@ -47,7 +47,7 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 	public function transform(source:Source<Q>):RealSource {
 		return (
 			(source:RealSource).parseStream(new ChunkedParser())
-				.map(function(v) return v == null ? Chunk.EMPTY : v)
+				.map(v -> v == null /* TODO: figure out where does these nulls come from */ ? Chunk.EMPTY : v )
 			:Stream<Chunk, Error>
 		);
 	}
@@ -55,7 +55,7 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 
 class ChunkedParser implements StreamParserObject<Chunk> {
 	
-	static var LINEBREAK:Seekable = '\r\n';
+	static final LINEBREAK:Seekable = '\r\n';
 	var lastChunkSize:Int = -1;
 	var chunkSize:Int;
 	var remaining:Int;
@@ -102,6 +102,4 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 	inline static function min(a:Int, b:Int):Int {
 		return a > b ? b : a;
 	}
-	
-	
 }
