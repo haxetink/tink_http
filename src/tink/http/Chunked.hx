@@ -95,8 +95,8 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 			}
 	}
 	
-	public function eof(rest:ChunkCursor):Outcome<Chunk, Error> {
-		return chunkSize == -1 && lastChunkSize == 0 ? Success(Chunk.EMPTY) : Failure(new Error('Unexpected end of input'));
+	public function eof(rest:ChunkCursor):Outcome<Option<Chunk>, Error> {
+		return chunkSize == -1 && lastChunkSize == 0 ? Success(None) : Failure(new Error('Unexpected end of input'));
 	}
 	
 	inline static function min(a:Int, b:Int):Int {
