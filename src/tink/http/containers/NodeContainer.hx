@@ -4,7 +4,6 @@ import tink.http.Container;
 import tink.http.Request;
 import tink.http.Header;
 import tink.io.*;
-import js.node.http.*;
 
 import #if haxe4 js.lib.Error #else js.Error #end as JsError;
 
@@ -45,22 +44,22 @@ class NodeContainer implements Container {
           server;
           
         case Port(port):
-          var server = new Server();
+          var server = new js.node.http.Server();
           server.listen(port);
           server;
           
         case Host(host):
-          var server = new Server();
+          var server = new js.node.http.Server();
           server.listen(host.port, host.name);
           server;
           
         case Path(path):
-          var server = new Server();
+          var server = new js.node.http.Server();
           server.listen(path);
           server;
           
         case Fd(fd):
-          var server = new Server();
+          var server = new js.node.http.Server();
           server.listen(fd);
           server;
       }
@@ -100,7 +99,7 @@ class NodeContainer implements Container {
 }
 
 private enum ServerKindBase {
-  Instance(server:Server);
+  Instance(server:js.node.net.Server);
   Port(port:Int);
   Host(host:tink.url.Host);
   Path(path:String);
@@ -109,7 +108,11 @@ private enum ServerKindBase {
 
 abstract ServerKind(ServerKindBase) from ServerKindBase to ServerKindBase {
   @:from
-  public static inline function fromInstance(server:Server):ServerKind
+  public static inline function fromInstance(server:js.node.http.Server):ServerKind
+    return Instance(server);
+  
+  @:from
+  public static inline function fromSecureInstance(server:js.node.https.Server):ServerKind
     return Instance(server);
     
   @:from
