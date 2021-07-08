@@ -1,5 +1,6 @@
 package tink.http.clients;
 
+import js.node.http.Agent;
 import haxe.DynamicAccess;
 import tink.io.Source;
 import tink.io.Sink;
@@ -13,13 +14,16 @@ import js.node.Https.HttpsRequestOptions;
 
 using tink.CoreApi;
 
-typedef NodeAgent<Opt> = {
+typedef NodeHttp<Opt> = {
   public function request(options:Opt, callback:IncomingMessage->Void):ClientRequest;
 }
 
 class NodeClient implements ClientObject {
+  final agent:Agent;
   
-  public function new() { }
+  public function new(?agent) {
+    this.agent = agent;
+  }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return switch Helpers.checkScheme(req.header.url.scheme) {
@@ -37,6 +41,7 @@ class NodeClient implements ClientObject {
   
   function getNodeOptions(header:OutgoingRequestHeader):HttpsRequestOptions {
     return {
+      agent: agent,
       method: cast header.method,
       path: header.url.pathWithQuery,
       host: header.url.host.name,
@@ -58,11 +63,10 @@ class NodeClient implements ClientObject {
         }
         map;
       },
-      agent: false,
     }
   }
     
-  function nodeRequest<A:NodeAgent<T>, T>(agent:A, options:T, req:OutgoingRequest):Promise<IncomingResponse> 
+  function nodeRequest<A:NodeHttp<T>, T>(agent:A, options:T, req:OutgoingRequest):Promise<IncomingResponse> 
     return 
       Future.async(function (cb) {
         var fwd = agent.request(
