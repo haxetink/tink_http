@@ -26,7 +26,7 @@ class NodeClient implements ClientObject {
   }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return switch Helpers.checkScheme(req.header.url.scheme) {
+    return switch Helpers.checkScheme(req.header.url) {
       case Some(e):
         Promise.reject(e);
         case None:
