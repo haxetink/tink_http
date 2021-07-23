@@ -25,7 +25,7 @@ class CurlClient implements ClientObject {
       case None:
         final args = switch extraArgs {
           case null: [];
-          case v: v;
+          case v: v.copy();
         }
         
         args.push('-isS');
@@ -48,7 +48,7 @@ class CurlClient implements ClientObject {
         args.push(req.header.url);
         curl(args, req.body)
           .parse(ResponseHeader.parser())
-          .next(function (p) return new IncomingResponse(p.a, p.b));
+          .next(p -> new IncomingResponse(p.a, p.b));
     }
   }
   
