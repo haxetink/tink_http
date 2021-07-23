@@ -24,46 +24,49 @@ class JsClient implements ClientObject {
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return Future.async(function(cb) {
-      var http = getHttp();
-      // null scheme is for urls such as "//google.com/foo" where the scheme of current url is to be reused
-      if(req.header.url.scheme != null && req.header.url.scheme != "http" && req.header.url.scheme != "https") cb(Failure(Helpers.missingSchemeError()));
-      http.open(req.header.method, req.header.url);
-      http.withCredentials = credentials;
-      http.responseType = ARRAYBUFFER;
-      for(header in req.header) 
-        switch header.name {
-          case CONTENT_LENGTH | HOST: // browsers doesn't allow setting these headers explicitly
-          case _: http.setRequestHeader(header.name, header.value);
-        }
-      http.onreadystatechange = function() if(http.readyState == 4) { // this is equivalent to onload...
-        if(http.status != 0) {
-          var headers = switch http.getAllResponseHeaders() {
-            case null: [];
-            case v: [for(line in v.split('\r\n')) if(line != '') HeaderField.ofString(line)];
-          }
-          var header = new ResponseHeader(http.status, http.statusText, headers);
-          cb(Success(new IncomingResponse(
-            new ResponseHeader(http.status, http.statusText, headers),
-            switch http.response {
-              case null: cast Source.EMPTY;
-              case v: Bytes.ofData(v);
+      switch req.header.url.scheme {
+        case null | 'http' | 'https': // null scheme is for urls such as "//google.com/foo" where the scheme of current url is to be reused
+          var http = getHttp();
+          http.open(req.header.method, req.header.url);
+          http.withCredentials = credentials;
+          http.responseType = ARRAYBUFFER;
+          for(header in req.header) 
+            switch header.name {
+              case CONTENT_LENGTH | HOST: // browsers doesn't allow setting these headers explicitly
+              case _: http.setRequestHeader(header.name, header.value);
             }
-          )));
-        } else {
-          // onerror may be able to capture the error, give it a chance first
-          haxe.Timer.delay(
-            cb.bind(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: 'Status code is zero'}))),
-            1
-          );
-        }
+          http.onreadystatechange = function() if(http.readyState == 4) { // this is equivalent to onload...
+            if(http.status != 0) {
+              var headers = switch http.getAllResponseHeaders() {
+                case null: [];
+                case v: [for(line in v.split('\r\n')) if(line != '') HeaderField.ofString(line)];
+              }
+              var header = new ResponseHeader(http.status, http.statusText, headers);
+              cb(Success(new IncomingResponse(
+                new ResponseHeader(http.status, http.statusText, headers),
+                switch http.response {
+                  case null: cast Source.EMPTY;
+                  case v: Bytes.ofData(v);
+                }
+              )));
+            } else {
+              // onerror may be able to capture the error, give it a chance first
+              haxe.Timer.delay(
+                cb.bind(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: 'Status code is zero'}))),
+                1
+              );
+            }
+          }
+          http.onerror = function(e) {
+            cb(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: e})));
+          }
+          if(req.header.method == GET)
+            http.send();
+          else
+            req.body.all().handle(function(chunk) http.send(new Int8Array(chunk.toBytes().getData())));
+        case _:
+          cb(Failure(Helpers.missingSchemeError(req.header.url)));
       }
-      http.onerror = function(e) {
-        cb(Failure(Error.withData(502, 'XMLHttpRequest Error', {request: req, error: e})));
-      }
-      if(req.header.method == GET)
-        http.send();
-      else
-        req.body.all().handle(function(chunk) http.send(new Int8Array(chunk.toBytes().getData())));
     });
   }
   

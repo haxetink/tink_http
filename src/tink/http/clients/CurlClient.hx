@@ -11,17 +11,22 @@ using tink.CoreApi;
 
 // Does not restrict to any platform as long as they can run the curl command somehow
 class CurlClient implements ClientObject {
+  final extraArgs:Array<String>;
   
-  public function new(?curl:Array<String>->IdealSource->RealSource) {
+  public function new(?curl:Array<String>->IdealSource->RealSource, ?extraArgs:Array<String>) {
     if(curl != null) this.curl = curl;
+    this.extraArgs = extraArgs;
   }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return switch Helpers.checkScheme(req.header.url.scheme) {
+    return switch Helpers.checkScheme(req.header.url) {
       case Some(e):
         Promise.reject(e);
       case None:
-        var args = [];
+        final args = switch extraArgs {
+          case null: [];
+          case v: v;
+        }
         
         args.push('-isS');
         
@@ -53,17 +58,20 @@ class CurlClient implements ClientObject {
       args.push('@-');
       
       #if nodejs
-      var process = js.node.ChildProcess.spawn('curl', args);
-      var sink = Sink.ofNodeStream('stdin', process.stdin);
-      body.pipeTo(sink, {end: true}).eager();
-      return Future.async(function(cb) process.once('exit', function(code, signal) cb(code)))
-        .next(function(code) return switch code {
-          case 0: Source.ofNodeStream('stdout', process.stdout);
-          case v: Source.ofNodeStream('stderr', process.stderr).all().next(function(stderr) return new Error(v, stderr.toString()));
+      final process = js.node.ChildProcess.spawn('curl', args);
+      final stdin = Sink.ofNodeStream('stdin', process.stdin);
+      final stdout = Source.ofNodeStream('stdout', process.stdout);
+      final stderr = Source.ofNodeStream('stderr', process.stderr);
+      
+      body.pipeTo(stdin, {end: true}).eager();
+      return Future.async(cb -> process.once('exit', (code, signal) -> cb(code)))
+        .next(code -> switch code {
+          case 0: stdout;
+          case v: stderr.all().next(chunk -> new Error(v, chunk.toString()));
         });
       #else
-      var process = new sys.io.Process('curl', args);
-      var sink = Sink.ofOutput('stdin', process.stdin);
+      final process = new sys.io.Process('curl', args);
+      final sink = Sink.ofOutput('stdin', process.stdin);
       body.pipeTo(sink, {end: true}).eager();
       return switch process.exitCode() {
         case 0: Source.ofInput('stdout', process.stdout);
