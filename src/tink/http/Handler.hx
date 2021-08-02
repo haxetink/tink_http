@@ -58,7 +58,11 @@ abstract Handler(HandlerObject) from HandlerObject to HandlerObject {
   }
   #end
   
-  #if java
+  #if (java && servlet)
+  /**
+   * Note: to enable this function, download and include the javax.servet-api jar with --java-lib, then manaully define `-D servlet`
+   * https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
+   */
   public function toJavaServletHandler() {
     return function(req:HttpServletRequest, res:HttpServletResponse) 
       this.process(
@@ -86,7 +90,7 @@ abstract Handler(HandlerObject) from HandlerObject to HandlerObject {
         )
       ).handle(function (out) {
         res.setStatus(out.header.statusCode);
-        for(header in out.header.fields) res.addHeader(header.name, header.value);
+        for(header in out.header) res.addHeader(header.name, header.value);
         out.body.pipeTo(Sink.ofOutput('Outgoing HTTP response to ${req.getRemoteAddr()}', new NativeOutput(res.getOutputStream()))).handle(function (x) {
           // res.getOutputStream().flush();
         });
