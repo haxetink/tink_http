@@ -20,7 +20,7 @@ abstract UploadedFile(UploadedFileBase) from UploadedFileBase to UploadedFileBas
       fileName: name,
       mimeType: type,
       size: data.length,
-      read: function():RealSource return data,
+      read: function() return data,
       saveTo: function(path:String) {
         var name = 'File sink $path';
         var dest:RealSink = 
@@ -48,10 +48,10 @@ typedef UploadedFileBase = {
   var size(default, null):Int;
   
   /**
-   *  Read the uploaded file as Source
-   *  @return RealSource
+   *  Return the contents of the file
+   *  @return Bytes
    */
-  function read():RealSource;
+  function read():Bytes;
   
   /**
    *  Save the uploaded file to the specified location
