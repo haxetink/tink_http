@@ -8,6 +8,7 @@ enum ClientType {
   
   #if (js && !nodejs)
   Js;
+  JsFetch;
   #end
   
   #if nodejs

@@ -30,6 +30,7 @@ class TestHttp {
       #end
       #if (js && !nodejs)
       case Js: new JsClient();
+      case JsFetch: new JsFetchClient();
       #end
       #if nodejs
       case Node: new NodeClient();
