@@ -92,7 +92,7 @@ class TestHttp {
       .next(function(echo) {
           switch target {
             #if (js && !nodejs)
-            case _ if(clientType == Js): // js client combines multiple same-name headers into a single comma-delimited one (at least in puppeteer)
+            case _ if(clientType == Js || clientType == JsFetch): // js client combines multiple same-name headers into a single comma-delimited one (at least in puppeteer)
               for(field in fields) {
                 asserts.assert(Type.enumEq(echo.headers.byName(field.name), Success(field.value.join(', '))));
               }
