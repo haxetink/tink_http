@@ -77,7 +77,11 @@ class Fetch {
 					#elseif sys new SocketClient()
 					#end ;
 				case Local(c): new LocalContainerClient(c);
-				#if (sys || nodejs) case Curl: new CurlClient(); #end
+				#if (sys || nodejs) 
+				case Curl: new CurlClient();
+				case CurlSocks5(host, port): new CurlClient(null, ["--proxy", 'socks5://$host:$port']);
+				case CurlSocks5h(host, port): new CurlClient(null, ["--proxy", 'socks5h://$host:$port']);
+				#end
 				case StdLib: new StdClient();
 				case Custom(c): c;
 				#if php case Php: new PhpClient(); #end
@@ -106,7 +110,11 @@ typedef FetchOptions = {
 enum ClientType {
 	Default;
 	Local(container:tink.http.containers.LocalContainer);
-	#if (sys || nodejs) Curl; #end
+	#if (sys || nodejs)
+	Curl;
+	CurlSocks5(host:String, port:Int);   // resolve hostnames locally
+	CurlSocks5h(host:String, port:Int);  // tunnel DNS resolution to proxy
+	#end
 	StdLib;
 	Custom(v:Client);
 	#if php Php; #end
