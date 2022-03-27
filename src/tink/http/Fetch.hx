@@ -79,6 +79,7 @@ class Fetch {
 				case Local(c): new LocalContainerClient(c);
 				#if (sys || nodejs) 
 				case Curl: new CurlClient();
+				case CurlCustomArgs(a): new CurlClient(null, a);
 				case CurlSocks5(host, port): new CurlClient(null, ["--proxy", 'socks5://$host:$port']);
 				case CurlSocks5h(host, port): new CurlClient(null, ["--proxy", 'socks5h://$host:$port']);
 				#end
@@ -112,6 +113,7 @@ enum ClientType {
 	Local(container:tink.http.containers.LocalContainer);
 	#if (sys || nodejs)
 	Curl;
+	CurlCustomArgs(a:Array<String>);
 	CurlSocks5(host:String, port:Int);   // resolve hostnames locally
 	CurlSocks5h(host:String, port:Int);  // tunnel DNS resolution to proxy
 	#end
