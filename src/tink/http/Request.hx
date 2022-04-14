@@ -158,7 +158,7 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
   static public function parse(clientIp, source:RealSource)
     return
       source.parse(IncomingRequestHeader.parser())
-        .next(function (parts) return new IncomingRequest(
+        .next(function (parts):Promise<IncomingRequest> return new IncomingRequest(
           clientIp,
           parts.a,
           Plain(switch parts.a.getContentLength() {
