@@ -5,7 +5,6 @@ import js.Browser;
 import js.html.Headers;
 import js.lib.HaxeIterator;
 import js.lib.Int8Array;
-import tink.Anon;
 import tink.http.Client;
 import tink.http.Header;
 import tink.http.Request;
@@ -33,13 +32,13 @@ class JsFetchClient implements ClientObject {
 
 				var responseHeader: ResponseHeader;
 				requestBody
-					.next(body -> Browser.self.fetch(req.header.url, Anon.merge(options, {
+					.next(body -> Browser.self.fetch(req.header.url, js.lib.Object.assign({}, options, {
 						body: body,
 						headers: requestHeaders,
 						method: req.header.method
 					})))
 					.next(response -> {
-						final headers = [for (entry in new HaxeIterator(response.headers.entries())) new HeaderField(entry[0], entry[1])];
+						final headers = [for (entry in new HaxeIterator(response.headers.entries())) new HeaderField((entry[0]:String).toString(), (entry[1]:String).toString())];
 						responseHeader = new ResponseHeader(response.status, response.statusText, headers);
 						response.arrayBuffer();
 					})

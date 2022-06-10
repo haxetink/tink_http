@@ -3,7 +3,6 @@
 	"description": "Universal HTTP abstraction",
 	"classPath": "src",
 	"dependencies": {
-		"tink_anon": "",
 		"tink_io": "",
 		"tink_url": "",
 		"http-status": ""

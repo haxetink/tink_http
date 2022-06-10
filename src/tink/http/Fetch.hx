@@ -12,36 +12,35 @@ import tink.url.Host;
 import tink.io.Worker;
 import tink.Url;
 import tink.Chunk;
-import tink.Anon.*;
 
 using tink.io.Source;
 using tink.CoreApi;
 
 class Fetch {
-	
+
 	static var cache = new Map<ClientType, Client>();
-	
+
 	public static function fetch(url:Url, ?options:FetchOptions):FetchResponse {
-		
+
 		return Future.async(function(cb) {
-			
+
 			var uri:String = url.path;
 			if(url.query != null) uri += '?' + url.query;
-			
+
 			var method = GET;
 			var headers = null;
 			var body:IdealSource = Source.EMPTY;
 			var type = Default;
 			var followRedirect = true;
-			
+
 			if(options != null) {
 				if(options.method != null) method = options.method;
 				if(options.headers != null) headers = options.headers;
 				if(options.body != null) body = options.body;
-				if(options.client != null) type = options.client; 
-				if(options.followRedirect == false) followRedirect = false; 
+				if(options.client != null) type = options.client;
+				if(options.followRedirect == false) followRedirect = false;
 			}
-			
+
 			var client = getClient(type);
 
 			if (options != null && options.augment != null)
@@ -54,9 +53,9 @@ class Fetch {
 				switch res {
 					case Success(res):
 						switch res.header.statusCode {
-							case code = 301 | 302 | 303 | 307 | 308 if(followRedirect): 
+							case code = 301 | 302 | 303 | 307 | 308 if(followRedirect):
 								Promise.lift(res.header.byName('location'))
-									.next(function(location) return fetch(url.resolve(location), code == 303 ? merge(options, method = GET) : options))
+									.next(function(location) return fetch(url.resolve(location), code == 303 ? { var o = Reflect.copy(options); o.method = GET; o; } : options))
 									.handle(cb);
 							default: cb(Success(res));
 						}
@@ -66,7 +65,7 @@ class Fetch {
 			});
 		});
 	}
-	
+
 	static function getClient(type:ClientType) {
 		if(!cache.exists(type)) {
 			var c:Client = switch type {
@@ -85,12 +84,12 @@ class Fetch {
 				#if flash case Flash: new FlashClient(); #end
 				#if openfl case OpenFl: new FlashClient(); #end
 			}
-			
+
 			cache.set(type, c);
 		}
-		
+
 		return cache.get(type);
-		
+
 	}
 }
 
@@ -120,22 +119,22 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 	public function all():Promise<CompleteResponse> {
 		return this.next(function(r) {
 			return r.body.all().next(function(chunk) {
-				return 
+				return
 					if(r.header.statusCode >= 400)
 						Error.withData(r.header.statusCode, r.header.reason, chunk.toString());
-					else 
+					else
 						new CompleteResponse(r.header, chunk);
 			});
 		});
 	}
-	
+
 	#if (tink_core >= "2")
 	public function progress():Promise<ProgressResponse> {
 		return this.next(function(r) {
-			return 
+			return
 				if(r.header.statusCode >= 400)
 					r.body.all().next(function(chunk) return Error.withData(r.header.statusCode, r.header.reason, chunk.toString()));
-				else 
+				else
 					new ProgressResponse(
 						r.header,
 						tink.core.Progress.make(function(progress, finish) {
