@@ -66,8 +66,8 @@ class CurlClient implements ClientObject {
       body.pipeTo(stdin, {end: true}).eager();
       return Future.async(cb -> process.once('exit', (code, signal) -> cb(code)))
         .next(code -> switch code {
-          case 0: stdout;
-          case v: stderr.all().next(chunk -> new Error(v, chunk.toString()));
+          case 0: Promise.lift(stdout);
+          case v: stderr.all().next(chunk -> Promise.lift(new Error(v, chunk.toString())));
         });
       #else
       final process = new sys.io.Process('curl', args);

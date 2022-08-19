@@ -55,7 +55,7 @@ class Fetch {
 						switch res.header.statusCode {
 							case code = 301 | 302 | 303 | 307 | 308 if(followRedirect):
 								Promise.lift(res.header.byName('location'))
-									.next(function(location) return fetch(url.resolve(location), code == 303 ? { var o = Reflect.copy(options); o.method = GET; o; } : options))
+									.next(function(location) return Promise.lift(fetch(url.resolve(location), code == 303 ? { var o = Reflect.copy(options); o.method = GET; o; } : options)))
 									.handle(cb);
 							default: cb(Success(res));
 						}
@@ -119,11 +119,12 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 	public function all():Promise<CompleteResponse> {
 		return this.next(function(r) {
 			return r.body.all().next(function(chunk) {
-				return
+				return Promise.lift(
 					if(r.header.statusCode >= 400)
 						Error.withData(r.header.statusCode, r.header.reason, chunk.toString());
 					else
-						new CompleteResponse(r.header, chunk);
+						new CompleteResponse(r.header, chunk)
+				);
 			});
 		});
 	}
@@ -133,9 +134,9 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 		return this.next(function(r) {
 			return
 				if(r.header.statusCode >= 400)
-					r.body.all().next(function(chunk) return Error.withData(r.header.statusCode, r.header.reason, chunk.toString()));
+					r.body.all().next(function(chunk) return Promise.lift(Error.withData(r.header.statusCode, r.header.reason, chunk.toString())));
 				else
-					new ProgressResponse(
+					Promise.lift(new ProgressResponse(
 						r.header,
 						tink.core.Progress.make(function(progress, finish) {
 							var total = switch r.header.getContentLength() {
@@ -156,7 +157,7 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 									case Halted(_): finish(Failure(new Error('unreachable')));
 								});
 						})
-					);
+					));
 		});
 	}
 	#end
