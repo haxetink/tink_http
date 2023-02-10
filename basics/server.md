@@ -42,7 +42,7 @@ function router(m:Map<String, Handler>):Handler
   }
 
 router([
-  '/static' => serverFiles('./assets'),
+  '/static' => serveFiles('./assets'),
   '/route1' => handler1,
   '/route2' => handler2,
   '/route3' => router([
