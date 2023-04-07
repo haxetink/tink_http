@@ -35,11 +35,11 @@ class PhpContainer implements Container {
     var map = php.Lib.hashOfAssociativeArray(a);
     var ret = [];
     for (name in map.keys()) 
-      switch process(map[name]) {
+      switch process(map.get(name)) {
         case null: 
         case v: ret.push(new Named(
           name,
-          process(map[name])
+          process(map.get(name))
         ));
       }
     return ret;
@@ -55,7 +55,7 @@ class PhpContainer implements Container {
        
         var raw =  php.Lib.hashOfAssociativeArray( #if haxe4 php.Global.getallheaders() #else untyped __call__('getallheaders') #end );
         
-          [for (name in raw.keys()) new HeaderField(name, raw[name])];
+          [for (name in raw.keys()) new HeaderField(name, raw.get(name))];
         } else {
           
           var h = php.Lib.hashOfAssociativeArray(#if haxe4 SuperGlobal._SERVER #else untyped __php__("$_SERVER") #end);
