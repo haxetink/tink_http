@@ -47,7 +47,7 @@ class ChunkedDecoder<Q> implements Transformer<Q, Error> {
 	public function transform(source:Source<Q>):RealSource {
 		return (
 			(source:RealSource).parseStream(new ChunkedParser())
-				.map(v -> v == null /* TODO: figure out where does these nulls come from */ ? Chunk.EMPTY : v )
+				.map(v -> v != null /* TODO: figure out where does these nulls come from */ ? v : Chunk.EMPTY)
 			:Stream<Chunk, Error>
 		);
 	}
