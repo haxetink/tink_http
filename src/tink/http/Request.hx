@@ -119,7 +119,7 @@ class OutgoingRequestHeader extends RequestHeader {
     switch  extractAuth(url) {
       case Some(v):
         url = v.url;
-        fields = fields.concat(v.headers);
+        fields = fields != null ? fields.concat(v.headers) : v.headers;
       default:
     }
     super(method, url, protocol, fields);
