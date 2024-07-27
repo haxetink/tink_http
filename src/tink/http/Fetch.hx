@@ -22,7 +22,7 @@ class Fetch {
 
 	public static function fetch(url:Url, ?options:FetchOptions):FetchResponse {
 
-		return Future.irreversible(function(cb) {
+		return Future #if (tink_core >= "2") .irreversible #else .async #end(function(cb) {
 
 			var uri:String = url.path;
 			if(url.query != null) uri += '?' + url.query;

@@ -23,7 +23,7 @@ class JsClient implements ClientObject {
   }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return Future.irreversible(function(cb) {
+    return Future #if (tink_core >= "2") .irreversible #else .async #end(function(cb) {
       switch req.header.url.scheme {
         case null | 'http' | 'https': // null scheme is for urls such as "//google.com/foo" where the scheme of current url is to be reused
           var http = getHttp();

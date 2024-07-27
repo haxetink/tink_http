@@ -138,7 +138,7 @@ class PhpContainer implements Container {
   }
   
   public function run(handler:Handler):Future<ContainerResult> 
-    return Future.irreversible(function (cb) 
+    return Future #if (tink_core >= "2") .irreversible #else .async #end(function (cb) 
       handler.process(
         getRequest()
       ).handle(function (res) {

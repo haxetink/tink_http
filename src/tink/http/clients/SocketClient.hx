@@ -19,7 +19,7 @@ class SocketClient implements ClientObject {
   }
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return Future.irreversible(function(cb) {
+    return Future #if (tink_core >= "2") .irreversible #else .async #end(function(cb) {
       switch Helpers.checkScheme(req.header.url) {
         case Some(e):
           cb(Failure(e));

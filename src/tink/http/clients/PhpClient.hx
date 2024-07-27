@@ -13,7 +13,7 @@ class PhpClient implements ClientObject {
   public function new() {}
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return Future.irreversible(function(cb) {
+    return Future #if (tink_core >= "2") .irreversible #else .async #end(function(cb) {
       req.body.all().handle(function(chunk) {
         var options = php.Lib.associativeArrayOfObject({
           http: php.Lib.associativeArrayOfObject({

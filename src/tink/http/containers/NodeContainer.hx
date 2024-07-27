@@ -36,7 +36,7 @@ class NodeContainer implements Container {
   
   
   public function run(handler:Handler) 
-    return Future.irreversible(function (cb) {
+    return Future #if (tink_core >= "2") .irreversible #else .async #end(function (cb) {
       var failures = Signal.trigger();
       
       var server = switch kind {
@@ -80,7 +80,7 @@ class NodeContainer implements Container {
             if (hard)
               trace('Warning: hard shutdown not implemented');
               
-            return Future.irreversible(function (cb) {
+            return Future #if (tink_core >= "2") .irreversible #else .async #end(function (cb) {
               server.close(function () cb(true));
             });
           },
