@@ -22,7 +22,7 @@ class Fetch {
 
 	public static function fetch(url:Url, ?options:FetchOptions):FetchResponse {
 
-		return Future.async(function(cb) {
+		return Future.irreversible(function(cb) {
 
 			var uri:String = url.path;
 			if(url.query != null) uri += '?' + url.query;

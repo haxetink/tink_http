@@ -64,7 +64,7 @@ class CurlClient implements ClientObject {
       final stderr = Source.ofNodeStream('stderr', process.stderr);
       
       body.pipeTo(stdin, {end: true}).eager();
-      return Future.async(cb -> process.once('exit', (code, signal) -> cb(code)))
+      return Future.irreversible(cb -> process.once('exit', (code, signal) -> cb(code)))
         .next(code -> switch code {
           case 0: stdout;
           case v: stderr.all().next(chunk -> new Error(v, chunk.toString()));

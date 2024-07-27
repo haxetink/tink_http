@@ -74,7 +74,7 @@ class AwsLambdaNodeContainer implements Container {
   }
   
   public function run(handler:Handler) 
-    return Future.async(function (cb) {
+    return Future.irreversible(function (cb) {
       Reflect.setField(
         js.Node.exports,
         name,

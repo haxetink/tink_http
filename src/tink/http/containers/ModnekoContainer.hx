@@ -36,7 +36,7 @@ class ModnekoContainer implements Container {
       );
       
   public function run(handler:tink.http.Handler):Future<ContainerResult> {
-    return Future.async(function (cb) 
+    return Future.irreversible(function (cb) 
       handler.process({
         var header = getHeader();
         new IncomingRequest(

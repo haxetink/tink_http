@@ -26,7 +26,7 @@ class FlashClient implements ClientObject {
   public function new() {}
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return Future.async(function(cb) {
+    return Future.irreversible(function(cb) {
       switch Helpers.checkScheme(req.header.url) {
         case Some(e):
           cb(Failure(e));

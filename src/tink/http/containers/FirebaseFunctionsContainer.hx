@@ -24,7 +24,7 @@ class FirebaseFunctionsContainer implements Container {
 	}
 	
 	public function run(handler:Handler):Future<ContainerResult> {
-		return Future.async(function(cb) {	
+		return Future.irreversible(function(cb) {	
 			Reflect.setField(
 				js.Node.exports,
 				name,

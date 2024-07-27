@@ -81,7 +81,7 @@ class Master {
 	
 	static function waitForConnection(port: Int) {
 		Sys.println('Waiting for server to be ready...');
-		return Future.async(function(cb) {
+		return Future.irreversible(function(cb) {
 			var retry = 30;
 			var delay = 100;
 
