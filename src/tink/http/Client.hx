@@ -5,7 +5,7 @@ import tink.http.Request;
 import tink.http.Response;
 import tink.http.Fetch;
 
-#if haxe4 
+#if haxe4
   import Std.downcast;
 #elseif haxe3
   import Std.instance as downcast;
@@ -32,7 +32,7 @@ interface ClientObject {
   function request(req:OutgoingRequest):Promise<IncomingResponse>;
 }
 
-typedef Processors = { 
+typedef Processors = {
   @:optional var before(default, never):Array<Preprocessor>;
   @:optional var after(default, never):Array<Postprocessor>;
 }
@@ -41,7 +41,7 @@ typedef Preprocessor = Next<OutgoingRequest, OutgoingRequest>;
 typedef Postprocessor = OutgoingRequest->Next<IncomingResponse, IncomingResponse>;
 
 private class CustomClient implements ClientObject {
-  
+
   var preprocessors:Array<Preprocessor>;
   var postprocessors:Array<Postprocessor>;
   var real:ClientObject;
@@ -53,19 +53,19 @@ private class CustomClient implements ClientObject {
   }
 
   function pipe<A>(value:A, transforms:Null<Array<Next<A, A>>>, ?index:Int = 0):Promise<A>
-    return 
-      if (transforms != null && index < transforms.length) 
+    return
+      if (transforms != null && index < transforms.length)
         transforms[index](value)
           .next(pipe.bind(_, transforms, index + 1))
       else
         value;
 
-  public function request(req) 
-    return 
+  public function request(req)
+    return
       pipe(req, preprocessors)
-        .next(function (req) 
+        .next(function (req)
           return real.request(req)
-            .next(pipe.bind(_, postprocessors == null ? null : [for (p in postprocessors) p(req)]))
+            .next(v -> pipe(v, postprocessors == null ? null : [for (p in postprocessors) p(req)]))
         );
 
   static function concat<A>(a:Null<Array<A>>, b:Null<Array<A>>):Null<Array<A>>
