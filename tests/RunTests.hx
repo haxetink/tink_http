@@ -14,7 +14,8 @@ class RunTests {
     
     var tests = TestBatch.make([
     #if !container_only
-      new TestHeader(),
+    new TestHeader(),
+      new Sses(),
       new TestChunked(),
       new FetchTest(#if php Php #end),
     #end
