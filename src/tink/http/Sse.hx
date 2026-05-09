@@ -57,7 +57,8 @@ class SseStream {
                 }
             }
 
-          ({ id: id, event: event, retry: retry, data: data.join('\n') }:Sse);
-        });
+          ({ id: id, event: event, retry: retry, data: if (data.length == 0) null else data.join('\n') }:Sse);
+        })
+        .filter((sse:Sse) -> sse.data != null);
   }
 }
