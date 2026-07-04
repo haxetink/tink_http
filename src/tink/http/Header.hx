@@ -198,7 +198,7 @@ abstract HeaderValue(String) from String to String {
 
 }
 
-@:enum abstract HeaderName(String) to String {
+enum abstract HeaderName(String) to String {
 
   var REFERER                          = 'referer';
   var HOST                             = 'host';

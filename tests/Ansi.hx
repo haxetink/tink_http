@@ -1,5 +1,4 @@
-@:enum
-abstract AnsiColor(Int) {
+enum abstract AnsiColor(Int) {
   var Black = 0;
   var Red = 1;
   var Green = 2;

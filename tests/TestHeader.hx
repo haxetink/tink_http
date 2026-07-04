@@ -126,7 +126,7 @@ class TestHeader {
 	@:variant(new tink.http.Response.ResponseHeader(200, 'OK', []), tink.http.Response.ResponseHeaderBase)
 	public function concat(header:Header, cls:Class<Header>) {
 		var header = header.concat([new HeaderField('host', 'haxetink.org')]);
-		asserts.assert(Std.is(header, cls));
+		asserts.assert(Std.isOfType(header, cls));
 		asserts.assert(Lambda.count(header) == 1);
 		return asserts.done();
 	}
