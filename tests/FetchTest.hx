@@ -23,35 +23,35 @@ class FetchTest {
     this.client = client;
   }
   
-  public function get() return testStatus('http://httpbin.org/');
-  public function post() return testData('http://httpbin.org/post', POST);
-  public function delete() return testData('http://httpbin.org/delete', DELETE);
-  public function patch() return testData('http://httpbin.org/patch', PATCH);
-  public function put() return testData('http://httpbin.org/put', PUT);
+  public function get() return testStatus('http://httpbin.io/');
+  public function post() return testData('http://httpbin.io/post', POST);
+  public function delete() return testData('http://httpbin.io/delete', DELETE);
+  public function patch() return testData('http://httpbin.io/patch', PATCH);
+  public function put() return testData('http://httpbin.io/put', PUT);
   
   
   // TODO: re-enable when issue resolved: https://github.com/postmanlabs/httpbin/issues/617
   // #if !cpp // TODO: investigate
-  // public function redirect() return testStatus('http://httpbin.org/redirect/5');
+  // public function redirect() return testStatus('http://httpbin.io/redirect/5');
   // #end
   
   #if(!python && !cs && !interp && !lua)
-  public function secureGet() return testStatus('https://httpbin.org/');
-  public function securePost() return testData('https://httpbin.org/post', POST);
-  public function secureDelete() return testData('https://httpbin.org/delete', DELETE);
-  public function securePatch() return testData('https://httpbin.org/patch', PATCH);
-  public function securePut() return testData('https://httpbin.org/put', PUT);
+  public function secureGet() return testStatus('https://httpbin.io/');
+  public function securePost() return testData('https://httpbin.io/post', POST);
+  public function secureDelete() return testData('https://httpbin.io/delete', DELETE);
+  public function securePatch() return testData('https://httpbin.io/patch', PATCH);
+  public function securePut() return testData('https://httpbin.io/put', PUT);
   
   // TODO: re-enable when issue resolved: https://github.com/postmanlabs/httpbin/issues/617
   // #if !cpp // TODO: investigate
-  // public function secureRedirect() return testStatus('https://httpbin.org/redirect/5');
+  // public function secureRedirect() return testStatus('https://httpbin.io/redirect/5');
   // #end
   #end
   
   public function headers(buffer:AssertionBuffer) {
     var name = 'my-sample-header';
     var value = 'foobar';
-    return fetch('http://httpbin.org/headers', {
+    return fetch('http://httpbin.io/headers', {
       headers:[
         // {name: name, value: value},
         new HeaderField(name, value),
