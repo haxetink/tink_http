@@ -105,8 +105,12 @@ class FetchTest {
   }
   
   function objectToHeader(obj:Dynamic) {
-    return new Header([for(key in Reflect.fields(obj))
-      new HeaderField(key, Reflect.field(obj, key))]);
+    return new Header([for(key in Reflect.fields(obj)) {
+      var v:Dynamic = Reflect.field(obj, key);
+      // httpbin.io returns header values as arrays
+      var s = if(Std.isOfType(v, Array)) (v:Array<Dynamic>).map(Std.string).join(',') else Std.string(v);
+      new HeaderField(key, s);
+    }]);
   }
   
 }

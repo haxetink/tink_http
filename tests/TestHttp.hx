@@ -197,8 +197,8 @@ class HttpbinConverter implements Converter {
   public function convert(res:IncomingResponse):Promise<EchoedRequest> {
     return res.body.all().next(function(chunk):EchoedRequest {
       var parsed: {
-        headers:DynamicAccess<String>,
-        args:DynamicAccess<String>,
+        headers:DynamicAccess<Dynamic>,
+        args:DynamicAccess<Dynamic>,
         data:String,
         origin:String,
       } = haxe.Json.parse(chunk);
@@ -206,14 +206,14 @@ class HttpbinConverter implements Converter {
       return {
         headers: new Header(
           if(Reflect.hasField(parsed, 'headers'))
-            [for(name in parsed.headers.keys()) new HeaderField(name, parsed.headers.get(name))]
+            [for(name in parsed.headers.keys()) new HeaderField(name, normalizeHttpbinValue(parsed.headers.get(name)))]
           else
             []
         ),
         query: {
           var map = new Map();
           if(Reflect.hasField(parsed, 'args'))
-            for(name in parsed.args.keys()) map.set(name, parsed.args.get(name));
+            for(name in parsed.args.keys()) map.set(name, normalizeHttpbinValue(parsed.args.get(name)));
           map;
         },
         body: Reflect.hasField(parsed, 'data') ? parsed.data : Chunk.EMPTY,
@@ -221,6 +221,10 @@ class HttpbinConverter implements Converter {
       }
     });
   }
+
+  /** httpbin.io returns args/headers as string arrays; older httpbin used plain strings. */
+  static function normalizeHttpbinValue(v:Dynamic):String
+    return if(Std.isOfType(v, Array)) (v:Array<Dynamic>).map(Std.string).join(',') else Std.string(v);
 }
 
 typedef EchoedRequest = {
