@@ -140,7 +140,7 @@ class Context {
   #if neko
   
   static function targetArgs(port: Int) {
-    var args = ['-lib tink_unittest', '-D port=$port', '-main RunTests'];
+    var args = ['-lib tink_unittest', '-lib deep_equal', '-D port=$port', '-main RunTests'];
     if(Env.getDefine('container_only') != null) args.push('-D container_only');
     return args;
   }
