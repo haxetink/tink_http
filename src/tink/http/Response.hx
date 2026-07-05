@@ -81,9 +81,39 @@ abstract OutgoingResponse(OutgoingResponseData) {
           chunk
         );
   
-  static public function chunked(contentType:String, ?headers, source:IdealSource) {
-    //TODO: implement
-    
+  static public function chunked(?code = OK, contentType:String, ?headers, source:IdealSource)
+    return new OutgoingResponse(
+      new ResponseHeader(
+        code,
+        code,
+        [
+          new HeaderField('Content-Type', contentType),
+          new HeaderField(TRANSFER_ENCODING, 'chunked'),
+        ].concat(switch headers {
+          case null: [];
+          case v: v;
+        })),
+      Chunked.encode(source)
+    );
+
+  public function withChunkedEncoding():OutgoingResponse {
+    final res:OutgoingResponse = cast this;
+    final code = res.header.statusCode.toInt();
+    if((code >= 100 && code <= 199) || code == 204 || code == 304)
+      return res;
+    switch res.header.getContentLength() {
+      case Success(_): return res;
+      case Failure(_):
+    }
+    switch res.header.byName(TRANSFER_ENCODING) {
+      case Success((_:String).split(',').map(StringTools.trim) => encodings):
+        if(encodings.indexOf('chunked') != -1) return res;
+      case Failure(_):
+    }
+    return new OutgoingResponse(
+      res.header.concat([new HeaderField(TRANSFER_ENCODING, 'chunked')]),
+      Chunked.encode(res.body)
+    );
   }
         
   @:from static function ofString(s:String) 

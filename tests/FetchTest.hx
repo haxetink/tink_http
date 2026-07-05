@@ -23,35 +23,35 @@ class FetchTest {
     this.client = client;
   }
   
-  public function get() return testStatus('http://httpbin.org/');
-  public function post() return testData('http://httpbin.org/post', POST);
-  public function delete() return testData('http://httpbin.org/delete', DELETE);
-  public function patch() return testData('http://httpbin.org/patch', PATCH);
-  public function put() return testData('http://httpbin.org/put', PUT);
+  public function get() return testStatus('http://httpbin.io/');
+  public function post() return testData('http://httpbin.io/post', POST);
+  public function delete() return testData('http://httpbin.io/delete', DELETE);
+  public function patch() return testData('http://httpbin.io/patch', PATCH);
+  public function put() return testData('http://httpbin.io/put', PUT);
+  public function chunked() return testChunked('http://httpbin.io/stream/10');
   
   
-  // TODO: re-enable when issue resolved: https://github.com/postmanlabs/httpbin/issues/617
-  // #if !cpp // TODO: investigate
-  // public function redirect() return testStatus('http://httpbin.org/redirect/5');
-  // #end
+  #if !cpp // TODO: investigate
+  public function redirect() return testStatus('http://httpbin.io/redirect/5');
+  #end
   
   #if(!python && !cs && !interp && !lua)
-  public function secureGet() return testStatus('https://httpbin.org/');
-  public function securePost() return testData('https://httpbin.org/post', POST);
-  public function secureDelete() return testData('https://httpbin.org/delete', DELETE);
-  public function securePatch() return testData('https://httpbin.org/patch', PATCH);
-  public function securePut() return testData('https://httpbin.org/put', PUT);
+  public function secureGet() return testStatus('https://httpbin.io/');
+  public function securePost() return testData('https://httpbin.io/post', POST);
+  public function secureDelete() return testData('https://httpbin.io/delete', DELETE);
+  public function securePatch() return testData('https://httpbin.io/patch', PATCH);
+  public function securePut() return testData('https://httpbin.io/put', PUT);
+  public function secureChunked() return testChunked('https://httpbin.io/stream/10');
   
-  // TODO: re-enable when issue resolved: https://github.com/postmanlabs/httpbin/issues/617
-  // #if !cpp // TODO: investigate
-  // public function secureRedirect() return testStatus('https://httpbin.org/redirect/5');
-  // #end
+  #if !cpp // TODO: investigate
+  public function secureRedirect() return testStatus('https://httpbin.io/redirect/5');
+  #end
   #end
   
   public function headers(buffer:AssertionBuffer) {
     var name = 'my-sample-header';
     var value = 'foobar';
-    return fetch('http://httpbin.org/headers', {
+    return fetch('http://httpbin.io/headers', {
       headers:[
         // {name: name, value: value},
         new HeaderField(name, value),
@@ -68,6 +68,19 @@ class FetchTest {
   function testStatus(url:String, status = 200) {
     return fetch(url, {client: client}).all().next(function(res) {
       return assert(res.header.statusCode == status);
+    });
+  }
+  
+  function testChunked(url:String) {
+    return fetch(url, {client: client}).all().next(function(res) {
+      var lines = [for(line in res.body.toString().split('\n')) if(line.length > 0) line];
+      var assertions:Array<Assertion> = [
+        assert(res.header.statusCode == 200),
+        assert(lines.length == 10),
+      ];
+      for(i in 0...lines.length)
+        assertions.push(assert(lines[i].parse().id == i));
+      return assertions;
     });
   }
   
@@ -92,8 +105,12 @@ class FetchTest {
   }
   
   function objectToHeader(obj:Dynamic) {
-    return new Header([for(key in Reflect.fields(obj))
-      new HeaderField(key, Reflect.field(obj, key))]);
+    return new Header([for(key in Reflect.fields(obj)) {
+      var v:Dynamic = Reflect.field(obj, key);
+      // httpbin.io returns header values as arrays
+      var s = if(Std.isOfType(v, Array)) (v:Array<Dynamic>).map(Std.string).join(',') else Std.string(v);
+      new HeaderField(key, s);
+    }]);
   }
   
 }

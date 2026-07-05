@@ -28,6 +28,7 @@ class NodeContainer implements Container {
             IncomingRequestHeader.fromIncomingMessage(req),
             Plain(Source.ofNodeStream('Incoming HTTP message from ${req.socket.remoteAddress}', socket)))
         ).handle(function (out) {
+          out = out.withChunkedEncoding();
           out.body.prepend(out.header.toString()).pipeTo(Sink.ofNodeStream('Outgoing HTTP response to ${req.socket.remoteAddress}', socket)).handle(function (_) {
             socket.end();
           });

@@ -30,8 +30,8 @@ class DummyServer {
   static public function handleRequest(req:IncomingRequest):Future<OutgoingResponse> {
     if (req.header.url.path == '/close') {
       Sys.println('\n>> Closing server');
-      Sys.exit(0);
-      return null;
+      haxe.Timer.delay(function() Sys.exit(0), 0);
+      return Future.sync(OutgoingResponse.blob(Bytes.ofString('ok'), 'text/plain'));
     }
     
     if (req.header.url.path == '/active')
