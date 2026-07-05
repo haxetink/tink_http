@@ -43,16 +43,8 @@ class SocketClient implements ClientObject {
             case Failure(_): addHeaders([new HeaderField('host', req.header.url.host.name)]);
           }
           
-          var socket =
-            if(req.header.url.scheme == 'https')
-              #if php new php.net.SslSocket();
-              #elseif java new java.net.SslSocket();
-              #elseif python new python.net.SslSocket();
-              #elseif (!no_ssl && (hxssl || hl || cpp || eval || (neko && !(macro || interp)))) new sys.ssl.Socket();
-              #else throw "Https is only supported with -lib hxssl";
-              #end
-            else
-              new sys.net.Socket();
+          var hostname = req.header.url.host.name;
+          var socket = createSocket(req.header.url.scheme == 'https', hostname);
             
           var port = switch req.header.url.host.port {
             case null: req.header.url.scheme == 'https' ? 443 : 80;
@@ -90,5 +82,28 @@ class SocketClient implements ClientObject {
           });
       }
     });
+  }
+  
+  static function createSocket(secure:Bool, hostname:String):sys.net.Socket {
+    if (!secure) return new sys.net.Socket();
+    #if php
+    return new php.net.SslSocket();
+    #elseif jvm
+      #if (haxe_ver >= 5)
+      return new jvm.net.SslSocket();
+      #else
+      return new java.net.SslSocket();
+      #end
+    #elseif python
+    return new python.net.SslSocket();
+    #elseif no_ssl
+    throw new Error('HTTPS is disabled (-D no_ssl)');
+    #elseif (hl || cpp || eval || neko)
+    var s = new sys.ssl.Socket();
+    s.setHostname(hostname);
+    return s;
+    #else
+    throw new Error('HTTPS is not supported on this target');
+    #end
   }
 }

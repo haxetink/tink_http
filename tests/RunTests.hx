@@ -25,7 +25,7 @@ class RunTests {
     for(client in Context.clients) {
       #if !container_only
         tests.push(TestSuite.make(new TestHttp(client, Httpbin(false)), '$client -> http://httpbin.io'));
-        #if (cs || lua || python) if(client != Socket) #end // no support for ssl socket yet
+        #if (cs || lua) if(client != Socket) #end // no support for ssl socket yet
         tests.push(TestSuite.make(new TestHttp(client, Httpbin(true)), '$client -> https://httpbin.io'));
       #end
       

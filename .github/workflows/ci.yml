@@ -16,13 +16,11 @@ jobs:
         haxe-version:
           - stable
           - nightly
-        containers:
-          - node
-          - node-tcp
-          # - neko-mod
-        targets:
-          - js,node,php,neko,cpp
-          - node
+        include:
+          - containers: node
+            targets: js,node,php,neko,cpp,python,interp,jvm
+          - containers: node-tcp
+            targets: node
 
     steps:
       - name: Check out repo
