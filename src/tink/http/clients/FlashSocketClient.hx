@@ -35,7 +35,7 @@ class FlashSocketClient implements ClientObject {
     return secure ? new SecureSocket() : new Socket();
   
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
-    return Future #if (tink_core >= "2") .irreversible #else .async #end(function(cb) {
+    return Future.irreversible(function(cb) {
       
       switch req.header.byName('connection') {
         case Success((_:String).toLowerCase() => 'close'): // ok

@@ -74,7 +74,7 @@ class AwsLambdaNodeContainer implements Container {
   }
   
   public function run(handler:Handler) 
-    return Future #if (tink_core >= "2") .irreversible #else .async #end(function (cb) {
+    return Future.irreversible(function (cb) {
       Reflect.setField(
         js.Node.exports,
         name,

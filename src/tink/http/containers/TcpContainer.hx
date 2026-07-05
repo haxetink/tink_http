@@ -66,9 +66,7 @@ class TcpContainer implements Container {
   
   @:require(tink_tcp)
   public function new(port:Void->Promise<tink.tcp.OpenPort>) {
-    this.port = Future #if (tink_core >= "2") .irreversible #else .async #end(function (cb) {
-      port().handle(cb);
-    }, true);
+    this.port = Future.irreversible(cb -> port().handle(cb));
   }
   
   public function run(handler):Future<ContainerResult> 

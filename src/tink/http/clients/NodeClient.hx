@@ -68,7 +68,7 @@ class NodeClient implements ClientObject {
     
   function nodeRequest<A:NodeHttp<T>, T>(agent:A, options:T, req:OutgoingRequest):Promise<IncomingResponse> 
     return 
-      Future #if (tink_core >= "2") .irreversible #else .async #end(function (cb) {
+      Future.irreversible(function (cb) {
         var fwd = agent.request(
           options,
           function (msg:IncomingMessage) cb(Success(new IncomingResponse(

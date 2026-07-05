@@ -81,7 +81,7 @@ class Master {
 	
 	static function waitForConnection(port: Int) {
 		Sys.println('Waiting for server to be ready...');
-		return Future #if (tink_core >= "2") .irreversible #else .async #end(function(cb) {
+		return Future.irreversible(function(cb) {
 			var retry = 30;
 			var delay = 100;
 

@@ -22,7 +22,7 @@ class Fetch {
 
 	public static function fetch(url:Url, ?options:FetchOptions):FetchResponse {
 
-		return Future #if (tink_core >= "2") .irreversible #else .async #end(function(cb) {
+		return Future.irreversible(function(cb) {
 
 			var uri:String = url.path;
 			if(url.query != null) uri += '?' + url.query;
@@ -128,7 +128,6 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 		});
 	}
 
-	#if (tink_core >= "2")
 	public function progress():Promise<ProgressResponse> {
 		return this.next(function(r) {
 			return
@@ -159,10 +158,7 @@ abstract FetchResponse(Promise<IncomingResponse>) from Surprise<IncomingResponse
 					);
 		});
 	}
-	#end
 }
 
 typedef CompleteResponse = Message<ResponseHeader, Chunk>;
-#if (tink_core >= "2")
 typedef ProgressResponse = Message<ResponseHeader, tink.core.Progress<Outcome<Chunk, Error>>>;
-#end

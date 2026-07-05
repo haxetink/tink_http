@@ -1,4 +1,5 @@
 -cp tests
 -lib tink_unittest
 -lib deep_equal
+-D port=8000
 -main RunTests
