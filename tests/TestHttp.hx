@@ -121,27 +121,22 @@ class TestHttp {
       });
   
   public function chunked() {
-    switch target {
-      case Local(_):
-        return asserts.done();
-      case Httpbin(_):
-        var streamUrl:Url = url + '/stream/10';
-        var headers = [new HeaderField(HOST, streamUrl.host.toString())];
-        client.request(new OutgoingRequest(
-          new OutgoingRequestHeader(GET, streamUrl, headers),
-          Source.EMPTY
-        )).next(function(res) {
-          asserts.assert(res.header.statusCode == 200);
-          return res.body.all().next(function(chunk) {
-            var lines = [for(line in chunk.toString().split('\n')) if(line.length > 0) line];
-            asserts.assert(lines.length == 10);
-            for(i in 0...lines.length)
-              asserts.assert(haxe.Json.parse(lines[i]).id == i);
-            return Noise;
-          });
-        }).handle(asserts.handle);
-        return asserts;
-    }
+    var streamUrl:Url = url + '/stream/10';
+    var headers = [new HeaderField(HOST, streamUrl.host.toString())];
+    client.request(new OutgoingRequest(
+      new OutgoingRequestHeader(GET, streamUrl, headers),
+      Source.EMPTY
+    )).next(function(res) {
+      asserts.assert(res.header.statusCode == 200);
+      return res.body.all().next(function(chunk) {
+        var lines = [for(line in chunk.toString().split('\n')) if(line.length > 0) line];
+        asserts.assert(lines.length == 10);
+        for(i in 0...lines.length)
+          asserts.assert(haxe.Json.parse(lines[i]).id == i);
+        return Noise;
+      });
+    }).handle(asserts.handle);
+    return asserts;
   }
   
   function request(method:Method, url:Url, ?headers:Array<HeaderField>, ?body:IdealSource) {

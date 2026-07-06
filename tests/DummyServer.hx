@@ -42,7 +42,21 @@ class DummyServer {
     
     if (req.header.url.path == '/swf')
       return Future.sync(OutgoingResponse.blob(sys.io.File.getBytes('/Users/kevin/Codes/tink_http/bin/swf/tests.swf'), 'application/x-shockwave-flash'));
-      
+
+    var path:String = req.header.url.path;
+    if (path.indexOf('/stream/') == 0) {
+      var count = Std.parseInt(path.substr('/stream/'.length));
+      if (count == null || count <= 0)
+        return Future.sync(OutgoingResponse.reportError(new Error(404, 'Not Found')));
+      var source:IdealSource = Source.EMPTY;
+      for (i in 0...count)
+        source = source.append(haxe.Json.stringify({id: i}) + '\n');
+      return Future.sync(new OutgoingResponse(
+        new ResponseHeader(OK, OK, [new HeaderField('Content-Type', 'application/json')]),
+        source
+      ));
+    }
+
     #if (tink_runloop || nodejs)
     Sys.print(Ansi.text(Cyan, '.'));
     #end
