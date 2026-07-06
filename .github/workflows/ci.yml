@@ -16,7 +16,7 @@ jobs:
         haxe-version:
           - stable
           - nightly
-        include:
+        combination:
           - containers: node
             targets: js,node,php,neko,cpp,python,interp,jvm
           - containers: node-tcp
@@ -42,7 +42,7 @@ jobs:
         run: lix download
 
       - name: Run Test
-        run: haxe master.hxml -D containers=${{ matrix.containers }} -D targets=${{ matrix.targets }}
+        run: haxe master.hxml -D containers=${{ matrix.combination.containers }} -D targets=${{ matrix.combination.targets }}
 
   release:
     runs-on: ubuntu-latest
