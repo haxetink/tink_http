@@ -18,7 +18,17 @@ jobs:
           - nightly
         combination:
           - containers: node
-            targets: js,node,php,neko,cpp,python,interp,jvm
+            targets: js,node,php
+          - containers: node
+            targets: neko
+          - containers: node
+            targets: cpp
+          - containers: node
+            targets: python
+          - containers: node
+            targets: interp
+          - containers: node
+            targets: jvm
           - containers: node-tcp
             targets: node
 
