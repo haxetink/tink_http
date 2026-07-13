@@ -73,7 +73,16 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 		return
 			if(chunkSize < 0) {
 				switch cursor.seek(LINEBREAK) {
-					case Some(v): remaining = chunkSize = Std.parseInt('0x$v');
+					case Some(v):
+						var size = v.toString();
+						switch size.indexOf(';') { // strip optional chunk extensions
+							case -1: // no extension
+							case i: size = size.substr(0, i);
+						}
+						switch Std.parseInt('0x${size.trim()}') {
+							case null: return Failed(new Error('Invalid chunk size'));
+							case parsed: remaining = chunkSize = parsed;
+						}
 					case None: // do nothing
 				}
 				Progressed;
