@@ -17,6 +17,19 @@ class TcpClient implements ClientObject {
       switch Helpers.checkScheme(req.header.url) {
         case Some(e): cb(Failure(e));
         case None:
+          switch req.header.byName('host') {
+            case Success(_): // ok
+            case Failure(_):
+              var url = req.header.url;
+              var defaultPort = url.scheme == 'https' ? 443 : 80;
+              var host = switch url.host.port {
+                case null: url.host.name;
+                case p if(p == defaultPort): url.host.name;
+                case p: '${url.host.name}:$p';
+              }
+              req = new OutgoingRequest(req.header.concat([new HeaderField('host', host)]), req.body);
+          }
+
           var cnx = Connection.establish({
             host: req.header.url.host.name, 
             port: req.header.url.host.port,
@@ -30,7 +43,18 @@ class TcpClient implements ClientObject {
           });
           
           cnx.source.parse(ResponseHeader.parser())
-            .next(function(parsed) return new IncomingResponse(parsed.a, parsed.b))
+            .next(function(parsed) {
+              var body = switch parsed.a.byName(TRANSFER_ENCODING) {
+                case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
+                  Chunked.decode(parsed.b);
+                case _:
+                  switch parsed.a.getContentLength() {
+                    case Success(len): parsed.b.limit(len);
+                    case Failure(_): parsed.b; // no framing info: read until the connection closes
+                  }
+              }
+              return new IncomingResponse(parsed.a, body);
+            })
             .handle(cb);
       }
     });
