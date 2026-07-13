@@ -187,7 +187,7 @@ abstract HeaderValue(String) from String to String {
   public static function basicAuth(username:String, password:String)
     return 'Basic ' + Base64.encode(Bytes.ofString('$username:$password')).toString();
 
-  static var DAYS = 'Sun,Mon,Tue,Wen,Thu,Fri,Sat'.split(',');
+  static var DAYS = 'Sun,Mon,Tue,Wed,Thu,Fri,Sat'.split(',');
   static var MONTHS = 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
   @:from static public function ofDate(d:Date):HeaderValue
     return DateTools.format(d, DAYS[d.getDay()] + ", %d " + MONTHS[d.getMonth()] + " %Y %H:%M:%S GMT");

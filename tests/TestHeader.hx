@@ -174,4 +174,9 @@ class TestHeader {
 	@:variant('foo', 'bar', 'Basic Zm9vOmJhcg==')
 	public function basicAuth(username:String, password:String, output:String)
 		return assert(HeaderValue.basicAuth(username, password) == output);
+
+	// noon avoids the weekday shifting across timezones
+	@:variant(new Date(2009, 10, 25, 12, 0, 0), 'Wed, 25 Nov 2009')
+	public function ofDate(date:Date, expected:String)
+		return assert((HeaderValue.ofDate(date):String).substr(0, expected.length) == expected);
 }
