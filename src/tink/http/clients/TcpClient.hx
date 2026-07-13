@@ -43,18 +43,9 @@ class TcpClient implements ClientObject {
           });
           
           cnx.source.parse(ResponseHeader.parser())
-            .next(function(parsed) {
-              var body = switch parsed.a.byName(TRANSFER_ENCODING) {
-                case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
-                  Chunked.decode(parsed.b);
-                case _:
-                  switch parsed.a.getContentLength() {
-                    case Success(len): parsed.b.limit(len);
-                    case Failure(_): parsed.b; // no framing info: read until the connection closes
-                  }
-              }
-              return new IncomingResponse(parsed.a, body);
-            })
+            .next(function(parsed)
+              return new IncomingResponse(parsed.a, Helpers.frameResponseBody(req.header.method, parsed.a, parsed.b))
+            )
             .handle(cb);
       }
     });

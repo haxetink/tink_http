@@ -17,6 +17,7 @@ class RunTests {
     new TestHeader(),
       new Sses(),
       new TestChunked(),
+      new TestResponseFraming(),
       new FetchTest(#if php Php #end),
     #end
     ]);
