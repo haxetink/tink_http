@@ -28,6 +28,8 @@ class TestChunked {
   @:variant('3\r\n123\r\n3\r\n123\r\n3\r\n123\r\n0\r\n\r\n', '123123123')
   @:variant('3\r\n123\r\n4\r\nA\r\nB\r\n3\r\n123\r\n0\r\n\r\n', '123A\r\nB123')
   @:variant('A\r\n1234567890\r\n0\r\n\r\n', '1234567890')
+  @:variant('3;foo=bar\r\n123\r\n0\r\n\r\n', '123') // chunk with extension
+  @:variant('3;a;b=c\r\n123\r\n0;done\r\n\r\n', '123') // multiple extensions, incl. on last chunk
   public function decode(input:IdealSource, output:String) {
     Chunked.decode(input).all()
       .next(decoded -> asserts.assert(decoded.toString() == output))
