@@ -17,6 +17,20 @@ class TcpClient implements ClientObject {
       switch Helpers.checkScheme(req.header.url) {
         case Some(e): cb(Failure(e));
         case None:
+          
+          function addHeaders(headers:Array<HeaderField>)
+            req = new OutgoingRequest(req.header.concat(headers), req.body);
+          
+          switch req.header.byName('connection') {
+            case Success((_:String).toLowerCase() => 'close'):
+              // ok
+            case Success(v):
+              cb(Failure(new Error('Only "Connection: Close" is supported. But specified as "$v"')));
+              return;
+            case Failure(_):
+              addHeaders([new HeaderField('connection', 'close')]);
+          }
+          
           switch req.header.byName('host') {
             case Success(_): // ok
             case Failure(_):
@@ -27,7 +41,7 @@ class TcpClient implements ClientObject {
                 case p if(p == defaultPort): url.host.name;
                 case p: '${url.host.name}:$p';
               }
-              req = new OutgoingRequest(req.header.concat([new HeaderField('host', host)]), req.body);
+              addHeaders([new HeaderField('host', host)]);
           }
 
           var cnx = Connection.establish({
