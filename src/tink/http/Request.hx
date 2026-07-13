@@ -172,7 +172,7 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
               }
             case Failure(_):
               switch [parts.a.method, parts.a.byName(TRANSFER_ENCODING)] {
-                case [GET | OPTIONS, _]: Source.EMPTY;
+                case [GET | HEAD | OPTIONS, _]: Source.EMPTY;
                 case [_, Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings)] if(encodings.indexOf('chunked') != -1): Chunked.decode(parts.b);
                 case _: return new Error(411, 'Content-Length header missing');
               }
