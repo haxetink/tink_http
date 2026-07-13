@@ -86,6 +86,19 @@ class ChunkedParser implements StreamParserObject<Chunk> {
 					case None: // do nothing
 				}
 				Progressed;
+			} else if(chunkSize == 0) {
+				// last-chunk: consume trailer-section until final CRLF (RFC 9112 §7.1.2)
+				switch cursor.seek(LINEBREAK) {
+					case Some(v):
+						if(v.length == 0) {
+							reset();
+							Done(Chunk.EMPTY);
+						} else {
+							Progressed; // discard trailer field
+						}
+					case None:
+						Progressed;
+				}
 			} else {
 				final length = min(cursor.length, remaining);
 				final data = cursor.sweep(length);
