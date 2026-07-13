@@ -193,4 +193,17 @@ class TestHeader {
 			.handle(asserts.handle);
 		return asserts;
 	}
+
+	// HEAD requests typically carry no body, so a missing Content-Length must not fail with 411
+	public function parseHeadRequestHasNoBody() {
+		var raw:IdealSource = 'HEAD / HTTP/1.1\r\nHost: example.com\r\n\r\n';
+		IncomingRequest.parse('127.0.0.1', raw)
+			.next(function(req) return switch req.body {
+				case Plain(source): source.all();
+				case Parsed(_): new Error('unexpected parsed body');
+			})
+			.next(function(chunk) return asserts.assert(chunk.toString() == ''))
+			.handle(asserts.handle);
+		return asserts;
+	}
 }
