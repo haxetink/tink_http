@@ -40,7 +40,14 @@ class SocketClient implements ClientObject {
           
           switch req.header.byName('host') {
             case Success(_): // ok
-            case Failure(_): addHeaders([new HeaderField('host', req.header.url.host.name)]);
+            case Failure(_):
+              var defaultPort = req.header.url.scheme == 'https' ? 443 : 80;
+              var host = switch req.header.url.host.port {
+                case null: req.header.url.host.name;
+                case p if(p == defaultPort): req.header.url.host.name;
+                case p: '${req.header.url.host.name}:$p';
+              }
+              addHeaders([new HeaderField('host', host)]);
           }
           
           var hostname = req.header.url.host.name;
