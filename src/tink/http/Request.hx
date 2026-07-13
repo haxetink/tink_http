@@ -163,11 +163,17 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
           parts.a,
           Plain(switch parts.a.getContentLength() {
             case Success(len):
-              parts.b.limit(len);
+              // RFC 7230 §3.3.3: a chunked Transfer-Encoding takes precedence over Content-Length
+              switch parts.a.byName(TRANSFER_ENCODING) {
+                case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
+                  Chunked.decode(parts.b);
+                case _:
+                  parts.b.limit(len);
+              }
             case Failure(_):
               switch [parts.a.method, parts.a.byName(TRANSFER_ENCODING)] {
                 case [GET | OPTIONS, _]: Source.EMPTY;
-                case [_, Success((_:String).split(',').map(StringTools.trim) => encodings)] if(encodings.indexOf('chunked') != -1): Chunked.decode(parts.b);
+                case [_, Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings)] if(encodings.indexOf('chunked') != -1): Chunked.decode(parts.b);
                 case _: return new Error(411, 'Content-Length header missing');
               }
           })

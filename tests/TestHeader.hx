@@ -179,4 +179,18 @@ class TestHeader {
 	@:variant(new Date(2009, 10, 25, 12, 0, 0), 'Wed, 25 Nov 2009')
 	public function ofDate(date:Date, expected:String)
 		return assert((HeaderValue.ofDate(date):String).substr(0, expected.length) == expected);
+
+	// a chunked Transfer-Encoding must be used even when Content-Length is present (RFC 7230 §3.3.3),
+	// and the token match must be case-insensitive
+	public function parseBodyPrefersTransferEncoding() {
+		var raw:IdealSource = 'POST / HTTP/1.1\r\nContent-Length: 999\r\nTransfer-Encoding: Chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n';
+		IncomingRequest.parse('127.0.0.1', raw)
+			.next(function(req) return switch req.body {
+				case Plain(source): source.all();
+				case Parsed(_): new Error('unexpected parsed body');
+			})
+			.next(function(chunk) return asserts.assert(chunk.toString() == '123'))
+			.handle(asserts.handle);
+		return asserts;
+	}
 }
