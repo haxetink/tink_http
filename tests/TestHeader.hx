@@ -21,7 +21,7 @@ class TestHeader {
 	static public var credentials(default, null) = 'usr:pwd';
 	static public var auth(default, null) = HeaderValue.basicAuth(credentials.split(':')[0], credentials.split(':')[1]);
 	@:describe('Build Outgoing Request Header')
-	@:variant(GET, 'https://www.example.com', HTTP1_1, [], 'GET / HTTP/1.1\r\n\r\n\r\n')
+	@:variant(GET, 'https://www.example.com', HTTP1_1, [], 'GET / HTTP/1.1\r\n\r\n')
 	@:variant(GET, 'https://www.example.com', HTTP2, [new tink.http.Header.HeaderField('host', 'v')], 'GET / HTTP/2\r\nhost: v\r\n\r\n')
 	@:variant(GET, 'https://${TestHeader.credentials}@www.example.com', HTTP2, [], 'GET / HTTP/2\r\nauthorization: ${TestHeader.auth}\r\n\r\n')
 	@:variant(GET, 'https://www.example.com', HTTP2, [new tink.http.Header.HeaderField(AUTHORIZATION, TestHeader.auth)], 'GET / HTTP/2\r\nauthorization: ${TestHeader.auth}\r\n\r\n')
@@ -31,7 +31,7 @@ class TestHeader {
 	}
 	#end
 
-	@:variant(200, 'OK', HTTP1_1, [], 'HTTP/1.1 200 OK\r\n\r\n\r\n')
+	@:variant(200, 'OK', HTTP1_1, [], 'HTTP/1.1 200 OK\r\n\r\n')
 	@:variant(403, 'Forbidden', HTTP2, [new tink.http.Header.HeaderField('content-length', '0')], 'HTTP/2 403 Forbidden\r\ncontent-length: 0\r\n\r\n')
 	public function buildResponseHeader(code:Int, reason:String, version:Protocol, fields:Array<HeaderField>, str:String) {
 		var header = new ResponseHeader(code, reason, fields, version);

@@ -140,7 +140,7 @@ class Header {
     inline function get_LINEBREAK() return '\r\n';
 
   public function toString()
-    return [for (f in fields) f.toString()].join(LINEBREAK) + LINEBREAK + LINEBREAK;
+    return [for (f in fields) f.toString() + LINEBREAK].join('') + LINEBREAK;
 
   inline function headerNotFound(name)
     return 'No $name header found';
