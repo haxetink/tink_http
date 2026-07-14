@@ -94,16 +94,7 @@ class FlashSocketClient implements ClientObject {
       
       source.parse(ResponseHeader.parser()).handle(function(o) switch o {
         case Success(parsed):
-          var body = switch parsed.a.byName(TRANSFER_ENCODING) {
-            case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
-              Chunked.decode(parsed.b);
-            case _:
-              switch parsed.a.getContentLength() {
-                case Success(len): parsed.b.limit(len);
-                case Failure(_): parsed.b; // no framing info: read until the connection closes
-              }
-          }
-          cb(Success(new IncomingResponse(parsed.a, body)));
+          cb(Success(new IncomingResponse(parsed.a, Helpers.frameResponseBody(req.header.method, parsed.a, parsed.b))));
         case Failure(e): cb(Failure(e));
       });
       
