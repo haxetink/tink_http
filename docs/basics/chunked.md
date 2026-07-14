@@ -40,4 +40,4 @@ OutgoingResponse.chunked(OK, 'text/plain', null, source);
 
 When parsing raw HTTP with `IncomingRequest.parse()`, a request body with `Transfer-Encoding: chunked` is automatically decoded via `Chunked.decode()`.
 
-This applies to non-GET/OPTIONS requests that lack a `Content-Length` header but include `chunked` in `Transfer-Encoding`.
+This applies whenever `chunked` appears in `Transfer-Encoding`, including for GET, HEAD, and OPTIONS requests without a `Content-Length` header.
