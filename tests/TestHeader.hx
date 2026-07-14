@@ -206,4 +206,20 @@ class TestHeader {
 			.handle(asserts.handle);
 		return asserts;
 	}
+
+	// RFC 9112 §6.3: chunked Transfer-Encoding must be decoded even for GET/HEAD/OPTIONS without Content-Length
+	@:variant(GET)
+	@:variant(HEAD)
+	@:variant(OPTIONS)
+	public function parseChunkedTransferEncodingBeforeMethod(method:Method) {
+		var raw:IdealSource = '$method / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n';
+		IncomingRequest.parse('127.0.0.1', raw)
+			.next(function(req) return switch req.body {
+				case Plain(source): source.all();
+				case Parsed(_): new Error('unexpected parsed body');
+			})
+			.next(function(chunk) return asserts.assert(chunk.toString() == '123'))
+			.handle(asserts.handle);
+		return asserts;
+	}
 }
