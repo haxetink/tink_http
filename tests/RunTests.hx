@@ -6,7 +6,8 @@ import tink.http.clients.*;
 
 class RunTests {
   static function main() {
-    
+    HttpbinConfig.bootstrapSslCa();
+
     var port = switch Env.getDefine('port') {
       case null: null;
       case v: Std.parseInt(v);
@@ -24,9 +25,9 @@ class RunTests {
     #if !no_client
     for(client in Context.clients) {
       #if !container_only
-        tests.push(TestSuite.make(new TestHttp(client, Httpbin(false)), '$client -> http://httpbin.io'));
+        tests.push(TestSuite.make(new TestHttp(client, Httpbin(false)), '$client -> ${HttpbinConfig.url}'));
         #if (cs || lua) if(client != Socket) #end // no support for ssl socket yet
-        tests.push(TestSuite.make(new TestHttp(client, Httpbin(true)), '$client -> https://httpbin.io'));
+        tests.push(TestSuite.make(new TestHttp(client, Httpbin(true)), '$client -> ${HttpbinConfig.secureUrl}'));
       #end
       
       if(port != null) tests = tests.concat([
