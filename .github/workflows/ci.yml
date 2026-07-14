@@ -43,6 +43,74 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Install Chrome dependencies for Puppeteer
+        if: contains(matrix.combination.targets, 'js')
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          # Ubuntu 24.04 uses t64 package names; older images still ship libasound2
+          if apt-cache show libasound2t64 >/dev/null 2>&1; then
+            ALSA=libasound2t64
+          else
+            ALSA=libasound2
+          fi
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates fonts-liberation libnss3-tools \
+            libnspr4 libnss3 \
+            libatk1.0-0 libatk-bridge2.0-0 libcups2 libdbus-1-3 \
+            libdrm2 libgbm1 libgtk-3-0 libpango-1.0-0 libpangocairo-1.0-0 \
+            libcairo2 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 \
+            libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
+            libxss1 libxtst6 libxkbcommon0 "$ALSA"
+          # Prefetch Chrome into the default cache so travix/js works under act --bind
+          # (host node_modules can skip puppeteer's postinstall while container cache is empty).
+          npx --yes puppeteer@24 browsers install chrome
+          # travix only writes bin/js/run.js when missing; seed one that trusts mkcert HTTPS
+          # (browser fetch does not honor NODE_EXTRA_CA_CERTS / OS store reliably).
+          mkdir -p bin/js
+          cat > bin/js/run.js <<'EOF'
+          const puppeteer = require("puppeteer");
+          const handler = require("serve-handler");
+          const http = require("http");
+          const url = "http://localhost:8912/run.html";
+
+          const server = http.createServer((request, response) => {
+          	return handler(request, response, { public: __dirname });
+          });
+
+          server.listen(8912, async () => {
+          	const browser = await puppeteer.launch({
+          		headless: true,
+          		devtools: true,
+          		ignoreHTTPSErrors: true,
+          		args: [
+          			"--no-sandbox",
+          			"--disable-setuid-sandbox",
+          			"--disable-web-security",
+          			"--disable-features=IsolateOrigins",
+          			"--disable-site-isolation-trials",
+          			"--ignore-certificate-errors",
+          		],
+          	});
+          	const page = await browser.newPage();
+          	page.on("console", (msg) => console.log(msg.text()));
+          	page.on("pageerror", (err) => console.log(err));
+          	await Promise.all([
+          		page.exposeFunction("travixPrint", (s) => process.stdout.write(s)),
+          		page.exposeFunction("travixPrintln", (s) => process.stdout.write(s + "\n")),
+          		page.exposeFunction("travixExit", (code) => process.exit(code)),
+          		page.exposeFunction("travixThrow", (e) => {
+          			console.error("Uncaught error: ", e);
+          			process.exit(1);
+          		}),
+          	]);
+          	await page.evaluateOnNewDocument(() =>
+          		console.log(window.navigator.userAgent)
+          	);
+          	await page.goto(url);
+          });
+          EOF
+
       - name: Cache Haxe
         uses: actions/cache@v6
         with:
@@ -66,15 +134,28 @@ jobs:
           curl -fsSL -o /tmp/mkcert "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64"
           chmod +x /tmp/mkcert
           sudo mv /tmp/mkcert /usr/local/bin/mkcert
+          # certutil (libnss3-tools) improves browser CA install when present
           mkcert -install
 
-          CERT_DIR="${GITHUB_WORKSPACE}/.httpbin-certs"
+          # Workspace path so nested docker under act --bind can mount the certs
+          # Unique ports/names under act so parallel matrix cells don't collide on one Docker host
+          if [ "${ACT:-}" = "true" ]; then
+            HTTP_PORT=$((18000 + RANDOM % 1000))
+            HTTPS_PORT=$((19000 + RANDOM % 1000))
+            SUFFIX="$HTTP_PORT"
+          else
+            HTTP_PORT=8080
+            HTTPS_PORT=8443
+            SUFFIX="gha"
+          fi
+          CERT_DIR="${GITHUB_WORKSPACE}/.httpbin-certs/${SUFFIX}"
           mkdir -p "$CERT_DIR"
           mkcert -cert-file "$CERT_DIR/cert.pem" -key-file "$CERT_DIR/key.pem" \
-            localhost 127.0.0.1
-          # go-httpbin/nginx run as non-root; ensure mounted key is readable
+            localhost 127.0.0.1 host.docker.internal
+          # go-httpbin runs as non-root; ensure mounted key is readable
           chmod 644 "$CERT_DIR/cert.pem" "$CERT_DIR/key.pem"
 
+          # Keep CA in the workspace so -D httpbin_ca stays valid across processes
           cp "$(mkcert -CAROOT)/rootCA.pem" "$CERT_DIR/rootCA.pem"
           HTTPBIN_CA="$CERT_DIR/rootCA.pem"
           echo "HTTPBIN_CA=$HTTPBIN_CA" >> "$GITHUB_ENV"
@@ -83,14 +164,14 @@ jobs:
           echo "REQUESTS_CA_BUNDLE=$HTTPBIN_CA" >> "$GITHUB_ENV"
           echo "CURL_CA_BUNDLE=$HTTPBIN_CA" >> "$GITHUB_ENV"
 
+          # Also drop into the OS trust store (helps Curl without relying on env alone)
           if [ -d /usr/local/share/ca-certificates ]; then
             sudo cp "$HTTPBIN_CA" /usr/local/share/ca-certificates/mkcert-httpbin.crt
             sudo update-ca-certificates || true
           fi
 
+          # Prefer localhost for cert SAN / SNI matching
           HTTPBIN_HOST=localhost
-          HTTP_PORT=8080
-          HTTPS_PORT=8443
           echo "HTTPBIN_URL=http://${HTTPBIN_HOST}:${HTTP_PORT}" >> "$GITHUB_ENV"
           echo "HTTPBIN_SECURE_URL=https://${HTTPBIN_HOST}:${HTTPS_PORT}" >> "$GITHUB_ENV"
 
@@ -107,24 +188,27 @@ jobs:
               CACERTS="$JAVA_HOME_DIR/jre/lib/security/cacerts"
             fi
             if [ -f "$CACERTS" ]; then
-              sudo keytool -importcert -noprompt -alias mkcert-httpbin \
+              sudo keytool -importcert -noprompt -alias "mkcert-httpbin${SUFFIX}" \
                 -file "$HTTPBIN_CA" -keystore "$CACERTS" -storepass changeit || true
             fi
           fi
 
-          docker rm -f tink-httpbin-http tink-httpbin-https >/dev/null 2>&1 || true
-          docker network rm tink-httpbin-net >/dev/null 2>&1 || true
-          docker network create tink-httpbin-net >/dev/null
+          NAME_HTTP="tink-httpbin-http${SUFFIX:+-$SUFFIX}"
+          NAME_HTTPS="tink-httpbin-https${SUFFIX:+-$SUFFIX}"
+          NET="tink-httpbin-net${SUFFIX:+-$SUFFIX}"
+          docker rm -f "$NAME_HTTP" "$NAME_HTTPS" >/dev/null 2>&1 || true
+          docker network rm "$NET" >/dev/null 2>&1 || true
+          docker network create "$NET" >/dev/null
 
-          docker run -d --name tink-httpbin-http --network tink-httpbin-net \
+          docker run -d --name "$NAME_HTTP" --network "$NET" \
             ghcr.io/mccutchen/go-httpbin:2.18.3 \
             /bin/go-httpbin -port 8080
 
           # nginx terminates TLS 1.2 (mbedtls-friendly) and proxies HTTP/HTTPS to go-httpbin
-          sed "s/HTTPBIN_UPSTREAM/tink-httpbin-http/g" \
+          sed "s/HTTPBIN_UPSTREAM/$NAME_HTTP/g" \
             "${GITHUB_WORKSPACE}/.github/httpbin-nginx.conf" > "$CERT_DIR/nginx.conf"
 
-          docker run -d --name tink-httpbin-https --network tink-httpbin-net \
+          docker run -d --name "$NAME_HTTPS" --network "$NET" \
             -p "${HTTP_PORT}:80" \
             -p "${HTTPS_PORT}:443" \
             -v "$CERT_DIR/cert.pem:/certs/cert.pem:ro" \
@@ -141,8 +225,8 @@ jobs:
             sleep 1
           done
           echo "httpbin failed to become ready (${HTTPBIN_HOST}:${HTTP_PORT}/${HTTPS_PORT})"
-          docker logs tink-httpbin-http || true
-          docker logs tink-httpbin-https || true
+          docker logs "$NAME_HTTP" || true
+          docker logs "$NAME_HTTPS" || true
           exit 1
 
       - name: Run Test
