@@ -44,6 +44,67 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Install Chrome dependencies for Puppeteer
+        if: contains(matrix.combination.targets, 'js')
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          if apt-cache show libasound2t64 >/dev/null 2>&1; then
+            ALSA=libasound2t64
+          else
+            ALSA=libasound2
+          fi
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates fonts-liberation libnss3-tools \
+            libnspr4 libnss3 libgbm1 libx11-xcb1 libxcomposite1 libxdamage1 \
+            libxfixes3 libxrandr2 libxkbcommon0 libatk1.0-0 libatk-bridge2.0-0 \
+            libcups2 libdrm2 libgtk-3-0 "$ALSA"
+          # travix only writes bin/js/run.js when missing; seed one that trusts mkcert HTTPS
+          # (browser fetch does not honor NODE_EXTRA_CA_CERTS).
+          mkdir -p bin/js
+          cat > bin/js/run.js <<'EOF'
+          const puppeteer = require("puppeteer");
+          const handler = require("serve-handler");
+          const http = require("http");
+          const url = "http://localhost:8912/run.html";
+
+          const server = http.createServer((request, response) => {
+          	return handler(request, response, { public: __dirname });
+          });
+
+          server.listen(8912, async () => {
+          	const browser = await puppeteer.launch({
+          		headless: true,
+          		devtools: true,
+          		ignoreHTTPSErrors: true,
+          		args: [
+          			"--no-sandbox",
+          			"--disable-setuid-sandbox",
+          			"--disable-web-security",
+          			"--disable-features=IsolateOrigins",
+          			"--disable-site-isolation-trials",
+          			"--ignore-certificate-errors",
+          		],
+          	});
+          	const page = await browser.newPage();
+          	page.on("console", (msg) => console.log(msg.text()));
+          	page.on("pageerror", (err) => console.log(err));
+          	await Promise.all([
+          		page.exposeFunction("travixPrint", (s) => process.stdout.write(s)),
+          		page.exposeFunction("travixPrintln", (s) => process.stdout.write(s + "\n")),
+          		page.exposeFunction("travixExit", (code) => process.exit(code)),
+          		page.exposeFunction("travixThrow", (e) => {
+          			console.error("Uncaught error: ", e);
+          			process.exit(1);
+          		}),
+          	]);
+          	await page.evaluateOnNewDocument(() =>
+          		console.log(window.navigator.userAgent)
+          	);
+          	await page.goto(url);
+          });
+          EOF
+
       - name: Cache Haxe
         uses: actions/cache@v6
         with:
