@@ -4,6 +4,7 @@ import tink.Url;
 import tink.http.Chunked;
 import tink.http.Header;
 import tink.http.Method;
+import tink.http.Request;
 import tink.http.Response;
 
 using tink.io.Source;
@@ -22,6 +23,39 @@ class Helpers {
 	}
 	public static inline function invalidSchemeError(url:Url) {
 		return new Error(BadRequest, 'Invalid Scheme "${url.scheme}" (expected http/https) in URL: ${url.toString()}');
+	}
+
+	/**
+	 * For socket clients that do not reuse connections yet:
+	 * ensure `Connection: close` and inject `Host` when missing.
+	 */
+	public static function addSocketHeaders(req:OutgoingRequest):Outcome<OutgoingRequest, Error> {
+		function addHeaders(headers:Array<HeaderField>)
+			req = new OutgoingRequest(req.header.concat(headers), req.body);
+
+		switch req.header.byName('connection') {
+			case Success((_:String).toLowerCase() => 'close'):
+				// ok
+			case Success(v):
+				return Failure(new Error('Only "Connection: Close" is supported. But specified as "$v"'));
+			case Failure(_):
+				addHeaders([new HeaderField('connection', 'close')]);
+		}
+
+		switch req.header.byName('host') {
+			case Success(_): // ok
+			case Failure(_):
+				final url = req.header.url;
+				final defaultPort = url.scheme == 'https' ? 443 : 80;
+				final host = switch url.host.port {
+					case null: url.host.name;
+					case p if(p == defaultPort): url.host.name;
+					case p: '${url.host.name}:$p';
+				}
+				addHeaders([new HeaderField('host', host)]);
+		}
+
+		return Success(req);
 	}
 
 	/**
