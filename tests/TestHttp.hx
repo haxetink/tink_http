@@ -48,10 +48,10 @@ class TestHttp {
     
     switch this.target = target {
       case Httpbin(true):
-        url = 'https://httpbin.io';
+        url = HttpbinConfig.secureUrl;
         converter = new HttpbinConverter();
       case Httpbin(false):
-        url = 'http://httpbin.io';
+        url = HttpbinConfig.url;
         converter = new HttpbinConverter();
       case Local(port):
         url = 'http://localhost:$port';
