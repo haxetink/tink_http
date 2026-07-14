@@ -36,6 +36,13 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
 
+      - name: Install JDK
+        if: contains(matrix.combination.targets, 'jvm')
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Cache Haxe
         uses: actions/cache@v6
         with:
@@ -51,8 +58,101 @@ jobs:
       - name: Install Haxe Libraries
         run: lix download
 
+      - name: Start local httpbin (HTTP + HTTPS)
+        run: |
+          set -euo pipefail
+
+          # mkcert local CA (system trust for Curl/PHP/Chrome; root PEM for Node/JVM/mbedtls)
+          curl -fsSL -o /tmp/mkcert "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64"
+          chmod +x /tmp/mkcert
+          sudo mv /tmp/mkcert /usr/local/bin/mkcert
+          mkcert -install
+
+          CERT_DIR="${GITHUB_WORKSPACE}/.httpbin-certs"
+          mkdir -p "$CERT_DIR"
+          mkcert -cert-file "$CERT_DIR/cert.pem" -key-file "$CERT_DIR/key.pem" \
+            localhost 127.0.0.1
+          # go-httpbin/nginx run as non-root; ensure mounted key is readable
+          chmod 644 "$CERT_DIR/cert.pem" "$CERT_DIR/key.pem"
+
+          cp "$(mkcert -CAROOT)/rootCA.pem" "$CERT_DIR/rootCA.pem"
+          HTTPBIN_CA="$CERT_DIR/rootCA.pem"
+          echo "HTTPBIN_CA=$HTTPBIN_CA" >> "$GITHUB_ENV"
+          echo "NODE_EXTRA_CA_CERTS=$HTTPBIN_CA" >> "$GITHUB_ENV"
+          echo "SSL_CERT_FILE=$HTTPBIN_CA" >> "$GITHUB_ENV"
+          echo "REQUESTS_CA_BUNDLE=$HTTPBIN_CA" >> "$GITHUB_ENV"
+          echo "CURL_CA_BUNDLE=$HTTPBIN_CA" >> "$GITHUB_ENV"
+
+          if [ -d /usr/local/share/ca-certificates ]; then
+            sudo cp "$HTTPBIN_CA" /usr/local/share/ca-certificates/mkcert-httpbin.crt
+            sudo update-ca-certificates || true
+          fi
+
+          HTTPBIN_HOST=localhost
+          HTTP_PORT=8080
+          HTTPS_PORT=8443
+          echo "HTTPBIN_URL=http://${HTTPBIN_HOST}:${HTTP_PORT}" >> "$GITHUB_ENV"
+          echo "HTTPBIN_SECURE_URL=https://${HTTPBIN_HOST}:${HTTPS_PORT}" >> "$GITHUB_ENV"
+
+          # JVM trust store (does not use OS CAs)
+          if command -v keytool >/dev/null 2>&1; then
+            KEYTOOL="$(command -v keytool)"
+            if JAVA_BIN="$(readlink -f "$KEYTOOL" 2>/dev/null)"; then
+              JAVA_HOME_DIR="$(dirname "$(dirname "$JAVA_BIN")")"
+            else
+              JAVA_HOME_DIR="$(dirname "$(dirname "$KEYTOOL")")"
+            fi
+            CACERTS="$JAVA_HOME_DIR/lib/security/cacerts"
+            if [ ! -f "$CACERTS" ]; then
+              CACERTS="$JAVA_HOME_DIR/jre/lib/security/cacerts"
+            fi
+            if [ -f "$CACERTS" ]; then
+              sudo keytool -importcert -noprompt -alias mkcert-httpbin \
+                -file "$HTTPBIN_CA" -keystore "$CACERTS" -storepass changeit || true
+            fi
+          fi
+
+          docker rm -f tink-httpbin-http tink-httpbin-https >/dev/null 2>&1 || true
+          docker network rm tink-httpbin-net >/dev/null 2>&1 || true
+          docker network create tink-httpbin-net >/dev/null
+
+          docker run -d --name tink-httpbin-http --network tink-httpbin-net \
+            ghcr.io/mccutchen/go-httpbin:2.18.3 \
+            /bin/go-httpbin -port 8080
+
+          # nginx terminates TLS 1.2 (mbedtls-friendly) and proxies HTTP/HTTPS to go-httpbin
+          sed "s/HTTPBIN_UPSTREAM/tink-httpbin-http/g" \
+            "${GITHUB_WORKSPACE}/.github/httpbin-nginx.conf" > "$CERT_DIR/nginx.conf"
+
+          docker run -d --name tink-httpbin-https --network tink-httpbin-net \
+            -p "${HTTP_PORT}:80" \
+            -p "${HTTPS_PORT}:443" \
+            -v "$CERT_DIR/cert.pem:/certs/cert.pem:ro" \
+            -v "$CERT_DIR/key.pem:/certs/key.pem:ro" \
+            -v "$CERT_DIR/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+            nginx:1.27-alpine
+
+          for i in $(seq 1 30); do
+            if curl -sf "http://${HTTPBIN_HOST}:${HTTP_PORT}/get" >/dev/null \
+              && curl -sf "https://${HTTPBIN_HOST}:${HTTPS_PORT}/get" >/dev/null; then
+              echo "httpbin ready at ${HTTPBIN_HOST}:${HTTP_PORT}/${HTTPS_PORT}"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "httpbin failed to become ready (${HTTPBIN_HOST}:${HTTP_PORT}/${HTTPS_PORT})"
+          docker logs tink-httpbin-http || true
+          docker logs tink-httpbin-https || true
+          exit 1
+
       - name: Run Test
-        run: haxe master.hxml -D containers=${{ matrix.combination.containers }} -D targets=${{ matrix.combination.targets }}
+        run: >
+          haxe master.hxml
+          -D containers=${{ matrix.combination.containers }}
+          -D targets=${{ matrix.combination.targets }}
+          -D httpbin_url=${{ env.HTTPBIN_URL }}
+          -D httpbin_secure_url=${{ env.HTTPBIN_SECURE_URL }}
+          -D httpbin_ca=${{ env.HTTPBIN_CA }}
 
   release:
     runs-on: ubuntu-latest
