@@ -142,6 +142,18 @@ class Context {
   static function targetArgs(port: Int) {
     var args = ['-lib tink_unittest', '-lib deep_equal', '-D port=$port', '-main RunTests'];
     if(Env.getDefine('container_only') != null) args.push('-D container_only');
+    switch Env.getDefine('httpbin_url') {
+      case null:
+      case v: args.push('-D httpbin_url=$v');
+    }
+    switch Env.getDefine('httpbin_secure_url') {
+      case null:
+      case v: args.push('-D httpbin_secure_url=$v');
+    }
+    switch Env.getDefine('httpbin_ca') {
+      case null:
+      case v: args.push('-D httpbin_ca=$v');
+    }
     return args;
   }
     
@@ -156,12 +168,14 @@ class Context {
     'node' => travixTarget.bind('node'),
     'php' => travixTarget.bind('php'),
     'java' => travixTarget.bind('java'),
+    'jvm' => travixTarget.bind('jvm'),
     'cs' => travixTarget.bind('cs'),
     'cpp' => travixTarget.bind('cpp'),
     'js' => travixTarget.bind('js'),
     'lua' => travixTarget.bind('lua'),
     'python' => travixTarget.bind('python'),
     'hl' => travixTarget.bind('hl'),
+    'interp' => travixTarget.bind('interp'),
     
     'neko-tcp' => tcpTarget.bind('neko'),
   ];
