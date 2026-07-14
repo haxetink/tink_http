@@ -31,6 +31,15 @@ jobs:
             targets: jvm
           - containers: node-tcp
             targets: node
+        exclude:
+          - haxe-version: nightly
+            combination:
+              containers: node
+              targets: neko
+          - haxe-version: nightly
+            combination:
+              containers: node
+              targets: cpp
 
     steps:
       - name: Check out repo
