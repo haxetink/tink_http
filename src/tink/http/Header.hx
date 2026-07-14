@@ -200,43 +200,149 @@ abstract HeaderValue(String) from String to String {
 
 enum abstract HeaderName(String) to String {
 
-  var REFERER                          = 'referer';
-  var HOST                             = 'host';
-
-  var SET_COOKIE                       = 'set-cookie';
-  var COOKIE                           = 'cookie';
-
-  var CONTENT_TYPE                     = 'content-type';
-  var CONTENT_LENGTH                   = 'content-length';
-  var CONTENT_DISPOSITION              = 'content-disposition';
-  var CONTENT_RANGE                    = 'content-range';
-
-  var ACCEPT                           = 'accept';
-  var ACCEPT_ENCODING                  = 'accept-encoding';
-
-  var TRANSFER_ENCODING                = 'transfer-encoding';
-  
-  var RANGE                            = 'range';
-
-  var LOCATION                         = 'location';
+  // Authentication
   var AUTHORIZATION                    = 'authorization';
+  var PROXY_AUTHENTICATE               = 'proxy-authenticate';
+  var PROXY_AUTHORIZATION              = 'proxy-authorization';
+  var WWW_AUTHENTICATE                 = 'www-authenticate';
 
-  var ORIGIN                           = 'origin';
+  // Caching
+  var AGE                              = 'age';
+  var CACHE_CONTROL                    = 'cache-control';
+  var CLEAR_SITE_DATA                  = 'clear-site-data';
+  var EXPIRES                          = 'expires';
+  var PRAGMA                           = 'pragma';
+  var WARNING                          = 'warning';
+
+  // Conditionals
+  var ETAG                             = 'etag';
+  var IF_MATCH                         = 'if-match';
+  var IF_MODIFIED_SINCE                = 'if-modified-since';
+  var IF_NONE_MATCH                    = 'if-none-match';
+  var IF_UNMODIFIED_SINCE              = 'if-unmodified-since';
+  var LAST_MODIFIED                    = 'last-modified';
   var VARY                             = 'vary';
 
-  var CACHE_CONTROL                    = 'cache-control';
-  var EXPIRES                          = 'expires';
+  // Connection management
+  var CONNECTION                       = 'connection';
+  var KEEP_ALIVE                       = 'keep-alive';
+  var PROXY_CONNECTION                 = 'proxy-connection';
 
-  var ACCESS_CONTROL_REQUEST_METHOD    = 'access-control-request-method';
-  var ACCESS_CONTROL_REQUEST_HEADERS   = 'access-control-request-headers';
-  var ACCESS_CONTROL_ALLOW_ORIGIN      = 'access-control-allow-origin';
+  // Content negotiation
+  var ACCEPT                           = 'accept';
+  var ACCEPT_CHARSET                   = 'accept-charset';
+  var ACCEPT_ENCODING                  = 'accept-encoding';
+  var ACCEPT_LANGUAGE                  = 'accept-language';
+  var ACCEPT_PATCH                     = 'accept-patch';
+  var ACCEPT_POST                      = 'accept-post';
+
+  // Controls
+  var EXPECT                           = 'expect';
+  var MAX_FORWARDS                     = 'max-forwards';
+
+  // Cookies
+  var COOKIE                           = 'cookie';
+  var SET_COOKIE                       = 'set-cookie';
+
+  // CORS
   var ACCESS_CONTROL_ALLOW_CREDENTIALS = 'access-control-allow-credentials';
+  var ACCESS_CONTROL_ALLOW_HEADERS     = 'access-control-allow-headers';
+  var ACCESS_CONTROL_ALLOW_METHODS     = 'access-control-allow-methods';
+  var ACCESS_CONTROL_ALLOW_ORIGIN      = 'access-control-allow-origin';
   var ACCESS_CONTROL_EXPOSE_HEADERS    = 'access-control-expose-headers';
   var ACCESS_CONTROL_MAX_AGE           = 'access-control-max-age';
-  var ACCESS_CONTROL_ALLOW_METHODS     = 'access-control-allow-methods';
-  var ACCESS_CONTROL_ALLOW_HEADERS     = 'access-control-allow-headers';
-  
+  var ACCESS_CONTROL_REQUEST_HEADERS   = 'access-control-request-headers';
+  var ACCESS_CONTROL_REQUEST_METHOD    = 'access-control-request-method';
+  var ORIGIN                           = 'origin';
+  var TIMING_ALLOW_ORIGIN              = 'timing-allow-origin';
+
+  // Downloads
+  var CONTENT_DISPOSITION              = 'content-disposition';
+
+  // Message body / representation
+  var CONTENT_ENCODING                 = 'content-encoding';
+  var CONTENT_LANGUAGE                 = 'content-language';
+  var CONTENT_LENGTH                   = 'content-length';
+  var CONTENT_LOCATION                 = 'content-location';
+  var CONTENT_TYPE                     = 'content-type';
+
+  // Preferences
+  var PREFER                           = 'prefer';
+  var PREFERENCE_APPLIED               = 'preference-applied';
+
+  // Proxies
+  var FORWARDED                        = 'forwarded';
+  var VIA                              = 'via';
+  var X_FORWARDED_FOR                  = 'x-forwarded-for';
+  var X_FORWARDED_HOST                 = 'x-forwarded-host';
+  var X_FORWARDED_PROTO                = 'x-forwarded-proto';
+  var X_REAL_IP                        = 'x-real-ip';
+
+  // Range requests
+  var ACCEPT_RANGES                    = 'accept-ranges';
+  var CONTENT_RANGE                    = 'content-range';
+  var IF_RANGE                         = 'if-range';
+  var RANGE                            = 'range';
+
+  // Redirects
+  var LOCATION                         = 'location';
+  var REFRESH                          = 'refresh';
+
+  // Request context
+  var FROM                             = 'from';
+  var HOST                             = 'host';
+  var REFERER                          = 'referer';
+  var REFERRER_POLICY                  = 'referrer-policy';
   var USER_AGENT                       = 'user-agent';
+
+  // Response context
+  var ALLOW                            = 'allow';
+  var DATE                             = 'date';
+  var SERVER                           = 'server';
+
+  // Security
+  var CONTENT_SECURITY_POLICY          = 'content-security-policy';
+  var CONTENT_SECURITY_POLICY_REPORT_ONLY = 'content-security-policy-report-only';
+  var CROSS_ORIGIN_EMBEDDER_POLICY     = 'cross-origin-embedder-policy';
+  var CROSS_ORIGIN_OPENER_POLICY       = 'cross-origin-opener-policy';
+  var CROSS_ORIGIN_RESOURCE_POLICY     = 'cross-origin-resource-policy';
+  var PERMISSIONS_POLICY               = 'permissions-policy';
+  var STRICT_TRANSPORT_SECURITY        = 'strict-transport-security';
+  var UPGRADE_INSECURE_REQUESTS        = 'upgrade-insecure-requests';
+  var X_CONTENT_TYPE_OPTIONS           = 'x-content-type-options';
+  var X_FRAME_OPTIONS                  = 'x-frame-options';
+  var X_XSS_PROTECTION                 = 'x-xss-protection';
+
+  // Fetch metadata
+  var SEC_FETCH_DEST                   = 'sec-fetch-dest';
+  var SEC_FETCH_MODE                   = 'sec-fetch-mode';
+  var SEC_FETCH_SITE                   = 'sec-fetch-site';
+  var SEC_FETCH_USER                   = 'sec-fetch-user';
+  var SEC_PURPOSE                      = 'sec-purpose';
+
+  // Transfer coding
+  var TE                               = 'te';
+  var TRAILER                          = 'trailer';
+  var TRANSFER_ENCODING                = 'transfer-encoding';
+
+  // WebSockets / upgrades
+  var SEC_WEBSOCKET_ACCEPT             = 'sec-websocket-accept';
+  var SEC_WEBSOCKET_EXTENSIONS         = 'sec-websocket-extensions';
+  var SEC_WEBSOCKET_KEY                = 'sec-websocket-key';
+  var SEC_WEBSOCKET_PROTOCOL           = 'sec-websocket-protocol';
+  var SEC_WEBSOCKET_VERSION            = 'sec-websocket-version';
+  var UPGRADE                          = 'upgrade';
+
+  // Other common / miscellaneous
+  var ALT_SVC                          = 'alt-svc';
+  var LINK                             = 'link';
+  var RETRY_AFTER                      = 'retry-after';
+  var SERVER_TIMING                    = 'server-timing';
+  var SOURCEMAP                        = 'sourcemap';
+  var X_REQUESTED_WITH                 = 'x-requested-with';
+  var X_POWERED_BY                     = 'x-powered-by';
+  var X_REQUEST_ID                     = 'x-request-id';
+  var X_CORRELATION_ID                 = 'x-correlation-id';
 
   inline function new(s) this = s;
 
