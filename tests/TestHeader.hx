@@ -207,6 +207,19 @@ class TestHeader {
 		return asserts;
 	}
 
+	// RFC 9112 §6.3: without Content-Length or chunked TE, body length is zero for all methods
+	public function parsePostWithoutFramingHasEmptyBody() {
+		var raw:IdealSource = 'POST / HTTP/1.1\r\nHost: example.com\r\n\r\n';
+		IncomingRequest.parse('127.0.0.1', raw)
+			.next(function(req) return switch req.body {
+				case Plain(source): source.all();
+				case Parsed(_): new Error('unexpected parsed body');
+			})
+			.next(function(chunk) return asserts.assert(chunk.toString() == ''))
+			.handle(asserts.handle);
+		return asserts;
+	}
+
 	// RFC 9112 §3.2.2: HTTP/1.1 requests without a Host header must be rejected
 	public function parseHttp11MissingHost() {
 		var raw:IdealSource = 'GET / HTTP/1.1\r\n\r\n';

@@ -176,14 +176,12 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
                     parts.b.limit(len);
                 }
               case Failure(_):
+                // RFC 9112 §6.3: without Content-Length or chunked TE, body length is zero for all methods
                 switch parts.a.byName(TRANSFER_ENCODING) {
                   case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
                     Chunked.decode(parts.b);
                   case _:
-                    switch parts.a.method {
-                      case GET | HEAD | OPTIONS: Source.EMPTY;
-                      case _: return new Error(411, 'Content-Length header missing');
-                    }
+                    Source.EMPTY;
                 }
             })
           );
