@@ -212,7 +212,6 @@ enum abstract HeaderName(String) to String {
   var CLEAR_SITE_DATA                  = 'clear-site-data';
   var EXPIRES                          = 'expires';
   var PRAGMA                           = 'pragma';
-  var WARNING                          = 'warning';
 
   // Conditionals
   var ETAG                             = 'etag';
@@ -226,19 +225,15 @@ enum abstract HeaderName(String) to String {
   // Connection management
   var CONNECTION                       = 'connection';
   var KEEP_ALIVE                       = 'keep-alive';
-  var PROXY_CONNECTION                 = 'proxy-connection';
 
   // Content negotiation
   var ACCEPT                           = 'accept';
-  var ACCEPT_CHARSET                   = 'accept-charset';
   var ACCEPT_ENCODING                  = 'accept-encoding';
   var ACCEPT_LANGUAGE                  = 'accept-language';
   var ACCEPT_PATCH                     = 'accept-patch';
-  var ACCEPT_POST                      = 'accept-post';
 
   // Controls
   var EXPECT                           = 'expect';
-  var MAX_FORWARDS                     = 'max-forwards';
 
   // Cookies
   var COOKIE                           = 'cookie';
@@ -289,7 +284,6 @@ enum abstract HeaderName(String) to String {
   var REFRESH                          = 'refresh';
 
   // Request context
-  var FROM                             = 'from';
   var HOST                             = 'host';
   var REFERER                          = 'referer';
   var REFERRER_POLICY                  = 'referrer-policy';
