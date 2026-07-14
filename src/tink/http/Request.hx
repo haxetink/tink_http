@@ -158,28 +158,34 @@ class IncomingRequest extends Message<IncomingRequestHeader, IncomingRequestBody
   static public function parse(clientIp, source:RealSource)
     return
       source.parse(IncomingRequestHeader.parser())
-        .next(function (parts):Promise<IncomingRequest> return new IncomingRequest(
-          clientIp,
-          parts.a,
-          Plain(switch parts.a.getContentLength() {
-            case Success(len):
-              // RFC 7230 §3.3.3: a chunked Transfer-Encoding takes precedence over Content-Length
-              switch parts.a.byName(TRANSFER_ENCODING) {
-                case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
-                  Chunked.decode(parts.b);
-                case _:
-                  parts.b.limit(len);
-              }
-            case Failure(_):
-              // RFC 9112 §6.3: without Content-Length or chunked TE, body length is zero for all methods
-              switch parts.a.byName(TRANSFER_ENCODING) {
-                case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
-                  Chunked.decode(parts.b);
-                case _:
-                  Source.EMPTY;
-              }
-          })
-        ));
+        .next(function (parts):Promise<IncomingRequest> {
+          // RFC 9112 §3.2.2 / RFC 7230 §5.4: HTTP/1.1 requests must include a Host header
+          if (parts.a.protocol == HTTP1_1 && parts.a.get(HOST).length == 0)
+            return new Error(400, 'Host header missing');
+
+          return new IncomingRequest(
+            clientIp,
+            parts.a,
+            Plain(switch parts.a.getContentLength() {
+              case Success(len):
+                // RFC 7230 §3.3.3: a chunked Transfer-Encoding takes precedence over Content-Length
+                switch parts.a.byName(TRANSFER_ENCODING) {
+                  case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
+                    Chunked.decode(parts.b);
+                  case _:
+                    parts.b.limit(len);
+                }
+              case Failure(_):
+                // RFC 9112 §6.3: without Content-Length or chunked TE, body length is zero for all methods
+                switch parts.a.byName(TRANSFER_ENCODING) {
+                  case Success((_:String).toLowerCase().split(',').map(StringTools.trim) => encodings) if(encodings.indexOf('chunked') != -1):
+                    Chunked.decode(parts.b);
+                  case _:
+                    Source.EMPTY;
+                }
+            })
+          );
+        });
 }
 
 enum IncomingRequestBody {

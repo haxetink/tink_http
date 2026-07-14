@@ -183,7 +183,7 @@ class TestHeader {
 	// a chunked Transfer-Encoding must be used even when Content-Length is present (RFC 7230 §3.3.3),
 	// and the token match must be case-insensitive
 	public function parseBodyPrefersTransferEncoding() {
-		var raw:IdealSource = 'POST / HTTP/1.1\r\nContent-Length: 999\r\nTransfer-Encoding: Chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n';
+		var raw:IdealSource = 'POST / HTTP/1.1\r\nHost: example.com\r\nContent-Length: 999\r\nTransfer-Encoding: Chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n';
 		IncomingRequest.parse('127.0.0.1', raw)
 			.next(function(req) return switch req.body {
 				case Plain(source): source.all();
@@ -220,12 +220,51 @@ class TestHeader {
 		return asserts;
 	}
 
+	// RFC 9112 §3.2.2: HTTP/1.1 requests without a Host header must be rejected
+	public function parseHttp11MissingHost() {
+		var raw:IdealSource = 'GET / HTTP/1.1\r\n\r\n';
+		IncomingRequest.parse('127.0.0.1', raw)
+			.handle(function(o) switch o {
+				case Success(_):
+					asserts.fail('expected Host rejection');
+				case Failure(e):
+					asserts.assert(e.code == 400);
+					asserts.assert(e.message == 'Host header missing');
+					asserts.done();
+			});
+		return asserts;
+	}
+
+	public function parseHttp11WithHost() {
+		var raw:IdealSource = 'GET / HTTP/1.1\r\nHost: example.com\r\n\r\n';
+		IncomingRequest.parse('127.0.0.1', raw)
+			.next(function(req) {
+				asserts.assert(req.header.byName(HOST).sure() == 'example.com');
+				return Noise;
+			})
+			.handle(asserts.handle);
+		return asserts;
+	}
+
+	// HTTP/1.0 does not require Host
+	public function parseHttp10MissingHost() {
+		var raw:IdealSource = 'GET / HTTP/1.0\r\n\r\n';
+		IncomingRequest.parse('127.0.0.1', raw)
+			.next(function(req) {
+				asserts.assert(req.header.protocol == HTTP1_0);
+				asserts.assert(req.header.get(HOST).length == 0);
+				return Noise;
+			})
+			.handle(asserts.handle);
+		return asserts;
+	}
+
 	// RFC 9112 §6.3: chunked Transfer-Encoding must be decoded even for GET/HEAD/OPTIONS without Content-Length
 	@:variant(GET)
 	@:variant(HEAD)
 	@:variant(OPTIONS)
 	public function parseChunkedTransferEncodingBeforeMethod(method:Method) {
-		var raw:IdealSource = '$method / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n';
+		var raw:IdealSource = '$method / HTTP/1.1\r\nHost: example.com\r\nTransfer-Encoding: chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n';
 		IncomingRequest.parse('127.0.0.1', raw)
 			.next(function(req) return switch req.body {
 				case Plain(source): source.all();
