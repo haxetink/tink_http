@@ -39,13 +39,10 @@ jobs:
       # Needed for the jvm matrix target (and keytool CA import below); not always present on ubuntu-latest
       - name: Install JDK
         if: contains(matrix.combination.targets, 'jvm')
-        run: |
-          set -euo pipefail
-          # apt is lighter under act than actions/setup-java (large Temurin tarball download)
-          sudo apt-get update
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openjdk-17-jdk-headless
-          echo "JAVA_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")" >> "$GITHUB_ENV"
-          java -version
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Cache Haxe
         uses: actions/cache@v6
