@@ -37,15 +37,33 @@ class FlashSocketClient implements ClientObject {
   public function request(req:OutgoingRequest):Promise<IncomingResponse> {
     return Future.irreversible(function(cb) {
       
+      function addHeaders(headers:Array<HeaderField>)
+        req = new OutgoingRequest(req.header.concat(headers), req.body);
+      
       switch req.header.byName('connection') {
-        case Success((_:String).toLowerCase() => 'close'): // ok
+        case Success((_:String).toLowerCase() => 'close'):
+          // ok
         case Success(v):
           cb(Failure(new Error('Only "Connection: Close" is supported. But specified as "$v"')));
           return;
-        case Failure(_): @:privateAccess req.header.fields.push(new HeaderField('connection', 'close'));
+        case Failure(_):
+          addHeaders([new HeaderField('connection', 'close')]);
       }
       
-      var socket = getSocket(req.header.url.scheme == 'https');
+      switch req.header.byName('host') {
+        case Success(_): // ok
+        case Failure(_):
+          var defaultPort = req.header.url.scheme == 'https' ? 443 : 80;
+          var host = switch req.header.url.host.port {
+            case null: req.header.url.host.name;
+            case p if(p == defaultPort): req.header.url.host.name;
+            case p: '${req.header.url.host.name}:$p';
+          }
+          addHeaders([new HeaderField('host', host)]);
+      }
+      
+      var secure = req.header.url.scheme == 'https';
+      var socket = getSocket(secure);
       
       var signal = Signal.trigger();
       var source:RealSource = new SignalStream(signal);
