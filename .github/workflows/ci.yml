@@ -62,11 +62,10 @@ jobs:
             libcairo2 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 \
             libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
             libxss1 libxtst6 libxkbcommon0 "$ALSA"
-          # Prefetch Chrome into the default cache so travix/js works under act --bind
-          # (host node_modules can skip puppeteer's postinstall while container cache is empty).
-          npx --yes puppeteer@24 browsers install chrome
           # travix only writes bin/js/run.js when missing; seed one that trusts mkcert HTTPS
           # (browser fetch does not honor NODE_EXTRA_CA_CERTS / OS store reliably).
+          # Clear prior node_modules so puppeteer's postinstall can download Chrome under act --bind.
+          rm -rf bin/js/node_modules
           mkdir -p bin/js
           cat > bin/js/run.js <<'EOF'
           const puppeteer = require("puppeteer");
