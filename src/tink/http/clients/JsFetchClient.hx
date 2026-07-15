@@ -9,6 +9,7 @@ import tink.http.Client;
 import tink.http.Header;
 import tink.http.Request;
 import tink.http.Response;
+import tink.io.js.ReadableStream;
 
 using tink.CoreApi;
 using tink.io.Source;
@@ -30,7 +31,6 @@ class JsFetchClient implements ClientObject {
 				final requestHeaders = new Headers();
 				for (header in req.header) requestHeaders.append(header.name, header.value);
 
-				var responseHeader: ResponseHeader;
 				requestBody
 					.next(body -> Browser.self.fetch(req.header.url, js.lib.Object.assign({}, options, {
 						body: body,
@@ -39,13 +39,20 @@ class JsFetchClient implements ClientObject {
 					})))
 					.next(response -> {
 						final headers = [for (entry in new HaxeIterator(response.headers.entries())) new HeaderField((entry[0]:String).toString(), (entry[1]:String).toString())];
-						responseHeader = new ResponseHeader(response.status, response.statusText, headers);
-						response.arrayBuffer();
-					})
-					.next(arrayBuffer -> new IncomingResponse(responseHeader, switch arrayBuffer {
-						case null: Source.EMPTY;
-						default: Bytes.ofData(arrayBuffer);
-					}));
+						final responseHeader = new ResponseHeader(response.status, response.statusText, headers);
+						final stream:Null<ReadableStream> = untyped response.body;
+						return if (stream != null)
+							new IncomingResponse(
+								responseHeader,
+								Source.ofReadableStream('Response from ${req.header.url}', stream)
+							);
+						else
+							Promise.ofJsPromise(response.arrayBuffer())
+								.next(arrayBuffer -> new IncomingResponse(responseHeader, switch arrayBuffer {
+										case null: Source.EMPTY;
+										default: Bytes.ofData(arrayBuffer);
+								}));
+					});
 
 			default:
 				Promise.reject(Helpers.missingSchemeError(req.header.url));
