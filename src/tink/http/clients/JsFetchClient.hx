@@ -40,18 +40,20 @@ class JsFetchClient implements ClientObject {
 					.next(response -> {
 						final headers = [for (entry in new HaxeIterator(response.headers.entries())) new HeaderField((entry[0]:String).toString(), (entry[1]:String).toString())];
 						final responseHeader = new ResponseHeader(response.status, response.statusText, headers);
-						final stream:Null<ReadableStream> = untyped response.body;
-						return if (stream != null)
-							new IncomingResponse(
-								responseHeader,
-								Source.ofReadableStream('Response from ${req.header.url}', stream)
-							);
-						else
-							Promise.ofJsPromise(response.arrayBuffer())
-								.next(arrayBuffer -> new IncomingResponse(responseHeader, switch arrayBuffer {
-										case null: Source.EMPTY;
-										default: Bytes.ofData(arrayBuffer);
-								}));
+						
+						switch (untyped response.body:Null<ReadableStream>) {
+							case null:
+								Promise.ofJsPromise(response.arrayBuffer())
+									.next(arrayBuffer -> new IncomingResponse(responseHeader, switch arrayBuffer {
+											case null: Source.EMPTY;
+											default: Bytes.ofData(arrayBuffer);
+									}));
+							case stream:
+								new IncomingResponse(
+									responseHeader,
+									Source.ofReadableStream('Response from ${req.header.url}', stream)
+								);
+						}
 					});
 
 			default:
