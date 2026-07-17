@@ -3,7 +3,6 @@ package tink.http.clients;
 import tink.http.Client;
 import tink.http.Response;
 import tink.http.Request;
-import tink.http.Header;
 import tink.io.Sink;
 import tink.io.Worker;
 
@@ -24,30 +23,12 @@ class SocketClient implements ClientObject {
         case Some(e):
           cb(Failure(e));
         case None:
-          
-          function addHeaders(headers:Array<HeaderField>)
-            req = new OutgoingRequest(req.header.concat(headers), req.body);
-          
-          switch req.header.byName('connection') {
-            case Success((_:String).toLowerCase() => 'close'):
-              // ok
-            case Success(v):
-              cb(Failure(new Error('Only "Connection: Close" is supported. But specified as "$v"')));
+          switch Helpers.addSocketHeaders(req) {
+            case Failure(e):
+              cb(Failure(e));
               return;
-            case Failure(_):
-              addHeaders([new HeaderField('connection', 'close')]);
-          }
-          
-          switch req.header.byName('host') {
-            case Success(_): // ok
-            case Failure(_):
-              var defaultPort = req.header.url.scheme == 'https' ? 443 : 80;
-              var host = switch req.header.url.host.port {
-                case null: req.header.url.host.name;
-                case p if(p == defaultPort): req.header.url.host.name;
-                case p: '${req.header.url.host.name}:$p';
-              }
-              addHeaders([new HeaderField('host', host)]);
+            case Success(v):
+              req = v;
           }
           
           var hostname = req.header.url.host.name;
